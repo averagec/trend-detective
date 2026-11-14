@@ -63,3 +63,23 @@ xr.open_dataset = real_open
 ea2 = pd.read_csv("data/raw/earthaccess/GPCPMON_3.3_precip_100_-1_106_4_2000_2000.csv")
 assert abs(ea2.value[0] - expect) < 1e-9
 print("earthaccess descending-lat ok")
+
+# --- pressure levels: pick 850 vs 5 hPa from a 3-D field (T = level value + lat term)
+lev = np.array([1000., 850., 500., 5., 1.])
+g3 = xr.Dataset({"T": (("time", "lev", "lat", "lon"),
+                 (lev[None, :, None, None] + 0 * lat[None, None, :, None]) * np.ones((1, lev.size, lat.size, lon.size)))},
+                coords={"time": [pd.Timestamp("2000-01-01")], "lev": lev, "lat": lat, "lon": lon})
+fake_ea.open = lambda res: [g3]; xr.open_dataset = lambda f, **k: f
+pn.earthaccess_monthly("M2IMNPASM", "5.12.4", "T", [-180, -60, 180, 60], 2000, 2000, level=850, tag="t850")
+pn.earthaccess_monthly("M2IMNPASM", "5.12.4", "T", [-180, -60, 180, 60], 2000, 2000, level=5, tag="t5")
+xr.open_dataset = real_open
+assert abs(pd.read_csv("data/raw/earthaccess/t850.csv").value[0] - 850) < 1e-6 and abs(pd.read_csv("data/raw/earthaccess/t5.csv").value[0] - 5) < 1e-6
+print("pressure-level selection ok")
+
+# --- catalog: every entry names an instrument/model from the brief and a realm
+named = ("MODIS", "OMI", "AIRS", "GPM", "MERRA-2", "GLDAS")
+covered = {k for k in named if any(k in v["src"] for v in pn.CATALOG.values())}
+assert covered == set(named), set(named) - covered
+realms = " ".join(v["realm"] for v in pn.CATALOG.values())
+assert all(r in realms for r in ("land", "ocean", "atmosphere"))
+print("catalog covers", sorted(covered), "and land/ocean/atmosphere")
