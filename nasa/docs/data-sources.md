@@ -14,6 +14,16 @@ Prefer **monthly** (then daily) products: these are the easiest according to the
 | KNMI Climate Explorer | Reference trend analyses to cross-check our numbers | https://climexp.knmi.nl/ |
 | CSA RCM / SWOT | SAR and water-surface data (advanced, probably out of scope) | https://donnees-data.asc-csa.gc.ca/en/dataset/rcm |
 
+**AppEEARS check (2026-11-15).** The public product list (`GET /api/product`, no login) returned 193
+products from LP DAAC, NSIDC, OB.DAAC, USGS, ORNL and one GES DISC product (none is MERRA-2).
+None of our MERRA-2 variables is offered: T2M, T2MMAX, QV2M, PS, EVAP, PRECTOTCORR, TSURF (VPD is
+derived from the first three and PS). GLDAS, GPCP and GRACE are not offered either. So AppEEARS
+cannot replace `merra2_download.py`. It only has different land products: for example MOD11A1/A2
+land surface temperature (1 km), MOD16A2GF evapotranspiration (500 m), SMAP soil moisture, and
+DAYMET (North America only). These are not the same quantities as the MERRA-2 variables.
+`scripts/make_appeears_request.py` still works for those land products. `scripts/appeears_submit.py`
+was not written for this reason.
+
 Most NASA Earthdata access needs a free Earthdata Login: store it as `EARTHDATA_USERNAME`
 / `EARTHDATA_PASSWORD` in `.env`, never in code.
 
