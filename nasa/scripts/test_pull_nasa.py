@@ -1,6 +1,14 @@
-import json, sys, types, numpy as np, xarray as xr, pandas as pd
+import json
+import sys
+import types
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+
 sys.path.insert(0, "/home/claude/hackathon/ingest_kit")
 import pull_nasa as pn
+
 
 class R:
     def __init__(s, j, url="u"): s._j, s.url = j, url

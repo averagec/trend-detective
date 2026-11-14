@@ -36,7 +36,8 @@ fi
 # --- Stack checks (auto-enable when the stack exists) ---
 if [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   command -v ruff >/dev/null && run "ruff" ruff check --quiet .
-  command -v pytest >/dev/null && [ -d tests ] && ls tests/*.py >/dev/null 2>&1 && run "pytest" pytest -q
+  # tests live in tests/core, tests/app, ...: the old `ls tests/*.py` guard never matched them
+  command -v pytest >/dev/null && [ -d tests ] && run "pytest" pytest -q
 fi
 if [ -f package.json ]; then
   grep -q '"lint"' package.json && run "npm lint" npm run -s lint
