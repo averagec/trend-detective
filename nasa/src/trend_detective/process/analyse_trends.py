@@ -6,7 +6,8 @@ build() for each request. No statistics are computed here.
 
 Inputs : data/processed/merra2/monthly_regional.csv   (from process/merra2_clean.py)
 Outputs: data/processed/json/index.json                 every series, with its headline sentence
-         data/processed/json/<region>/<variable>.json  one series: values, anomalies, statistics
+         data/processed/json/<region>/<variable>.json  one series: values, anomalies, statistics,
+                                                       95% trend band per year
 
 Examples:
     python src/trend_detective/process/analyse_trends.py
@@ -90,6 +91,20 @@ def annual_means(axis: list[str], anomalies: np.ndarray) -> list[dict]:
     ]
 
 
+def band_rows(axis: list[str], summary) -> list[dict]:
+    """The 95% band from core/summary.py, labelled with calendar years. Nothing is computed here."""
+    first_year = int(axis[0][:4])
+    return [
+        {
+            "year": first_year + k,
+            "fit": jsonable(fit),
+            "low": jsonable(low),
+            "high": jsonable(high),
+        }
+        for k, fit, low, high in summary.ols_band_by_year
+    ]
+
+
 def build(
     region: str,
     variable: str,
@@ -120,10 +135,12 @@ def build(
             {**row, "mean_anomaly": jsonable(row["mean_anomaly"])}
             for row in annual_means(axis, anomalies)
         ],
+        # 95% band around the OLS line (same unit as the anomalies), one row per year
+        "band": band_rows(axis, summary),
         "statistics": {
             k: jsonable(v) if not isinstance(v, tuple) else [jsonable(x) for x in v]
             for k, v in asdict(summary).items()
-            if k not in ("sentence", "warnings")
+            if k not in ("sentence", "warnings", "ols_band_by_year")
         },
         "sentence": summary.sentence,
         "warnings": list(summary.warnings),

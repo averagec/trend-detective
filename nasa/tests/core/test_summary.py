@@ -52,3 +52,25 @@ def test_one_year_of_data_gives_no_trend_not_a_false_significant_one():
     assert np.isnan(s.ols_per_decade)
     assert not s.ols_significant
     assert "not enough data" in s.sentence
+
+
+def test_band_has_one_row_per_year_on_the_ols_line():
+    s = summarise(monthly(0.01, years=30), "K", "Test region temperature")
+    assert [row[0] for row in s.ols_band_by_year] == list(range(30))
+    for k, fit, low, high in s.ols_band_by_year:
+        assert low < fit < high
+        assert fit == np.float64(s.ols_intercept + s.ols_slope_per_month * (12 * k + 6))
+    widths = [high - low for _, _, low, high in s.ols_band_by_year]
+    assert min(widths) == widths[14] or min(widths) == widths[15]  # narrowest mid-record
+    assert widths[0] > widths[14] and widths[-1] > widths[14]
+
+
+def test_band_stops_before_a_partial_year_that_ends_before_midyear():
+    y = monthly(0.01, years=6)[: 12 * 5 + 3]  # 5 years and 3 months
+    s = summarise(y, "K", "Partial last year")
+    assert [row[0] for row in s.ols_band_by_year] == [0, 1, 2, 3, 4]
+
+
+def test_no_band_when_there_is_no_trend_to_draw():
+    s = summarise(monthly(0.01, years=1), "K", "One year")
+    assert s.ols_band_by_year == ()

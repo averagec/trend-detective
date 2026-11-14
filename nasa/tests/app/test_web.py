@@ -94,3 +94,31 @@ def test_missing_data_says_what_to_run(tmp_path):
     response = client.get("/api/meta")
     assert response.status_code == 503
     assert "merra2_clean.py" in response.get_json()["error"]
+
+
+def test_trend_returns_a_95_percent_band_around_the_trend_line(client):
+    data = client.get("/api/trend?variable=t2m&region=east_asia_land").get_json()
+    band = data["band"]
+    assert [row["year"] for row in band] == list(range(1980, 2011))
+    stats = data["statistics"]
+    for i, row in enumerate(band):
+        assert row["low"] < row["fit"] < row["high"]
+        # the centre of the band is the plotted trend line (month index 12 * year offset + 6)
+        line = stats["ols_intercept"] + stats["ols_slope_per_month"] * (12 * i + 6)
+        assert row["fit"] == pytest.approx(line)
+    assert "ols_band_by_year" not in stats  # sent once, as `band`
+
+
+def test_band_follows_the_year_window(client):
+    data = client.get("/api/trend?variable=t2m&region=east_asia_land&from=1990&to=1999").get_json()
+    assert [row["year"] for row in data["band"]] == list(range(1990, 2000))
+    wide = client.get("/api/trend?variable=t2m&region=east_asia_land").get_json()["band"]
+    narrow_width = data["band"][5]["high"] - data["band"][5]["low"]
+    wide_width = wide[15]["high"] - wide[15]["low"]
+    assert narrow_width > wide_width  # a shorter record leaves more doubt about the line
+
+
+def test_band_is_empty_for_a_one_year_window(client):
+    data = client.get("/api/trend?variable=t2m&region=east_asia_land&from=1990&to=1990").get_json()
+    assert data["band"] == []
+    assert data["statistics"]["ols_per_decade"] is None

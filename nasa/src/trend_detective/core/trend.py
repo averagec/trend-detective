@@ -85,6 +85,40 @@ def ols_trend(values: np.ndarray, alpha: float = 0.05) -> TrendResult:
     )
 
 
+def ols_band(
+    values: np.ndarray, at: np.ndarray, alpha: float = 0.05
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Confidence band around the OLS line of `ols_trend`, at the time steps `at`.
+
+    Returns (fit, low, high): the line value and the 95% band limits (units of `values`),
+    where time is the index into `values` (as in `ols_trend`). It uses the same n_eff and
+    degrees of freedom (n_eff - 2) as the slope CI, so the band opens up away from the mean
+    time at exactly the rate of that CI:
+
+        var(fit at t) = s^2 / n_eff + se_slope^2 * (t - mean_t)^2
+
+    with s^2 = SSR / (n - 2), the residual variance, and se_slope from `ols_trend`. This is
+    the band for the line (where the true trend plausibly lies), not for single months.
+    See docs/statistics.md section 4.2.
+    """
+    y = np.asarray(values, dtype=float)
+    fit = ols_trend(y, alpha)  # raises if fewer than 3 values
+    t = np.arange(y.size, dtype=float)
+    m = ~np.isnan(y)
+    t, y = t[m], y[m]
+    resid = y - (fit.slope * t + fit.intercept)
+    ssr = float(np.sum(resid**2))
+    dof = fit.n_eff - 2
+    sxx = float(np.sum((t - t.mean()) ** 2))
+    level_var = ssr / (fit.n - 2) / fit.n_eff
+    slope_var = ssr / dof / sxx
+    tcrit = stats.t.ppf(1 - alpha / 2, dof)
+    tau = np.asarray(at, dtype=float)
+    centre = fit.slope * tau + fit.intercept
+    half = tcrit * np.sqrt(level_var + slope_var * (tau - t.mean()) ** 2)
+    return centre, centre - half, centre + half
+
+
 def sens_slope(values: np.ndarray) -> float:
     """Median of all pairwise slopes (robust to outliers)."""
     y = np.asarray(values, dtype=float)

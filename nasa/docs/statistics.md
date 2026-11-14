@@ -11,6 +11,7 @@ ingest/merra2_download.py   Harmony subsets  ->  data/raw/merra2/subset/<collect
 process/merra2_clean.py     QC, units, VPD,   ->  data/processed/merra2/monthly_regional.csv
                             regional means
 core/summary.py + core/trend.py                   (pure statistics, no files)
+                            (includes the 95% band around the OLS line, 4.2a)
 app/web.py (Flask)          per request: build() for the chosen region, variable and years
                             -> JSON to the page
 (optional) process/analyse_trends.py  ->  data/processed/json/  (static export)
@@ -96,6 +97,22 @@ cycle (about 10 K in mid-latitudes) dominates the trend.
   confidence interval uses the t distribution with the same degrees of freedom.
 - `p` is the two-sided t-test on `b / se`.
 
+### 4.2a Confidence band around the OLS line (`ols_band`)
+The chart shades a 95% band around the OLS line, one point per year (at month 6 of the year, the
+same place as the yearly bar). It uses the same `n_eff` and `n_eff − 2` degrees of freedom as the
+slope CI:
+
+`var(line at t) = s² / n_eff + se_slope² · (t − t̄)²`, band = line ± t_crit · √var
+
+- `s² = SSR / (n − 2)` is the residual variance; `se_slope` is the one from §4.2, so the band
+  opens up away from the middle of the record at exactly the rate of the slope CI.
+- It is a band for the **line** (where the true trend plausibly lies), not a prediction band
+  for single months, so most dots lie outside it.
+- Years whose position falls after the last month of the record are left out (no extrapolation).
+  Records under two years have no band.
+- This adds a number; it does not change the slope, CI or p-values. The `s² / n_eff` level term is
+  a choice made for the band: see the open question in §8.
+
 **Why:** monthly anomalies are usually positively autocorrelated. A naive test then finds
 trends that are not there. The `n_eff` adjustment widens the interval to match.
 
@@ -153,6 +170,10 @@ by one extreme month.
   seasonal cycle is removed, white noise is rarely significant, autocorrelation widens the CI,
   Mann-Kendall agrees with Kendall's tau, Sen's slope resists an outlier, opposite trends are
   both detected, and polar cells are down-weighted.
+- Band (`ols_band`, same file): a hand-worked 5-point series gives the exact half-widths
+  (0.9001, 1.5591, 2.7004 at t = 2, 0 or 4, 6); the band opens at the rate of the slope CI; it is
+  wider for autocorrelated anomalies; it covers the true line about 95% of the time over 400
+  simulated records; missing months keep their positions; an exact line has zero width.
 - `tests/core/test_summary.py`: known warming gives the right per-decade value and sentence; no
   trend gives the "no significant trend" sentence; short records, gaps and one-year records
   give warnings, not false results.
@@ -164,3 +185,6 @@ by one extreme month.
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).
 - Whether to add a multiple-testing correction and a seasonal test (§6).
 - Whether annual means are shown alongside the monthly trend as a plain-language check.
+- Band level term: `s² / n_eff` with `s² = SSR / (n − 2)` (§4.2a). The slope part is the existing
+  CI, so only the level term is new. A different convention (for example `SSR / (n_eff − 2)` as
+  the slope uses) would give a wider band near the middle of the record. Team to confirm.
