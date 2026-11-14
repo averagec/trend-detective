@@ -1,0 +1,31 @@
+{
+  "versions": {
+    "ecco_v4r4_05deg": {
+      "files": 312,
+      "cells": 80870400,
+      "fill_masked": 28099656,
+      "out_of_range_masked": 0
+    },
+    "ecco_v4r4b_05deg": {
+      "files": 312,
+      "cells": 80870400,
+      "fill_masked": 28099656,
+      "out_of_range_masked": 0
+    },
+    "ecco_v4r4_llc90": {
+      "files": 312,
+      "cells": 32853600,
+      "fill_masked": 13932048,
+      "out_of_range_masked": 0
+    },
+    "ecco_v4r4b_llc90": {
+      "files": 312,
+      "cells": 32853600,
+      "fill_masked": 13932048,
+      "out_of_range_masked": 0
+    }
+  },
+  "errors": [],
+  "generated_utc": "2026-11-14T18:14:07+00:00",
+  "rows": 3744
+}

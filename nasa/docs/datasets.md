@@ -12,10 +12,12 @@ about 7.3 GB. Raw files are not committed. The cleaned outputs in `data/processe
 | MERRA-2 | T2M, QV2M, PS (monthly temperature, humidity, pressure) | 561 | Complete | Yes |
 | MERRA-2 | EVAP, PRECTOTCORR (monthly evaporation, rainfall) | 561 | Complete | Yes |
 | MERRA-2 | TSURF (monthly land surface temperature) | 561 | Complete | Yes (land cells only) |
-| Witness | GLDAS Noah 2.1 monthly soil moisture and rainfall | 319 | Complete | No |
-| Witness | GPCP v3.3 monthly rainfall | 516 | Complete | No |
-| Witness | GRACE / GRACE-FO mascon water storage | 1 | Complete | No |
-| Ocean | ECCO sea level (0.5° and LLC90), NASA SSH indicators | see `data/raw/ocean/` | Earlier download | Yes (GeoJSON) |
+| Witness | GLDAS Noah 2.1 monthly soil moisture and rainfall | 319 | Complete | Yes (regional monthly means, land cells only) |
+| Witness | GPCP v3.3 monthly rainfall | 516 | Complete | Yes (regional monthly means) |
+| Witness | GRACE / GRACE-FO mascon water storage | 1 | Complete | Yes (regional monthly means; 2 duplicate months resolved) |
+| Ocean | ECCO sea level 0.5° (V4R4 and V4R4B) | 312 each | Complete | Yes (regional monthly CSV) |
+| Ocean | ECCO sea level, native LLC90 grid (V4R4, V4R4B) | 312 each | Complete | Yes (regional monthly CSV and GeoJSON) |
+| Ocean | NASA SSH indices (ENSO, IOD, PDO, GMSL) | 4 text files | Complete | Yes (GeoJSON, time series, no regions) |
 | SAR | Sentinel-1 scene list and browse images | see `data/raw/sar/` | Earlier download | Partly |
 
 Download manifests: `data/raw/merra2/manifest.csv` (702 jobs ok, 1 skipped, 0 failed) and
@@ -27,6 +29,10 @@ Download manifests: `data/raw/merra2/manifest.csv` (702 jobs ok, 1 skipped, 0 fa
 |---|---|---|
 | `data/processed/merra2/monthly_regional.csv` | 13,467 rows: 3 regions × 8 variables × months, with area-weighted values and cell counts | `process/merra2_clean.py` |
 | `data/processed/merra2/qc_report.json` | Files read, rows written, fill and out-of-range counts per variable | `process/merra2_clean.py` |
+| `data/processed/witness/witness_regional.csv` | 7,110 rows: GLDAS (5 variables), GPCP (1), GRACE (1) × 3 regions × months | `process/witness_clean.py` |
+| `data/processed/witness/qc_report.json` | Masked counts per variable and the GRACE duplicate-month count | `process/witness_clean.py` |
+| `data/processed/ocean/ocean_regional.csv` | 3,744 rows: ECCO SSH, 4 products (0.5° and native LLC90, V4R4 and V4R4B) × 3 regions × 312 months (metres) | `process/ocean_clean.py` |
+| `data/processed/ocean/qc_report.json` | Masked counts per version | `process/ocean_clean.py` |
 | `data/processed/geojson/*.geojson` | Ocean and sea-level series as GeoJSON (one polygon per month for the box, or null geometry for indices) | `scripts/raw_to_json.py` |
 | `data/processed/ocean_se_asia/*.npz` | Monthly Southeast Asia sea-surface height, 1992 to 2017 | `ingest/ocean_download.py` |
 
@@ -56,7 +62,7 @@ variables. TSURF has 63% of cells masked because they are ocean cells, which is 
 - Grid: 0.25° (440 × 476 in the box). Coverage: 2000 to July 2026 (open-ended in CMR).
 - Variables: `SoilMoi0_10cm_inst`, `SoilMoi10_40cm_inst`, `SoilMoi40_100cm_inst`,
   `SoilMoi100_200cm_inst` (soil moisture, kg m⁻²), `Rainf_tavg` (rainfall rate, kg m⁻² s⁻¹).
-- Fill value: −9999 (not 1e15). Not yet cleaned.
+- Fill value: −9999 (not 1e15). Cleaned: masked over ocean (70% of box cells), so regional values are land-only.
 - Script: `src/trend_detective/ingest/witness_download.py` (group `gldas`).
 
 ### GPCP Precipitation, monthly v3.3 (`GPCPMON`)
@@ -64,14 +70,17 @@ variables. TSURF has 63% of cells masked because they are ocean cells, which is 
 - Grid: 0.5° (220 × 238 in the box), not the 2.5° in the first plan. Coverage: 1983-01 to 2025-12.
 - Variable used: `sat_gauge_precip` (combined satellite and gauge rainfall, mm day⁻¹).
   `gauge_precip` is not used: it holds values below the fill value.
-- Fill value: −99999. Not yet cleaned.
+- Fill value: −99999. Cleaned: no fill values inside the box.
 - Script: `src/trend_detective/ingest/witness_download.py` (group `gpcp`).
 
 ### GRACE / GRACE-FO mascon, RL06.3 V04 (`TELLUS_GRAC-GRFO_MASCON_GRID_RL06.3_V4`)
 - Source: JPL, PO.DAAC, concept `C3195502222-POCLOUD`.
 - Grid: 0.5° (360 × 720), global single file (39 MB). Coverage: 2002-04 to 2026-09.
 - Variables: `lwe_thickness` (water storage anomaly, cm), `uncertainty` (cm).
-- Fill value: −99999. Coarse signal (about 3° effective); use for large regions only. Not yet cleaned.
+- Fill value: −99999. Coarse signal (about 3° effective); use for large regions only. Cleaned: the
+  box is cut from the global file, longitudes are wrapped to −180…180, and two months that have two
+  time steps keep the step nearest the 15th (2012-01 and 2015-04). Result: 259 months, 2002-04 to 2026-09,
+  with gaps where GRACE had no solution.
 - Script: `src/trend_detective/ingest/witness_download.py` (group `grace`).
 
 ## Other data (earlier downloads)
