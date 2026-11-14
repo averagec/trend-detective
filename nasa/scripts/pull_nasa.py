@@ -88,8 +88,11 @@ def tesvis(lat, lon, product, band, start, end, km=0):
 
 
 # ---------------------------------------------------------------- earthaccess (gridded, login)
-def earthaccess_monthly(short_name, version, var, bbox, start, end, list_vars=False):
-    """Stream granules lazily, cut the bbox, cos(lat)-weighted mean -> one value per granule."""
+def earthaccess_monthly(short_name, version, var, bbox, start, end, list_vars=False,
+                        group=None, level=None, level_dim=None, tag=""):
+    """Stream granules lazily, cut the bbox, cos(lat)-weighted mean -> one value per time step.
+    group: HDF5 group holding the variable (e.g. 'Grid' for GPM IMERG).
+    level: pressure level to select (e.g. 850 or 1 hPa for MERRA-2 M2IMNPASM)."""
     import earthaccess, numpy as np, xarray as xr
     earthaccess.login()  # uses .netrc / env vars / prompt
     res = earthaccess.search_data(short_name=short_name, version=version,
@@ -99,19 +102,23 @@ def earthaccess_monthly(short_name, version, var, bbox, start, end, list_vars=Fa
     if not res:
         sys.exit("No granules: check short name/version on search.earthdata.nasa.gov")
     files = earthaccess.open(res)
+    kw = {"group": group} if group else {}
     if list_vars:
-        ds = xr.open_dataset(files[0])
+        ds = xr.open_dataset(files[0], **kw)
         print(ds)
         return
     W, S, E, N = bbox
     rows = []
     for f in files:
-        ds = xr.open_dataset(f)
+        ds = xr.open_dataset(f, **kw)
+        if level is not None:
+            ld = level_dim or next(n for n in ("lev", "level", "plev", "StdPressureLev", "TempPrsLvls_A")
+                                   if n in ds.coords or n in ds.dims)
+            ds = ds.sel({ld: level}, method="nearest")
         latn = next(n for n in ("lat", "latitude", "Latitude") if n in ds.coords)
         lonn = next(n for n in ("lon", "longitude", "Longitude") if n in ds.coords)
-        lo = ds[lonn]
-        if float(lo.max()) > 180 and W < 0:           # 0..360 grids
-            W, E = W % 360, E % 360
+        if float(ds[lonn].max()) > 180:               # 0..360 grid -> -180..180 so any box works
+            ds = ds.assign_coords({lonn: ((ds[lonn] + 180) % 360) - 180}).sortby(lonn)
         la = ds[latn]
         lat_slice = slice(S, N) if la[0] < la[-1] else slice(N, S)
         sub = ds[var].sel({latn: lat_slice, lonn: slice(W, E)})
@@ -123,9 +130,67 @@ def earthaccess_monthly(short_name, version, var, bbox, start, end, list_vars=Fa
             if not math.isnan(v):
                 rows.append((date, v))
     rows.sort()
-    _save("earthaccess", f"{short_name}_{version}_{var}_{'_'.join(map(str, bbox))}_{start}_{end}", rows, dict(
+    lev = f"_L{level}" if level is not None else ""
+    name = tag or f"{short_name}_{version}_{var}{lev}_{'_'.join(map(str, bbox))}_{start}_{end}"
+    _save("earthaccess", name, rows, dict(
         source="NASA Earthdata via earthaccess", short_name=short_name, version=version, var=var,
-        bbox_WSEN=bbox, method="cos(lat)-weighted area mean of grid cells inside bbox"))
+        group=group, level=level, bbox_WSEN=bbox,
+        method="cos(lat)-weighted area mean of grid cells inside bbox"))
+
+
+# ---------------------------------------------------------------- catalog mapped to the challenge
+# Every entry ties to the challenge background: named instrument/model, variable type, and realm
+# (land / ocean / atmospheric level). verified = we have confirmed the variable name ourselves.
+# Run `pull_nasa.py earthaccess ... --list-vars` once for every entry with verified=False.
+SG = (1.35, 103.9)
+SEA_BOX = [100, -1, 106, 4]            # Singapore / Johor / Riau
+N_INDIA = [73, 24, 82, 32]             # Punjab-Haryana-Rajasthan (GRACE scale: several mascons)
+SCS = [108, 5, 118, 15]                # South China Sea (ocean)
+CATALOG = {
+    # --- simple variables
+    "sg_t2m":        dict(how="power", src="MERRA-2 (via POWER)", realm="land/air", params=["T2M"], start=1981, end=2024, verified=True),
+    "sea_rain_gpcp": dict(how="ea", src="GPCP (satellite+gauge)", realm="land", short_name="GPCPMON", version="3.3", var="sat_gauge_precip", bbox=SEA_BOX, start=1983, end=2023, verified=False),
+    "sea_rain_gpm":  dict(how="ea", src="GPM IMERG", realm="land", short_name="GPM_3IMERGM", version="07", var="precipitation", group="Grid", bbox=SEA_BOX, start=2001, end=2024, verified=False,
+                          note="IMERG is not a climate data record: cross-check only"),
+    # --- complex variables (land model)
+    "india_evap":    dict(how="ea", src="GLDAS Noah 2.1", realm="land", short_name="GLDAS_NOAH025_M", version="2.1", var="Evap_tavg", bbox=N_INDIA, start=2000, end=2024, verified=False),
+    "india_runoff":  dict(how="ea", src="GLDAS Noah 2.1", realm="land", short_name="GLDAS_NOAH025_M", version="2.1", var="Qs_acc", bbox=N_INDIA, start=2000, end=2024, verified=False,
+                          note="surface runoff = streamflow proxy; add Qsb_acc for subsurface"),
+    "india_soilm":   dict(how="ea", src="GLDAS Noah 2.1", realm="land", short_name="GLDAS_NOAH025_M", version="2.1", var="SoilMoi0_10cm_inst", bbox=N_INDIA, start=2000, end=2024, verified=False),
+    # --- MODIS (land surface)
+    "sg_ndvi":       dict(how="tesvis", src="MODIS Terra", realm="land", product="MOD13A3", band="1_km_monthly_NDVI", lat=1.35, lon=103.8, km=5, start=2000, end=2024, verified=False),
+    "sg_lst_day":    dict(how="tesvis", src="MODIS Aqua", realm="land", product="MYD11A2", band="LST_Day_1km", lat=1.35, lon=103.8, km=5, start=2002, end=2024, verified=False,
+                          note="8-day composites -> monthly mean in core; Aqua avoids Terra drift"),
+    # --- atmosphere, by level (same process, opposite sign)
+    "trop_t850":     dict(how="ea", src="MERRA-2", realm="atmosphere 850 hPa", short_name="M2IMNPASM", version="5.12.4", var="T", level=850, bbox=[-180, -60, 180, 60], start=1980, end=2024, verified=False),
+    "strat_t5":      dict(how="ea", src="MERRA-2", realm="atmosphere 5 hPa", short_name="M2IMNPASM", version="5.12.4", var="T", level=5, bbox=[-180, -60, 180, 60], start=1980, end=2024, verified=False),
+    "airs_t_check":  dict(how="ea", src="AIRS (AIRS-only V7)", realm="atmosphere levels", short_name="AIRS3STM", version="7.0", var="<list-vars>", bbox=[-180, -60, 180, 60], start=2002, end=2024, verified=False,
+                          note="independent satellite check of the MERRA-2 levels"),
+    # --- atmospheric composition
+    "omi_no2":       dict(how="ea", src="OMI", realm="atmosphere column", short_name="OMNO2d", version="003", var="<list-vars>", bbox=[114, 30, 120, 40], start=2005, end=2024, verified=False,
+                          note="DAILY files (~7,000): slow; average to monthly; row anomaly from 2007"),
+    # --- ocean
+    "scs_sst":       dict(how="ea", src="MERRA-2 (SST boundary field)", realm="ocean", short_name="M2TMNXSLV", version="5.12.4", var="TS", bbox=SCS, start=1980, end=2024, verified=False,
+                          note="surface skin temperature over open ocean; literature: +0.21 C/decade 1982-2022"),
+    # --- water storage (observation vs model)
+    "india_grace":   dict(how="ea", src="GRACE/GRACE-FO", realm="land water storage", short_name="TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4", version=None, var="lwe_thickness", bbox=N_INDIA, start=2002, end=2025, verified=False,
+                          note="single file; leave mission gap empty"),
+}
+
+
+def run_catalog(names):
+    for n in names or CATALOG:
+        c = CATALOG[n]
+        print(f"\n== {n}: {c['src']} [{c['realm']}] {c.get('note', '')}")
+        if c["how"] == "power":
+            power(SG[0], SG[1], c["params"], c["start"], c["end"])
+        elif c["how"] == "tesvis":
+            tesvis(c["lat"], c["lon"], c["product"], c["band"], c["start"], c["end"], c["km"])
+        elif "<list-vars>" in c["var"]:
+            print("   variable name unknown: run with --list-vars first, then fill it into CATALOG")
+        else:
+            earthaccess_monthly(c["short_name"], c["version"], c["var"], c["bbox"], c["start"], c["end"],
+                                group=c.get("group"), level=c.get("level"), tag=n)
 
 
 def main():
@@ -140,14 +205,24 @@ def main():
     e.add_argument("--var"); e.add_argument("--bbox", nargs=4, type=float, metavar=("W", "S", "E", "N"))
     e.add_argument("--start", type=int); e.add_argument("--end", type=int)
     e.add_argument("--list-vars", action="store_true")
+    e.add_argument("--group"); e.add_argument("--level", type=float); e.add_argument("--level-dim")
+    c = sub.add_parser("catalog", help="pull named datasets from CATALOG (all if none given)")
+    c.add_argument("names", nargs="*"); c.add_argument("--show", action="store_true")
     a = ap.parse_args()
+    if a.cmd == "catalog":
+        if a.show:
+            for n, v in CATALOG.items():
+                print(f"{n:14s} {v['src']:28s} {v['realm']:22s} verified={v['verified']}")
+        else:
+            run_catalog(a.names)
+        return
     if a.cmd == "power":
         power(a.lat, a.lon, a.params, a.start, a.end)
     elif a.cmd == "tesvis":
         tesvis(a.lat, a.lon, a.product, a.band, a.start, a.end, a.km)
     else:
         earthaccess_monthly(a.short_name, a.version, a.var, a.bbox or [-180, -90, 180, 90],
-                            a.start, a.end, a.list_vars)
+                            a.start, a.end, a.list_vars, a.group, a.level, a.level_dim)
 
 
 if __name__ == "__main__":
