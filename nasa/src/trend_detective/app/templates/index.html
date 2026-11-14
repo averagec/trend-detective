@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Trend Detective: how NASA MERRA-2 variables are changing in different regions, and whether the change is statistically significant."
+    />
+    <title>Trend Detective</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <h1>Trend Detective</h1>
+        <p class="lede">
+          Is a part of the Earth changing, where, by how much, and is the change real or chance?
+          Pick a question, a region and the years. The trend is worked out from NASA's MERRA-2
+          model each time you change something.
+        </p>
+        <p class="lede"><a href="/ocean">See the ocean and radar pictures →</a></p>
+      </header>
+
+      <div id="error" class="error" role="alert" hidden></div>
+
+      <main id="app-body">
+        <p class="muted" id="loading">Loading…</p>
+      </main>
+
+      <footer class="foot">
+        Data: NASA GES DISC, MERRA-2 reanalysis, accessed through NASA Harmony. Method:
+        docs/statistics.md in the project.
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

@@ -4,6 +4,7 @@ Owns: deseasonalising, OLS trend + confidence interval (autocorrelation-adjusted
 Mann-Kendall test, Sen's slope, and area-weighted regional means.
 See docs/science-rules.md for the rules these functions implement.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,13 +15,14 @@ from scipy import stats
 
 @dataclass(frozen=True)
 class TrendResult:
-    slope: float          # units per time step
+    slope: float  # units per time step
     ci_low: float
     ci_high: float
     p_value: float
     n: int
-    n_eff: float          # effective sample size after lag-1 autocorrelation
+    n_eff: float  # effective sample size after lag-1 autocorrelation
     method: str
+    intercept: float = float("nan")  # OLS intercept, for drawing the line (OLS only)
 
     @property
     def significant(self) -> bool:
@@ -67,8 +69,20 @@ def ols_trend(values: np.ndarray, alpha: float = 0.05) -> TrendResult:
     s2 = np.sum(resid**2) / dof
     se = np.sqrt(s2 / np.sum((t - t.mean()) ** 2))
     tcrit = stats.t.ppf(1 - alpha / 2, dof)
-    p = 2 * stats.t.sf(abs(slope / se), dof) if se > 0 else 0.0
-    return TrendResult(slope, slope - tcrit * se, slope + tcrit * se, float(p), n, n_eff, "ols")
+    if se > 0:
+        p = 2 * stats.t.sf(abs(slope / se), dof)
+    else:  # no residual spread: a flat line has p = 1; any other exact slope has p = 0
+        p = 1.0 if slope == 0 else 0.0
+    return TrendResult(
+        slope,
+        slope - tcrit * se,
+        slope + tcrit * se,
+        float(p),
+        n,
+        n_eff,
+        "ols",
+        float(intercept),
+    )
 
 
 def sens_slope(values: np.ndarray) -> float:
