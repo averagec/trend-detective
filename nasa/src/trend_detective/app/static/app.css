@@ -65,6 +65,7 @@ input[type="number"] { width: 6.5rem; }
 .chart .dot { fill: var(--dot); opacity: 0.55; }
 .chart .bar.warm { fill: var(--warm); opacity: 0.8; }
 .chart .bar.cool { fill: var(--cool); opacity: 0.8; }
+.chart .band { fill: var(--trend); fill-opacity: 0.2; stroke: none; }
 .chart .trend { fill: none; stroke: var(--trend); stroke-width: 2.5; }
 .notes ul { margin: 0 0 12px; padding-left: 22px; }
 .foot { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 14px; }

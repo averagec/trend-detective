@@ -18,3 +18,9 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Older ingest-kit scripts written in a compact style (long lines, one-line statements).
+# Style only; imports are still checked. Tidy them when next edited, then drop these lines.
+"scripts/pull_nasa.py" = ["E501", "E701", "E702"]
+"scripts/test_pull_nasa.py" = ["E501", "E701", "E702"]

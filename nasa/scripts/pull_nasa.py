@@ -17,7 +17,13 @@ Usage examples:
   python ingest/pull_nasa.py earthaccess --short-name GPCPMON --version 3.3 --var <name> --bbox 100 -1 106 4 --start 1983 --end 2023
   python ingest/pull_nasa.py earthaccess --short-name GPCPMON --version 3.3 --list-vars      # discover variable names first
 """
-import argparse, csv, datetime as dt, json, math, os, sys, time
+import argparse
+import csv
+import datetime as dt
+import json
+import math
+import sys
+import time
 from pathlib import Path
 
 import requests
@@ -93,7 +99,9 @@ def earthaccess_monthly(short_name, version, var, bbox, start, end, list_vars=Fa
     """Stream granules lazily, cut the bbox, cos(lat)-weighted mean -> one value per time step.
     group: HDF5 group holding the variable (e.g. 'Grid' for GPM IMERG).
     level: pressure level to select (e.g. 850 or 1 hPa for MERRA-2 M2IMNPASM)."""
-    import earthaccess, numpy as np, xarray as xr
+    import earthaccess
+    import numpy as np
+    import xarray as xr
     earthaccess.login()  # uses .netrc / env vars / prompt
     res = earthaccess.search_data(short_name=short_name, version=version,
                                   temporal=(f"{start}-01-01", f"{end}-12-31"),

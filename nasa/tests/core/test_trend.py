@@ -7,6 +7,7 @@ from trend_detective.core.trend import (
     area_weighted_mean,
     deseasonalize,
     mann_kendall,
+    ols_band,
     ols_trend,
 )
 
@@ -72,3 +73,74 @@ def test_area_weighting_downweights_poles():
     lats = np.array([0.0, 80.0])
     field = np.array([[1.0, 1.0], [10.0, 10.0]])
     assert area_weighted_mean(field, lats) < 5.5  # unweighted mean
+
+
+def test_band_golden_values_on_a_hand_worked_series():
+    # y = [0, 1, 0, 1, 0]: slope 0, intercept 0.4, SSR 1.2, n = n_eff = 5, Sxx = 10, mean t = 2.
+    # var(fit at t) = (1.2 / 3) / 5 + (1.2 / 3 / 10) (t - 2)^2, tcrit(0.975, 3 dof) = 3.18245.
+    y = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
+    fit, low, high = ols_band(y, np.array([2.0, 0.0, 4.0, 6.0]))
+    np.testing.assert_allclose(fit, 0.4, atol=1e-12)
+    np.testing.assert_allclose(
+        high - fit, [0.9001317, 1.5590739, 1.5590739, 2.7003952], rtol=1e-6
+    )
+    np.testing.assert_allclose(fit - low, high - fit, rtol=1e-12)  # symmetric about the line
+
+
+def test_band_opens_at_the_rate_of_the_slope_ci():
+    y = deseasonalize(synthetic(0.004, noise=0.5))
+    r = ols_trend(y)
+    mean_t = (y.size - 1) / 2
+    at = np.array([mean_t, 0.0, y.size - 1.0])
+    fit, low, high = ols_band(y, at)
+    half = (high - low) / 2
+    slope_half = (r.ci_high - r.ci_low) / 2
+    np.testing.assert_allclose(fit, r.slope * at + r.intercept, atol=1e-12)
+    for k in (1, 2):  # away from the mean the extra width is exactly the slope CI times distance
+        np.testing.assert_allclose(
+            half[k] ** 2, half[0] ** 2 + (slope_half * (at[k] - mean_t)) ** 2, rtol=1e-9
+        )
+    assert half[0] < half[1] and half[0] < half[2]  # narrowest at the middle of the record
+
+
+def test_band_is_wider_when_anomalies_are_autocorrelated():
+    rng = np.random.default_rng(7)
+    n = MONTHS
+    white = rng.normal(0, 1, n)
+    ar = np.zeros(n)
+    for k in range(1, n):
+        ar[k] = 0.8 * ar[k - 1] + rng.normal()
+    mid = np.array([(n - 1) / 2])
+    for series in (white, ar):
+        _, low, high = ols_band(series, mid)
+        sigma = np.std(series - np.polyval(np.polyfit(np.arange(n), series, 1), np.arange(n)))
+        naive_half = stats.t.ppf(0.975, n - 2) * sigma / np.sqrt(n)
+        if series is white:
+            assert (high - low)[0] / 2 < 1.5 * naive_half
+        else:
+            assert (high - low)[0] / 2 > 2.0 * naive_half  # n_eff is far below n
+
+
+def test_band_covers_the_true_line_about_95_percent_of_the_time():
+    rng = np.random.default_rng(2026)
+    n, hits, runs = 240, 0, 400
+    t = np.arange(n)
+    for _ in range(runs):
+        y = 0.01 * t + rng.normal(0, 1, n)
+        _, low, high = ols_band(y, np.array([n / 4]))
+        hits += low[0] <= 0.01 * (n / 4) <= high[0]
+    assert 0.90 <= hits / runs <= 0.99
+
+
+def test_band_ignores_missing_months_but_keeps_their_positions():
+    y = 0.02 * np.arange(60.0) + np.sin(np.arange(60.0))
+    y[10:14] = np.nan
+    fit, low, high = ols_band(y, np.array([0.0, 30.0, 59.0]))
+    r = ols_trend(y)
+    np.testing.assert_allclose(fit, r.slope * np.array([0.0, 30.0, 59.0]) + r.intercept)
+    assert np.all(low < fit) and np.all(fit < high)
+
+
+def test_flat_exact_line_has_a_zero_width_band():
+    fit, low, high = ols_band(2.0 + 0.5 * np.arange(10.0), np.array([0.0, 5.0, 9.0]))
+    np.testing.assert_allclose(high - low, 0.0, atol=1e-9)

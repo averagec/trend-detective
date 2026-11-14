@@ -4,6 +4,7 @@ const HOW_TO_READ = [
   "The dots are each month's difference from a normal year for that month.",
   "The bars are yearly averages of those differences.",
   "The line is the best straight-line fit through the monthly values.",
+  "The shaded band is the range where the true line probably lies (95% confidence). A wide band means the trend is uncertain.",
   "A trend is called significant only if the chance of seeing it by luck is under 5%.",
 ];
 const LIMITS = [
@@ -71,10 +72,13 @@ function chartSVG(data) {
 
   const trend = { intercept: data.statistics.ols_intercept, slope: data.statistics.ols_slope_per_month };
   const hasLine = finite(trend.intercept) && finite(trend.slope);
+  // 95% band from the server, one row per year. Drawn as given; nothing is computed here.
+  const band = (data.band || []).filter((b) => finite(b.low) && finite(b.high));
   const candidates = [0];
   series.forEach((s) => finite(s.anomaly) && candidates.push(s.anomaly));
   data.annual.forEach((a) => finite(a.mean_anomaly) && candidates.push(a.mean_anomaly));
   if (hasLine) candidates.push(trend.intercept, trend.intercept + trend.slope * (n - 1));
+  band.forEach((b) => candidates.push(b.low, b.high));
   let lo = Math.min(...candidates), hi = Math.max(...candidates);
   const pad = (hi - lo) * 0.08 || 1;
   lo -= pad;
@@ -98,6 +102,13 @@ function chartSVG(data) {
     const height = Math.abs(y(a.mean_anomaly) - y(0));
     const cls = a.mean_anomaly >= 0 ? "bar warm" : "bar cool";
     out += `<rect class="${cls}" x="${cx - barW / 2}" y="${top}" width="${barW}" height="${height}"><title>${a.year}: ${a.mean_anomaly.toFixed(2)} ${esc(data.unit)}</title></rect>`;
+  }
+  if (band.length > 1) {
+    // Same x as the yearly bars (month 6 of each year). Upper edge left to right, lower edge back.
+    const at = (b) => x((b.year - firstYear) * 12 + 6);
+    const upper = band.map((b) => `${at(b)},${y(b.high)}`);
+    const lower = band.slice().reverse().map((b) => `${at(b)},${y(b.low)}`);
+    out += `<path class="band" d="M${upper.join(" L")} L${lower.join(" L")} Z"><title>95% confidence band for the trend line</title></path>`;
   }
   series.forEach((s, i) => {
     if (finite(s.anomaly)) out += `<circle class="dot" cx="${x(i)}" cy="${y(s.anomaly)}" r="1.6"/>`;

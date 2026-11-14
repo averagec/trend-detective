@@ -12,11 +12,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from trend_detective.core.trend import deseasonalize, mann_kendall, ols_trend
+from trend_detective.core.trend import deseasonalize, mann_kendall, ols_band, ols_trend
 
 MONTHS_PER_DECADE = 120
 MIN_YEARS = 10  # science rule 2: show a warning under 10 years of monthly data
 MAX_MISSING_FRACTION = 0.10
+BAND_OFFSET = 6  # months after January: where each year's band is evaluated (the yearly bar)
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,9 @@ class Summary:
     sentence: str
     ols_intercept: float = float("nan")  # intercept of the OLS line on the anomalies
     ols_slope_per_month: float = float("nan")  # same slope as ols_per_decade / 120
+    # 95% band around the OLS line, one row per year of the series: (years after the first year,
+    # line value, lower, upper), in the unit of the anomalies. Empty when there is no trend.
+    ols_band_by_year: tuple[tuple[int, float, float, float], ...] = ()
 
 
 def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
@@ -71,6 +75,14 @@ def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
     anomalies = deseasonalize(y)  # science rule 1
     ols = ols_trend(anomalies)  # science rule 3
     mk = mann_kendall(anomalies)
+
+    # One point per year, only where it lies inside the record (no extrapolation).
+    year_offsets = np.arange((y.size - 1 - BAND_OFFSET) // 12 + 1)  # y.size >= 24 here
+    fit, low, high = ols_band(anomalies, year_offsets * 12 + BAND_OFFSET)
+    band = tuple(
+        (int(k), float(f), float(lo), float(hi))
+        for k, f, lo, hi in zip(year_offsets, fit, low, high, strict=True)
+    )
 
     per = MONTHS_PER_DECADE
     ols_per = ols.slope * per
@@ -109,4 +121,5 @@ def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
         sentence=sentence,
         ols_intercept=ols.intercept,
         ols_slope_per_month=ols.slope,
+        ols_band_by_year=band,
     )

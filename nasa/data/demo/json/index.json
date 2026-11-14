@@ -1,0 +1,74 @@
+[
+  {
+    "region": "east_asia_land",
+    "region_name": "Eastern China and Korea",
+    "variable": "precip",
+    "label": "Precipitation",
+    "unit": "mm day-1",
+    "path": "east_asia_land/precip.json",
+    "sentence": "Precipitation in Eastern China and Korea rose by 0.11 mm day-1 per decade (95% CI +0.05 to +0.16), statistically significant at 95%.",
+    "ols_per_decade": 0.10621925114115527,
+    "ols_significant": true,
+    "warnings": 0
+  },
+  {
+    "region": "east_asia_land",
+    "region_name": "Eastern China and Korea",
+    "variable": "t2m",
+    "label": "Mean 2 m air temperature",
+    "unit": "K",
+    "path": "east_asia_land/t2m.json",
+    "sentence": "Mean 2 m air temperature in Eastern China and Korea rose by 0.30 K per decade (95% CI +0.24 to +0.37), statistically significant at 95%.",
+    "ols_per_decade": 0.3018996707709278,
+    "ols_significant": true,
+    "warnings": 0
+  },
+  {
+    "region": "north_asia_siberia",
+    "region_name": "Southern Siberia and Mongolia",
+    "variable": "precip",
+    "label": "Precipitation",
+    "unit": "mm day-1",
+    "path": "north_asia_siberia/precip.json",
+    "sentence": "Precipitation in Southern Siberia and Mongolia rose by 0.03 mm day-1 per decade (95% CI +0.01 to +0.05), statistically significant at 95%.",
+    "ols_per_decade": 0.02796116693898523,
+    "ols_significant": true,
+    "warnings": 0
+  },
+  {
+    "region": "north_asia_siberia",
+    "region_name": "Southern Siberia and Mongolia",
+    "variable": "t2m",
+    "label": "Mean 2 m air temperature",
+    "unit": "K",
+    "path": "north_asia_siberia/t2m.json",
+    "sentence": "Mean 2 m air temperature in Southern Siberia and Mongolia rose by 0.20 K per decade (95% CI +0.05 to +0.34), statistically significant at 95%.",
+    "ols_per_decade": 0.19682490505098754,
+    "ols_significant": true,
+    "warnings": 0
+  },
+  {
+    "region": "se_asia_maritime",
+    "region_name": "Maritime Southeast Asia (Indonesia, Malaysia, Philippines)",
+    "variable": "precip",
+    "label": "Precipitation",
+    "unit": "mm day-1",
+    "path": "se_asia_maritime/precip.json",
+    "sentence": "Precipitation in Maritime Southeast Asia (Indonesia, Malaysia, Philippines) rose by 0.24 mm day-1 per decade (95% CI +0.10 to +0.38), statistically significant at 95%.",
+    "ols_per_decade": 0.2373391854910842,
+    "ols_significant": true,
+    "warnings": 0
+  },
+  {
+    "region": "se_asia_maritime",
+    "region_name": "Maritime Southeast Asia (Indonesia, Malaysia, Philippines)",
+    "variable": "t2m",
+    "label": "Mean 2 m air temperature",
+    "unit": "K",
+    "path": "se_asia_maritime/t2m.json",
+    "sentence": "Mean 2 m air temperature in Maritime Southeast Asia (Indonesia, Malaysia, Philippines) rose by 0.18 K per decade (95% CI +0.14 to +0.23), statistically significant at 95%.",
+    "ols_per_decade": 0.18308158410565667,
+    "ols_significant": true,
+    "warnings": 0
+  }
+]
