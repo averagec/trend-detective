@@ -50,3 +50,28 @@ so the demo never depends on a live API.
 - Size: whole files are about 108 GB for the full record (18,759 files; monthly files about 75 MB, daily statD about 1.7 MB). Harmony subsets to the Asia-Pacific box (lon 60–180, lat −50–60) and the chosen variables: estimated 3.5 GB (42,653 grid cells per variable, 4 bytes each).
 - Known quirks: every whole file holds about 100 variables, so we subset with Harmony (harmony-py, one job per collection and year). The direct GES DISC OPeNDAP path is not usable: goldsmr4 returns 410 and the data.gesdisc path returns 404 (checked without login). CMR page-number paging stops at 10,000 results, so discovery runs one year at a time. Variable names for the monthly and daily collections were not verified against the spec PDF (unreadable from the build sandbox); check on the first Harmony output file. Land and flux names confirmed only on the hourly EE catalog pages (EVAP, PRECTOT, EVLAND, TSURF).
 - Fetched by: `src/trend_detective/ingest/merra2_download.py` (`plan` = dry run, `download --confirm` = real run via Harmony) → cached at `data/raw/merra2/subset/<collection>/<year>/`
+- Cleaned output (committed): `src/trend_detective/process/merra2_clean.py` → `data/processed/merra2/monthly_regional.csv` (13,467 rows, 3 regions × 8 variables, columns `region,variable,period,value,unit,n_cells,n_valid,n_days`, 729 KB) and `qc_report.json` (1 KB). Periods 1980-01 to 2026-09 (T2MMAX to 2026-10). Cell counts per region: `east_asia_land` 1,155, `north_asia_siberia` 2,015, `se_asia_maritime` 3,034. Quirk: TSURF has 63% of cells masked (ocean cells), so `tsurf` is a land-only mean. Units after cleaning: K, Pa, g kg-1, kPa, mm day-1. Details: `docs/datasets.md`.
+
+### GLDAS Noah 2.1, monthly (witness for MERRA-2 soil and rain)
+- Provider / link: NASA GES DISC, short name `GLDAS_NOAH025_M`, version 2.1, CMR concept `C1342986036-GES_DISC` (https://cmr.earthdata.nasa.gov/search).
+- Variable(s), units: `SoilMoi0_10cm_inst`, `SoilMoi10_40cm_inst`, `SoilMoi40_100cm_inst`, `SoilMoi100_200cm_inst` (soil moisture, kg m-2), `Rainf_tavg` (rainfall rate, kg m-2 s-1).
+- Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`; Harmony subset to the Asia-Pacific box (lon 60–179, lat −50–60).
+- Resolution (time, space), time range: monthly, 0.25° (440 × 476 cells in the box), 2000-01 to 2026-07 (open-ended in CMR). 319 files on disk.
+- Known quirks: fill value is −9999 (not 1e15 as in MERRA-2). Not cleaned yet. Per-dataset size not recorded; all of `data/raw/` is about 7.3 GB (`docs/datasets.md`).
+- Fetched by: `src/trend_detective/ingest/witness_download.py` (group `gldas`) → cached at `data/raw/witness/`
+
+### GPCP monthly precipitation v3.3 (witness for MERRA-2 rain)
+- Provider / link: NASA GES DISC, short name `GPCPMON`, version 3.3, CMR concept `C3405935516-GES_DISC`.
+- Variable(s), units: `sat_gauge_precip` (combined satellite and gauge rainfall, mm day-1).
+- Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`; Harmony subset to the same box.
+- Resolution (time, space), time range: monthly, 0.5° (220 × 238 cells in the box), 1983-01 to 2025-12. 516 files on disk.
+- Known quirks: fill value is −99999. Do not use `gauge_precip`: it holds values below the fill value. The first plan assumed a 2.5° grid; the real grid is 0.5°. Not cleaned yet. Per-dataset size not recorded.
+- Fetched by: `src/trend_detective/ingest/witness_download.py` (group `gpcp`) → cached at `data/raw/witness/`
+
+### GRACE / GRACE-FO mascon, JPL RL06.3 V04 (witness for water storage)
+- Provider / link: JPL via PO.DAAC, short name `TELLUS_GRAC-GRFO_MASCON_GRID_RL06.3_V4`, CMR concept `C3195502222-POCLOUD`.
+- Variable(s), units: `lwe_thickness` (liquid water equivalent thickness anomaly, cm), `uncertainty` (cm).
+- Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`.
+- Resolution (time, space), time range: monthly, 0.5° grid (360 × 720, global), 2002-04 to 2026-09. One file, 39 MB.
+- Known quirks: Harmony returned the whole global file, so the box is cut later in cleaning. Fill value −99999. The true resolution is about 3°, so use large regions only. Not cleaned yet.
+- Fetched by: `src/trend_detective/ingest/witness_download.py` (group `grace`) → cached at `data/raw/witness/`
