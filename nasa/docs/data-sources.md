@@ -20,6 +20,9 @@ Most NASA Earthdata access needs a free Earthdata Login: store it as `EARTHDATA_
 ## Hackathon fallback
 Before the demo, cache every demo-case series to `data/demo/` (small CSVs, committed)
 so the demo never depends on a live API.
+`scripts/build_processed.py --region R --variable V` does this: it runs the ingest, clean and analyse
+steps once and copies the demo cases to `data/demo/` (`monthly_regional.csv`, `json/`, `cases.json`).
+Run the app on it with `python src/trend_detective/app/web.py --input data/demo/monthly_regional.csv`.
 
 ## Entry template
 ### <Dataset name>

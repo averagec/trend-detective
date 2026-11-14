@@ -1,0 +1,32 @@
+{
+  "note": "Demo cases for the offline demo. Made by scripts/build_processed.py; do not edit.",
+  "source": "data/processed/merra2/monthly_regional.csv",
+  "app_input": "data/demo/monthly_regional.csv",
+  "cases": [
+    {
+      "region": "east_asia_land",
+      "variable": "precip"
+    },
+    {
+      "region": "east_asia_land",
+      "variable": "t2m"
+    },
+    {
+      "region": "north_asia_siberia",
+      "variable": "precip"
+    },
+    {
+      "region": "north_asia_siberia",
+      "variable": "t2m"
+    },
+    {
+      "region": "se_asia_maritime",
+      "variable": "precip"
+    },
+    {
+      "region": "se_asia_maritime",
+      "variable": "t2m"
+    }
+  ],
+  "rows": 3366
+}
