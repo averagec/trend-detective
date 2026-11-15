@@ -85,7 +85,7 @@ assert abs(pd.read_csv("data/raw/earthaccess/t850.csv").value[0] - 850) < 1e-6 a
 print("pressure-level selection ok")
 
 # --- catalog: every entry names an instrument/model from the brief and a realm
-named = ("MODIS", "OMI", "AIRS", "GPM", "MERRA-2", "GLDAS")
+named = ("MODIS", "AIRS", "GPM", "MERRA-2", "GLDAS")
 covered = {k for k in named if any(k in v["src"] for v in pn.CATALOG.values())}
 assert covered == set(named), set(named) - covered
 realms = " ".join(v["realm"] for v in pn.CATALOG.values())

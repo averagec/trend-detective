@@ -174,9 +174,6 @@ CATALOG = {
     "strat_t5":      dict(how="ea", src="MERRA-2", realm="atmosphere 5 hPa", short_name="M2IMNPASM", version="5.12.4", var="T", level=5, bbox=[-180, -60, 180, 60], start=1980, end=2024, verified=False),
     "airs_t_check":  dict(how="ea", src="AIRS (AIRS-only V7)", realm="atmosphere levels", short_name="AIRS3STM", version="7.0", var="<list-vars>", bbox=[-180, -60, 180, 60], start=2002, end=2024, verified=False,
                           note="independent satellite check of the MERRA-2 levels"),
-    # --- atmospheric composition
-    "omi_no2":       dict(how="ea", src="OMI", realm="atmosphere column", short_name="OMNO2d", version="003", var="<list-vars>", bbox=[114, 30, 120, 40], start=2005, end=2024, verified=False,
-                          note="DAILY files (~7,000): slow; average to monthly; row anomaly from 2007"),
     # --- ocean
     "scs_sst":       dict(how="ea", src="MERRA-2 (SST boundary field)", realm="ocean", short_name="M2TMNXSLV", version="5.12.4", var="TS", bbox=SCS, start=1980, end=2024, verified=False,
                           note="surface skin temperature over open ocean; literature: +0.21 C/decade 1982-2022"),
