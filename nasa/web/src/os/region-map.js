@@ -48,7 +48,7 @@ const SSL_BINS = [30, 36, 42, 48];
 const BOX_KEY = "se_asia_maritime", BOX = [95, -10, 141, 10];
 const PAL = { s: ["#d8e6ee", "#9fd0e8", "#5aa6dd", "#2f6fc0", "#1c3d8c"], t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52], idn: [273, 78, 50, 28] };
-const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, tool: false, drawing: null, circ: null, cells: null };
+const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, tool: false, drawing: null, circ: null, cells: null, cityRes: {} };
 let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
@@ -446,23 +446,26 @@ function cityTip(e, i) {
   t.style.top = (e.clientY - box.top) / z + 16 + "px";
 }
 function pickCity(i, fly) {
-  const c = st.ssl.cities[i];
+  const c = st.ssl.cities[i], L = LAYERS[st.v];
   if (st.circ) {
     st.circ = null;
     circleDraw();
     placeFx();
   }
-  if (!LAYERS[st.v].real) {
-    st.v = LAYERS.findIndex((L) => L.real);
-    st.yr = null;
-  }
+  // The layer the user chose stays. Sea level has its own city card; every other layer reads the grid cells around the city.
   st.city = i;
   st.c = -1;
-  const k = cityState(c);
-  sfx(k === "inland" ? "err" : "select");
-  if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "Want a bigger picture? Press CIRCLE and drag over the sea around it."], "sig");
-  else if (k === "ns") talk([`${c.name}. The sea climbs fast here too.`, "But it swings so much from year to year that I can’t prove it yet. That’s a different answer from no."], "ns");
-  else talk(["Inland. The ocean data can’t speak for this one.", "I’m not inventing a number to fill the gap."], "inland");
+  st.bx = false;
+  if (L.real) {
+    const k = cityState(c);
+    sfx(k === "inland" ? "err" : "select");
+    if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "Want a bigger picture? Press CIRCLE and drag over the sea around it."], "sig");
+    else if (k === "ns") talk([`${c.name}. The sea climbs fast here too.`, "But it swings so much from year to year that I can’t prove it yet. That’s a different answer from no."], "ns");
+    else talk(["Inland. The ocean data can’t speak for this one.", "I’m not inventing a number to fill the gap."], "inland");
+  } else {
+    sfx("select");
+    talk([`${c.name}. Its number comes from the grid cells around it.`, "Each cell is about 55 km wide, so this is an area, not one spot."], "city-" + L.k);
+  }
   if (fly) flyTo(cityBox(c));
   paint(false);
 }
@@ -833,13 +836,13 @@ function toolbar() {
     if (LAYERS[st.v].box && !st.circ) talk(["This one is a single box over the whole region. Indonesia, Malaysia, the Philippines.", "One honest number for the box. Not city by city. The grid is too coarse for that."], "box");
     st.yr = null;
     st.bx = false;
-    if (!LAYERS[st.v].real) st.city = -1;
     st.c = -1;
     sfx("select");
     paint(true);
     if (st.circ && st.circ.r) circleResult();
   });
-  W.querySelector("[data-lock]").onclick = () => sfx("err");
+  const lk = W.querySelector("[data-lock]");
+  if (lk) lk.onclick = () => sfx("err");
   W.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => {
     st.f = +b.dataset.f;
     sfx("select");
@@ -1035,6 +1038,10 @@ function card() {
   if (L.real) {
     box.hidden = st.city < 0;
     if (st.city >= 0) cityCard(box);
+    return;
+  }
+  if (st.city >= 0 && st.ssl) {
+    cityLayerCard(box);
     return;
   }
   if (L.box) {
@@ -1575,6 +1582,24 @@ async function circleResult() {
     card();
     return;
   }
+  const cities = st.ssl ? st.ssl.cities.map((ct, i) => [ct, i]).filter(([ct]) => kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) : [];
+  const tt = $("#rm-toast");
+  if (tt) tt.classList.remove("on");
+  c.res = areaResult(J, D, cities, L.k);
+  sfx("chime");
+  st.city = -1;
+  st.bx = false;
+  circleDraw();
+  card();
+  placeFx();
+  if (!st.seen["circle" + L.k]) {
+    st.seen["circle" + L.k] = 1;
+    const word = up >= down ? L.upV : L.downV;
+    say(["Switch the layer and the same circle tells a different story."]);
+  }
+}
+// The server's verdicts for one area, turned into the numbers the cards show. Nothing is judged here.
+function areaResult(J, D, cities, layer) {
   const cells = J.cells, up = J.counts.rise, down = J.counts.fall, unclear = J.counts.unclear;
   const sl = cells.map((q) => q.slope_per_decade).filter((v) => v != null).sort((a, b) => a - b), med = sl[Math.floor(sl.length / 2)];
   const years = D.yearly_anomaly[cells[0].k].length, yrs = [];
@@ -1589,24 +1614,66 @@ async function circleResult() {
     });
     if (sw) yrs.push([D.period[0] + y + 0.5, sv / sw]);
   }
-  const cities = st.ssl ? st.ssl.cities.map((ct, i) => [ct, i]).filter(([ct]) => kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) : [];
-  const tt = $("#rm-toast");
-  if (tt) tt.classList.remove("on");
-  c.res = { layer: L.k, n: J.cells_inside, up, down, unclear, flat: J.cells_inside - up - down, min: sl[0], max: sl[sl.length - 1], med, yrs, cities, note: J.note };
-  sfx("chime");
-  st.city = -1;
-  st.bx = false;
-  circleDraw();
-  card();
-  placeFx();
-  if (!st.seen["circle" + L.k]) {
-    st.seen["circle" + L.k] = 1;
-    const word = up >= down ? L.upV : L.downV;
-    say(["Switch the layer and the same circle tells a different story."]);
+  return { layer, n: J.cells_inside, up, down, unclear, flat: J.cells_inside - up - down, min: sl[0], max: sl[sl.length - 1], med, yrs, cities, note: J.note };
+}
+// A city on a layer other than sea level: the trend of the grid cells around it, judged the way a CIRCLE is.
+const CITY_RADII = [75, 150, 250];
+function cityLayerCard(box) {
+  const c = st.ssl.cities[st.city], L = LAYERS[st.v], D = cellLayer(), key = `${st.city}|${L.k}`;
+  const selg = W.querySelector("#rm-selg"), [px, py] = P(c.lon, c.lat);
+  const head = (sub) => `<div class="hd"><h3>${c.name.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div><div class="sub">${sub}</div>`;
+  box.hidden = false;
+  el("circle", { cx: px, cy: py, r: (0.9 * Math.min(1, (st.vb || VB.sea)[2] / VB.sea[2])).toFixed(3), class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
+  if (!D) {
+    box.innerHTML = head(L.name.toUpperCase()) + `<div class="rm-note">This build has no grid cells for ${L.noun} yet, so ${c.name} has no number on this layer. Pick another layer.</div>`;
+    box.querySelector("#rm-close").onclick = closeCard;
+    return;
   }
+  if (!st.cityRes[key]) loadCityArea(st.city, c, L, D);
+  const g = st.cityRes[key];
+  if (g.pending) box.innerHTML = head(L.name.toUpperCase() + " · READING THE GRID CELLS") + `<div class="rm-note">Reading the grid cells around ${c.name}…</div>`;
+  else if (g.failed) box.innerHTML = head(L.name.toUpperCase()) + `<div class="rm-note" style="color:var(--red)">${g.error}</div>`;
+  else {
+    areaCard(box, { kind: "city", name: c.name, lat: c.lat, lon: c.lon, r: g.R, res: g.res });
+    return;
+  }
+  box.querySelector("#rm-close").onclick = closeCard;
+}
+// Asks the same server endpoint as a CIRCLE, centred on the city. 75 km first; wider only when too few cells have data.
+async function loadCityArea(i, c, L, D) {
+  const key = `${i}|${L.k}`;
+  st.cityRes[key] = { pending: true };
+  let out = null;
+  for (const R of CITY_RADII) {
+    let J = null;
+    try {
+      const r = await fetch("api/cell-circle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ layer: L.k, lat: c.lat, lon: c.lon, radius_km: R }),
+      });
+      J = await r.json().catch(() => null);
+      if (r.ok) {
+        out = { R, res: areaResult(J, D, [], L.k) };
+        break;
+      }
+      out = { failed: true, error: (J && J.error) || `Request failed (${r.status})` };
+    } catch (e) {
+      out = { failed: true, error: "Cannot reach the analysis server. Is it running?" };
+      break;
+    }
+    if (!/at least/.test(out.error)) break;
+  }
+  if (out.failed && /at least/.test(out.error)) out.error = `Too few grid cells with data within ${CITY_RADII[CITY_RADII.length - 1]} km of ${c.name} for ${L.noun}.`;
+  st.cityRes[key] = out;
+  if (st.city === i && LAYERS[st.v].k === L.k) card();
 }
 function circleCard(box) {
-  const c = st.circ, r = c.res, L = LAYERS[st.v], D = cellLayer(), dp = L.real ? 0 : L.dp, ud = L.real ? "mm/dec" : L.ud;
+  areaCard(box, st.circ);
+}
+// One card for an area read from the grid cells: a drawn CIRCLE, or a city's surroundings (kind "city", with a name).
+function areaCard(box, c) {
+  const r = c.res, L = LAYERS[st.v], D = cellLayer(), dp = L.real ? 0 : L.dp, ud = L.real ? "mm/dec" : L.ud, city = c.kind === "city";
   const f = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(dp), ll = (v, a, b) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? a : b}`;
   const upW = L.upV, downW = L.downV;
   const Wd = 250, Hd = 70, vals = r.yrs, lo = Math.min(...vals.map((q) => q[1])), hi = Math.max(...vals.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
@@ -1619,9 +1686,9 @@ function circleCard(box) {
     return `<button class="rm-cc" data-ci="${i}"><span>${ct.name}</span><small>${v}</small></button>`;
   }).join("") : '<div class="rm-note" style="margin:2px 0">No study city inside this circle.</div>';
   box.hidden = false;
-  box.innerHTML = `<div class="hd"><h3>CIRCLE · ${Math.round(c.r)} KM</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
-    <div class="sub">${L.name.toUpperCase()} · ${D.period[0]}-${D.period[1]} · CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")}</div>
-    <div class="big"><b>${main}</b><span>of ${r.n} grid cells ${mainW} clearly</span></div>
+  box.innerHTML = `<div class="hd"><h3>${city ? `${c.name.toUpperCase()} · ` : "CIRCLE · "}${Math.round(c.r)} KM</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
+    <div class="sub">${L.name.toUpperCase()} · ${D.period[0]}-${D.period[1]} · ${city ? "AROUND THE CITY" : `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")}`}</div>
+    ${city ? `<div class="big"><b>${f(r.med)}</b><span>${ud} · middle grid cell</span></div>` : `<div class="big"><b>${main}</b><span>of ${r.n} grid cells ${mainW} clearly</span></div>`}
     <span class="rm-verd" style="background:${main > r.n / 2 ? "var(--grn)" : "var(--mus)"}">${verdict}</span>
     <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart"><path class="ln" d="${line}"/></svg>
     <div class="zoom-hint">${D.period[0]} · AVERAGE OF THE CELLS · CLICK TO ENLARGE · ${D.period[1]}</div>
@@ -1632,11 +1699,11 @@ function circleCard(box) {
       ${r.unclear ? `<tr><td>Unclear (one test only)</td><td>${r.unclear}</td></tr>` : ""}
     </table>
     ${r.up && r.down ? '<div class="rm-note" style="color:var(--red)">Cells disagree: some go up and some go down clearly. Look at them separately before trusting one number.</div>' : ""}
-    <div class="rm-sec">CITIES INSIDE (${r.cities.length})</div>
-    <div class="rm-ccs">${cityRows}</div>
+    ${city ? `<div class="rm-note">${c.name} has no grid cell of its own. This is the set of ${r.n} cells whose centre lies within ${Math.round(c.r)} km of it.${c.r > CITY_RADII[0] ? " The area is wider than 75 km because fewer cells had data closer in." : ""}</div>` : `<div class="rm-sec">CITIES INSIDE (${r.cities.length})</div>
+    <div class="rm-ccs">${cityRows}</div>`}
     <div class="rm-note">${r.note}</div>
     <div class="rm-note">NASA DATA · ${D.dataset}</div>
-    <button class="obtn" id="rm-redraw">DRAW ANOTHER CIRCLE ▸</button>`;
+    <button class="obtn" id="rm-redraw">${city ? "DRAW A CIRCLE HERE" : "DRAW ANOTHER CIRCLE"} ▸</button>`;
   box.querySelector("#rm-close").onclick = closeCard;
   box.querySelector("#rm-redraw").onclick = () => circleTool(true);
   box.querySelectorAll(".rm-cc").forEach((b) => b.onclick = () => {
@@ -1647,8 +1714,8 @@ function circleCard(box) {
   const zs = box.querySelector("#rm-zoom"), open1 = () => {
     sfx("select");
     openChart({
-      title: `CIRCLE · ${Math.round(c.r)} KM · ${L.name.toUpperCase()}`,
-      sub: `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · AVERAGE OF ${r.n} GRID CELLS · YEARLY, SEASONS REMOVED`,
+      title: `${city ? c.name.toUpperCase() : "CIRCLE"} · ${Math.round(c.r)} KM · ${L.name.toUpperCase()}`,
+      sub: `${city ? "AROUND THE CITY" : `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")}`} · AVERAGE OF ${r.n} GRID CELLS · YEARLY, SEASONS REMOVED`,
       unit: `${D.unit} vs normal`,
       series: vals,
       seriesLabel: `Average of the ${r.n} grid cells inside the circle`,
