@@ -3,6 +3,7 @@ import { say, closeSay } from "../ui/dialogue.js";
 import { analysis } from "../stats/trend-analysis.js";
 import { regionMap } from "./region-map.js";
 import { leaveDesk } from "../scene/office.js";
+import { toLocal } from "../ui/scale.js";
 const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const CASES = [
@@ -51,8 +52,8 @@ function drag(w) {
     w.style.right = "auto";
     w.style.bottom = "auto";
     const mv = (ev) => {
-      w.style.left = Math.max(0, ev.clientX - pr.left - ox) + "px";
-      w.style.top = Math.max(0, ev.clientY - pr.top - oy) + "px";
+      w.style.left = Math.max(0, toLocal(ev.clientX - pr.left - ox)) + "px";
+      w.style.top = Math.max(0, toLocal(ev.clientY - pr.top - oy)) + "px";
     };
     const up = () => {
       removeEventListener("pointermove", mv);
@@ -199,7 +200,8 @@ function yearPick(btn, from, to, sel, onPick) {
   g.dataset.for = btn.id;
   for (let y = from; y <= to; y++) g.innerHTML += `<button data-y="${y}" class="${y === sel ? "on" : ""}">${y}</button>`;
   host.appendChild(g);
-  const hb = host.getBoundingClientRect(), bb = btn.getBoundingClientRect();
+  const R = (r) => ({ left: toLocal(r.left), top: toLocal(r.top), bottom: toLocal(r.bottom) });
+  const hb = R(host.getBoundingClientRect()), bb = R(btn.getBoundingClientRect());
   const below = hb.bottom - bb.bottom, above = bb.top - hb.top, h = Math.min(g.offsetHeight, Math.max(below, above) - 10);
   g.style.maxHeight = h + "px";
   g.style.left = Math.max(4, Math.min(bb.left - hb.left + host.scrollLeft, host.clientWidth - g.offsetWidth - 4)) + "px";
@@ -514,13 +516,13 @@ async function open() {
   $("#f-user").querySelector(".car").remove();
   await typeField($("#f-pass"), "xxxxxxxx", true);
   $("#f-pass").querySelector(".car").remove();
-  const cur = $("#cur"), crt = $(".crt").getBoundingClientRect();
+  const cur = $("#cur"), cr = $(".crt").getBoundingClientRect(), crt = { left: toLocal(cr.left), top: toLocal(cr.top), width: toLocal(cr.width), height: toLocal(cr.height) };
   cur.style.transition = "none";
   cur.style.left = crt.width * 0.86 + "px";
   cur.style.top = crt.height * 0.86 + "px";
   cur.style.display = "block";
   await wait(60);
-  const br = btn.getBoundingClientRect();
+  const bR = btn.getBoundingClientRect(), br = { left: toLocal(bR.left), top: toLocal(bR.top), width: toLocal(bR.width), height: toLocal(bR.height) };
   cur.style.transition = "";
   cur.style.left = br.left - crt.left + br.width * 0.55 + "px";
   cur.style.top = br.top - crt.top + br.height * 0.35 + "px";

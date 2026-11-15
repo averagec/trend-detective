@@ -3,6 +3,7 @@ import { say } from "../ui/dialogue.js";
 import { analysis } from "../stats/trend-analysis.js";
 import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
+import { uiScale } from "../ui/scale.js";
 const NAMES = ["Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam"];
 const LAB = {
   Brunei: [114.6, 5.9],
@@ -21,6 +22,7 @@ const LABPOS = { Brunei: [115.2, 6.4], Indonesia: [113.2, -0.4], Singapore: [104
 const LAYERS = [
   {
     k: "t2m",
+    short: "TEMP",
     name: "Air temperature",
     src: "MERRA-2 · NASA POWER",
     unit: "°C",
@@ -35,6 +37,7 @@ const LAYERS = [
   },
   {
     k: "precip",
+    short: "RAIN",
     name: "Rainfall",
     src: "MERRA-2 · NASA POWER",
     unit: "mm/mo",
@@ -49,6 +52,7 @@ const LAYERS = [
   },
   {
     k: "tws",
+    short: "WATER",
     name: "Water storage",
     src: "GRACE / GRACE-FO",
     unit: "cm",
@@ -65,6 +69,7 @@ const LAYERS = [
   },
   {
     k: "sst",
+    short: "SEA",
     name: "Sea surface temp.",
     src: "MUR SST · PO.DAAC",
     unit: "°C",
@@ -81,10 +86,9 @@ const LAYERS = [
   { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "CASE 002" },
   { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "CASE 003" }
 ];
-const WINS = [["FULL", 0], ["20 Y", 20], ["10 Y", 10]];
 const PAL = { t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52] };
-const st = { v: 0, w: 0, yr: null, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1 };
+const st = { v: 0, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1 };
 let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
@@ -161,7 +165,7 @@ function compute() {
   if (st.yr) {
     y0 = Math.max(lo, Math.min(st.yr[0], hi0 - 9));
     hi = Math.min(hi0, Math.max(st.yr[1], y0 + 9));
-  } else if (WINS[st.w][1]) y0 = Math.max(lo, hi0 - WINS[st.w][1] + 1);
+  }
   const rows = NAMES.map((n, ci) => {
     if (L.na && L.na[n]) return { n, na: L.na[n] };
     const mo = monthly(li, ci), an = annual(mo), xs = [], ys = [];
@@ -287,9 +291,7 @@ function paint(sweep) {
   clearTimeout(paint.t);
   paint.t = setTimeout(placeFx, sweep ? 650 : 0);
   const fmt = (x) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(L.sd < 1 ? 2 : 1);
-  $("#rm-leg").innerHTML = `<div><div>TREND, ${L.ud}</div><div class="rm-bins">${PAL[L.pal].map((c, i) => `<span data-b="${i}" style="background:${c}" title="${["strong fall", "fall", "flat", "rise", "strong rise"][i]}"></span>`).join("")}</div>
-    <div class="rm-tk"><span>${fmt(-st.mxAbs)}</span><span>0</span><span>${fmt(st.mxAbs)}</span></div></div>
-    <div><span class="rm-sw" style="background:${GREY}"></span>no clear trend<br><span class="rm-sw" style="background:repeating-linear-gradient(45deg,#c9c2b2 0 3px,#8b93ad 3px 5px)"></span>no data<br><span class="rm-sw" style="background:repeating-linear-gradient(45deg,#16204a 0 3px,#24326a 3px 5px)"></span>locked region</div>`;
+  $("#rm-leg").innerHTML = `<span>${fmt(-st.mxAbs)}</span><span class="rm-bins">${PAL[L.pal].map((c, i) => `<span data-b="${i}" style="background:${c}" title="${["strong fall", "fall", "flat", "rise", "strong rise"][i]}"></span>`).join("")}</span><span>${fmt(st.mxAbs)} ${L.ud}</span><i class="rm-sw" style="background:${GREY}"></i>no trend<i class="rm-sw" style="background:repeating-linear-gradient(45deg,#c9c2b2 0 3px,#8b93ad 3px 5px)"></i>no data`;
   W.querySelectorAll(".rm-bins span").forEach((b) => {
     b.onmouseenter = () => {
       st.legend = +b.dataset.b;
@@ -302,8 +304,8 @@ function paint(sweep) {
       placeFx();
     };
   });
-  side();
-  preview();
+  toolbar();
+  card();
 }
 const FXTXT = { rain: () => "Heavier rain", storm: () => "Stronger storms", drought: (L) => L.k === "t2m" ? "Heat, drought" : "Drought" };
 function fxOf(r) {
@@ -323,9 +325,10 @@ function placeFx() {
     cv.style.display = "none";
     return;
   }
-  const svg = $("#rm-svg"), box = $("#rm-mapc").getBoundingClientRect(), ctm = svg.getScreenCTM();
-  if (!ctm || !box.width) return;
-  const cell = Math.max(3, Math.min(6, Math.round(ctm.a * 0.3))), GW = Math.ceil(box.width / cell), GH = Math.ceil(box.height / cell);
+  const svg = $("#rm-svg"), z = uiScale, rb = $("#rm-mapc").getBoundingClientRect(), sc = svg.getScreenCTM();
+  if (!sc || !rb.width) return;
+  const box = { left: rb.left / z, top: rb.top / z, width: rb.width / z, height: rb.height / z }, ctm = { a: sc.a / z, e: sc.e / z, f: sc.f / z };
+  const cell = 3, GW = Math.ceil(box.width / cell), GH = Math.ceil(box.height / cell);
   cv.width = GW;
   cv.height = GH;
   Object.assign(cv.style, { display: "block", width: GW * cell + "px", height: GH * cell + "px" });
@@ -382,94 +385,110 @@ function fades() {
 }
 function hud() {
   const rows = st.rows, L = LAYERS[st.v], det = rows.filter((r) => r.det).length, sus = rows.filter((r) => r.sus).length, nn = rows.filter((r) => !r.na).length;
-  $("#rm-hud").innerHTML = `${st.view === "world" ? "EARTH" : "SE ASIA"} · ${L.name.toUpperCase()}<br><b>${det}</b> OF ${nn} WITH A CLEAR TREND${sus ? ` · <span style="color:var(--red)">${sus} USE CAUTION</span>` : ""} · ${st.span[0]}-${st.span[1]}`;
+  $("#rm-hud").innerHTML = `${L.name.toUpperCase()} · <b>${det} of ${nn}</b> clear${sus ? ` · <span class="c">${sus} caution</span>` : ""}`;
 }
-function side() {
-  const [lo, hi] = span(st.v), yrs = (a, b) => {
-    let o = "";
-    for (let y = a; y <= b; y++) {
-      const cur = st.span[st.pick], bad = st.pick === 0 ? y > st.span[1] - 9 : y < st.span[0] + 9;
-      o += `<button data-yy="${y}" class="${y === cur ? "on" : ""}"${bad ? " disabled" : ""}>${y}</button>`;
-    }
-    return o;
-  };
-  $("#rm-side").innerHTML = `<h4>LAYER</h4>` + LAYERS.map((L, i) => `<div class="rm-l${i === st.v ? " on" : ""}${L.lock ? " lock" : ""}" data-l="${i}">
-      <i style="background:${L.lock ? "repeating-linear-gradient(45deg,#16204a 0 3px,#24326a 3px 5px)" : PAL[L.pal][4]}"></i>
-      <span>${L.name}${L.lock ? " <small>LOCKED</small>" : `<br><small>${L.src}</small>`}</span></div>`).join("") + `<h4>YEARS</h4><div class="rm-w">${WINS.map((w, i) => `<button data-w="${i}" class="${!st.yr && i === st.w ? "on" : ""}">${w[0]}</button>`).join("")}</div>
-    <div class="rm-yr"><button class="rm-yb${st.pick === 0 ? " open" : ""}" data-y="0" aria-label="From year">${st.span[0]}<span>▾</span></button><span>to</span><button class="rm-yb${st.pick === 1 ? " open" : ""}" data-y="1" aria-label="To year">${st.span[1]}<span>▾</span></button></div>
-    ${st.pick != null ? `<div class="rm-grid">${yrs(lo, hi)}</div>` : ""}
-    <h4>SHOW</h4><div class="rm-w rm-f">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "on" : ""}">${t}</button>`).join("")}</div>
-    <h4>WEATHER</h4><div class="rm-w"><button data-fx="1" class="${st.fx ? "on" : ""}">ON</button><button data-fx="0" class="${st.fx ? "" : "on"}">OFF</button></div>`;
-  const grid = W.querySelector(".rm-grid");
-  if (grid) {
-    const row = W.querySelector(".rm-yr");
-    grid.style.top = Math.max(4, row.offsetTop - grid.offsetHeight - 6) + "px";
-    const on = grid.querySelector(".on");
-    if (on) on.scrollIntoView({ block: "nearest" });
-  }
-  W.querySelectorAll(".rm-yb").forEach((b) => b.onclick = () => {
-    st.pick = st.pick === +b.dataset.y ? null : +b.dataset.y;
-    sfx("select");
-    side();
-  });
-  W.querySelectorAll(".rm-grid button").forEach((b) => b.onclick = () => {
-    const y = +b.dataset.yy;
-    st.yr = st.pick === 0 ? [y, st.span[1]] : [st.span[0], y];
-    st.pick = null;
+function toolbar() {
+  const [lo, hi] = span(st.v), locked = LAYERS.filter((L) => L.lock);
+  $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button></div>
+    <div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>
+    <span class="rm-yrs" id="rm-yrs"></span>
+    <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
+    <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">WEATHER ${st.fx ? "ON" : "OFF"}</button>`;
+  W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
+    st.v = +b.dataset.l;
+    st.yr = null;
     sfx("select");
     paint(true);
   });
+  W.querySelector("[data-lock]").onclick = () => sfx("err");
   W.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => {
     st.f = +b.dataset.f;
     sfx("select");
-    W.querySelectorAll("[data-f]").forEach((x) => x.classList.toggle("on", x === b));
+    W.querySelectorAll("[data-f]").forEach((x) => x.classList.toggle("ink", x === b));
     fades();
     placeFx();
   });
-  W.querySelectorAll("[data-fx]").forEach((b) => b.onclick = () => {
-    st.fx = b.dataset.fx === "1";
+  W.querySelector("[data-fx]").onclick = (e) => {
+    st.fx = !st.fx;
     sfx("select");
-    W.querySelectorAll("[data-fx]").forEach((x) => x.classList.toggle("on", x === b));
+    e.currentTarget.classList.toggle("on", st.fx);
+    e.currentTarget.textContent = `WEATHER ${st.fx ? "ON" : "OFF"}`;
     placeFx();
-  });
-  W.querySelectorAll(".rm-l").forEach((d) => d.onclick = () => {
-    const L = LAYERS[+d.dataset.l];
-    if (L.lock) {
-      sfx("err");
-      return;
-    }
-    st.v = +d.dataset.l;
-    st.yr = null;
-    st.pick = null;
-    sfx("select");
-    paint(true);
-  });
-  W.querySelectorAll("[data-w]").forEach((b) => b.onclick = () => {
-    st.w = +b.dataset.w;
-    st.yr = null;
-    st.pick = null;
-    sfx("select");
-    paint(true);
-  });
+  };
+  bindRange(lo, hi);
 }
-function preview() {
+function bindRange(lo, hi) {
+  const box = $("#rm-range"), hs = box.querySelectorAll(".hd"), fl = box.querySelector(".fl"), lab = $("#rm-yrs");
+  const val = st.span.slice(), MIN = 9;
+  const pct = (y) => 7 + (hi > lo ? (y - lo) / (hi - lo) : 0) * (box.clientWidth - 14);
+  const draw = () => {
+    hs[0].style.left = pct(val[0]) + "px";
+    hs[1].style.left = pct(val[1]) + "px";
+    fl.style.left = pct(val[0]) + "px";
+    fl.style.width = pct(val[1]) - pct(val[0]) + "px";
+    lab.textContent = `${val[0]}-${val[1]}`;
+    hs[0].setAttribute("aria-valuetext", val[0]);
+    hs[1].setAttribute("aria-valuetext", val[1]);
+  };
+  const set = (h, y) => {
+    y = Math.round(Math.max(lo, Math.min(hi, y)));
+    if (h === 0) val[0] = Math.min(y, val[1] - MIN);
+    else val[1] = Math.max(y, val[0] + MIN);
+    val[0] = Math.max(lo, val[0]);
+    val[1] = Math.min(hi, val[1]);
+    draw();
+  };
+  const commit = () => {
+    if (val[0] === st.span[0] && val[1] === st.span[1]) return;
+    st.yr = val.slice();
+    sfx("select");
+    paint(true);
+  };
+  const yearAt = (e) => {
+    const r = box.getBoundingClientRect();
+    return lo + (e.clientX - r.left - 7 * uiScale) / Math.max(1, r.width - 14 * uiScale) * (hi - lo);
+  };
+  let drag = -1;
+  box.onpointerdown = (e) => {
+    const y = yearAt(e);
+    drag = e.target.dataset.h != null ? +e.target.dataset.h : Math.abs(y - val[0]) < Math.abs(y - val[1]) ? 0 : 1;
+    box.setPointerCapture(e.pointerId);
+    set(drag, y);
+  };
+  box.onpointermove = (e) => {
+    if (drag >= 0) set(drag, yearAt(e));
+  };
+  box.onpointerup = () => {
+    if (drag < 0) return;
+    drag = -1;
+    commit();
+  };
+  hs.forEach((h, i) => h.onkeydown = (e) => {
+    const d = e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    set(i, val[i] + d);
+    commit();
+    W.querySelectorAll(".rm-range .hd")[i].focus();
+  });
+  draw();
+}
+function card() {
   const box = $("#rm-pv"), L = LAYERS[st.v];
   W.querySelector("#rm-selg").innerHTML = "";
-  if (st.c < 0) {
-    box.innerHTML = `<h3>SELECT A COUNTRY</h3>
-      <ul class="rm-empty" style="padding-left:18px;margin:10px 0 0"><li>Colour shows the trend per decade.</li><li>Grey means no clear trend.</li><li>Hover the legend to highlight one range.</li></ul>`;
-    return;
-  }
+  box.hidden = st.c < 0;
+  if (st.c < 0) return;
   const r = st.rows[st.c];
   const selg = W.querySelector("#rm-selg");
   el("path", { d: st.map.sea[r.n], class: "rm-sel", "vector-effect": "non-scaling-stroke" }, selg);
   const [px, py] = P(...LAB[r.n]);
   el("circle", { cx: px, cy: py, r: 1.4, class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
   if (r.na) {
-    box.innerHTML = `<h3>${r.n.toUpperCase()}</h3><div class="dim">${L.name}</div><div style="margin-top:14px;font-size:22px">${r.na}</div>`;
+    box.innerHTML = `<div class="hd"><h3>${r.n.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div><div class="sub">${L.name.toUpperCase()}</div><div style="margin-top:12px;font-size:20px">${r.na}</div>`;
+    box.querySelector("#rm-close").onclick = closeCard;
     return;
   }
-  const Wd = 268, Hd = 112, lo = Math.min(...r.ys), hi = Math.max(...r.ys), pad = (hi - lo) * 0.15 || 1;
+  const Wd = 250, Hd = 70, lo = Math.min(...r.ys), hi = Math.max(...r.ys), pad = (hi - lo) * 0.15 || 1;
   const X = (x) => 8 + (x - r.y0) / Math.max(1, r.y1 - r.y0) * (Wd - 16), Y = (y) => Hd - 8 - (y - lo + pad) / (hi - lo + 2 * pad) * (Hd - 16);
   let line = "";
   r.xs.forEach((x, i) => {
@@ -478,26 +497,34 @@ function preview() {
   const gap = L.gap && r.y0 <= L.gap[0] ? `<rect x="${X(L.gap[0] - 0.5)}" y="2" width="${X(L.gap[1] + 0.5) - X(L.gap[0] - 0.5)}" height="${Hd - 4}" fill="#d94a36" fill-opacity=".28"/>` : "";
   const dp = L.sd < 1 ? 2 : 1, f = (x) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(dp);
   const need = Math.ceil(r.nstar), det = r.det, sus = r.sus;
-  box.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3>${r.n.toUpperCase()}</h3>
-      <span class="rm-badge" style="background:${r.real ? "var(--grn)" : "var(--mus)"}">${r.real ? "NASA DATA" : "SAMPLE DATA"}</span></div>
-    <div class="dim" style="font-size:17px">${L.name} · ${r.y0}-${r.y1} · annual means</div>
+  const verdict = det ? "TREND DETECTED" : sus ? "USE CAUTION" : "NO CLEAR TREND";
+  const note = sus ? "Trend found, but the 2017-2018 satellite gap is inside this period." : det ? "Clear trend over this period." : need > r.N ? `No clear trend yet. About ${need - r.N} more years of data needed.` : "No clear trend once all 11 countries are compared.";
+  box.innerHTML = `<div class="hd"><h3>${r.n.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
+    <div class="sub">${L.name.toUpperCase()} · ${r.y0}-${r.y1}${r.real ? "" : " · SAMPLE DATA"}</div>
+    <div class="big"><b id="rm-count">${f(0)}</b><span>${L.ud.replace("/dec", " / decade")}</span></div>
+    <span class="rm-verd" style="background:${det ? "var(--grn)" : sus ? "var(--red)" : "var(--mus)"};color:${sus ? "#fff" : "var(--ink)"}">${verdict}</span>
     <svg class="rm-spark" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none">
-      ${[0.25, 0.5, 0.75].map((k) => `<path d="M6 ${(Hd * k).toFixed(0)}H${Wd - 6}" stroke="#1a2f6e" stroke-dasharray="2 2"/>`).join("")}${gap}
+      ${[0.33, 0.66].map((q) => `<path d="M4 ${(Hd * q).toFixed(0)}H${Wd - 4}" stroke="#1a2f6e" stroke-dasharray="2 2"/>`).join("")}${gap}
       <path class="ln" d="${line}"/>
-      <path class="tr" d="M${X(r.xs[0])} ${Y(r.a + r.b * r.xs[0])}L${X(r.xs[r.N - 1])} ${Y(r.a + r.b * r.xs[r.N - 1])}"/>
-      <text x="6" y="13" font-size="13" fill="#7fa8e8" font-family="VT323">${(hi + pad).toFixed(dp)} ${L.unit}</text>
-      <text x="6" y="${Hd - 4}" font-size="13" fill="#7fa8e8" font-family="VT323">${(lo - pad).toFixed(dp)}</text></svg>
+      <path class="tr" d="M${X(r.xs[0])} ${Y(r.a + r.b * r.xs[0])}L${X(r.xs[r.N - 1])} ${Y(r.a + r.b * r.xs[r.N - 1])}"/></svg>
     <table class="rm-tab">
-      <tr><td>Trend</td><td><span id="rm-count">${f(0)}</span> ${L.ud}</td></tr>
       <tr><td>95% range</td><td>${f(r.b10 - 1.96 * r.se10)} .. ${f(r.b10 + 1.96 * r.se10)}</td></tr>
-      <tr><td>Autocorr.</td><td>${r.r1.toFixed(2)}</td></tr>
-      <tr><td>n_eff / n</td><td>${r.neff.toFixed(1)} / ${r.N}</td></tr>
-      <tr><td>p-value</td><td>${r.p < 1e-3 ? "<.001" : r.p.toFixed(3)} / ${r.padj < 1e-3 ? "<.001" : r.padj.toFixed(3)}</td></tr>
       ${FXTXT[fxOf(r)] ? `<tr><td>Linked risk</td><td>${FXTXT[fxOf(r)](L)}</td></tr>` : ""}
+    </table>
+    <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
+    ${st.more ? `<table class="rm-tab">
+      <tr><td>Autocorr. r1</td><td>${r.r1.toFixed(2)}</td></tr>
+      <tr><td>n_eff / n</td><td>${r.neff.toFixed(1)} / ${r.N}</td></tr>
+      <tr><td>p / adj. p</td><td>${r.p < 1e-3 ? "<.001" : r.p.toFixed(3)} / ${r.padj < 1e-3 ? "<.001" : r.padj.toFixed(3)}</td></tr>
       <tr><td>Years needed</td><td>${need > r.N ? "≈" : ""}${need} (have ${r.N})</td></tr></table>
-    <div class="rm-verd" style="background:${det ? "var(--grn)" : sus ? "var(--red)" : "var(--mus)"};color:${sus ? "#fff" : "var(--ink)"}">${det ? "TREND DETECTED" : sus ? "USE CAUTION" : "NO CLEAR TREND"}</div>
-    <div class="dim" style="font-size:16px;margin-top:6px;line-height:1.12">${sus ? "Trend found, but the 2017-2018 satellite gap is inside this period. Treat with caution." : (L.gap && r.y0 <= L.gap[0] ? "Shaded band: no satellite data (2017-2018). " : "") + (det ? "Clear trend over this period." : need > r.N ? `No clear trend yet. About ${need - r.N} more years of data needed.` : "No clear trend once all 11 countries are compared.")}</div>
+      <div class="rm-note">${note}</div>` : ""}
     <button class="obtn" id="rm-open">OPEN AS CASE ▸</button>`;
+  box.querySelector("#rm-close").onclick = closeCard;
+  box.querySelector("#rm-more").onclick = () => {
+    st.more = !st.more;
+    sfx("select");
+    card();
+  };
   const ln = box.querySelector(".ln"), len = ln.getTotalLength();
   ln.style.strokeDasharray = `${len} ${len}`;
   ln.style.strokeDashoffset = len;
@@ -515,6 +542,11 @@ function preview() {
   };
   requestAnimationFrame(tick);
   box.querySelector("#rm-open").onclick = () => openCase(r);
+}
+function closeCard() {
+  st.c = -1;
+  sfx("close");
+  card();
 }
 function openCase(r) {
   const L = LAYERS[st.v], D = analysis.DATASETS;
@@ -545,15 +577,16 @@ function tip(e, ci) {
   const r = st.rows[ci], L = LAYERS[st.v], box = $("#rm-mapc").getBoundingClientRect();
   t.innerHTML = r.na ? `${r.n.toUpperCase()} <span class="dim">· no data</span>` : `${r.n.toUpperCase()} <b style="font-weight:400;color:${r.det ? "var(--ink)" : r.sus ? "var(--red)" : "#5b6b8f"}">${(r.b10 >= 0 ? "+" : "−") + Math.abs(r.b10).toFixed(L.sd < 1 ? 2 : 1)} ${L.ud}</b>${r.det ? "" : r.sus ? ' <span class="hi">· use caution</span>' : ' <span class="dim">· no clear trend</span>'}`;
   t.style.display = "block";
-  t.style.left = Math.min(e.clientX - box.left + 14, box.width - t.offsetWidth - 6) + "px";
-  t.style.top = e.clientY - box.top + 16 + "px";
+  const z = uiScale;
+  t.style.left = Math.min((e.clientX - box.left) / z + 14, box.width / z - t.offsetWidth - 6) + "px";
+  t.style.top = (e.clientY - box.top) / z + 16 + "px";
 }
 function pick(ci) {
   const r = st.rows[ci];
   if (st.view === "world") zoom("sea");
   st.c = ci;
   sfx(r.na ? "err" : "select");
-  preview();
+  card();
 }
 function denied(e) {
   sfx("err");
@@ -589,6 +622,8 @@ function setVB(vb, anim) {
   d.setAttribute("height", 3 * s);
   d.setAttribute("x", -1.5 * s);
   d.setAttribute("y", -1.5 * s);
+  const zr = W.querySelector("#rm-zr");
+  if (zr) zr.textContent = st.view === "sea" ? `${(VB.sea[2] / vb[2]).toFixed(1).replace(".0", "")}×` : "";
   const ls = Math.min(1, vb[2] / VB.sea[2]);
   W.querySelectorAll("#rm-labs text").forEach((t) => {
     t.setAttribute("font-size", (+t.dataset.fs * ls).toFixed(3));
@@ -637,13 +672,14 @@ function bindNav() {
     } else zoomAt(z === "in" ? 1 / 1.5 : 1.5);
   });
   mc.addEventListener("wheel", (e) => {
+    if (e.target.closest(".rm-card")) return;
     e.preventDefault();
     const u = toUnits(e);
     zoomAt(e.deltaY < 0 ? 1 / 1.2 : 1.2, u.x, u.y);
   }, { passive: false });
   let drag = null;
   mc.addEventListener("pointerdown", (e) => {
-    if (st.view !== "sea" || e.button !== 0 || e.target.closest("button,.rm-tip")) return;
+    if (st.view !== "sea" || e.button !== 0 || e.target.closest("button,.rm-tip,.rm-float")) return;
     drag = { x: e.clientX, y: e.clientY, vb: (st.vb || VB.sea).slice(), k: $("#rm-svg").getScreenCTM().a, moved: false };
     st.dragged = false;
   });
@@ -674,6 +710,7 @@ function zoom(to) {
   clearInterval(placeFx.iv);
   W.querySelector("#rm-fxc").style.display = "none";
   W.querySelectorAll(".rm-tog button").forEach((b) => b.classList.toggle("on", b.dataset.v === to));
+  if (to !== "sea") W.querySelector("#rm-zr").textContent = "";
   const labs = W.querySelector("#rm-labs");
   const step = (t) => {
     const k = Math.min(1, (t - t0) / dur), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
@@ -708,15 +745,17 @@ async function open(win, helpers) {
   W = win(
     "w-rmap",
     "MAP.EXE · SOUTHEAST ASIA",
-    `<div class="rm"><div class="rm-side" id="rm-side"></div>
+    `<div class="rm"><div class="rm-bar" id="rm-bar"></div>
     <div class="rm-map" id="rm-mapc"><svg id="rm-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend map of Southeast Asia"></svg>
-      <canvas class="rm-fxc" id="rm-fxc" aria-hidden="true"></canvas><svg id="rm-top" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="pointer-events:none"></svg><div class="rm-hud" id="rm-hud">ACQUIRING SCENE...</div>
-      <div class="rm-tog"><button data-v="world">WORLD</button><button data-v="sea">SE ASIA</button></div>
-      <div class="rm-zoom"><button data-z="in" title="Zoom in" aria-label="Zoom in">+</button><button data-z="out" title="Zoom out" aria-label="Zoom out">−</button><button data-z="home" title="Reset view" aria-label="Reset view">⌂</button></div>
+      <canvas class="rm-fxc" id="rm-fxc" aria-hidden="true"></canvas><svg id="rm-top" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="pointer-events:none"></svg>
+      <div class="rm-float rm-hud" id="rm-hud">LOADING MAP...</div>
+      <div class="rm-float rm-leg" id="rm-leg"></div>
+      <div class="rm-nav"><div class="rm-seg rm-tog"><button data-v="world">WORLD</button><button data-v="sea">SE ASIA</button></div>
+        <div class="rm-zoom"><span id="rm-zr" aria-live="polite"></span><button data-z="in" title="Zoom in" aria-label="Zoom in">+</button><button data-z="out" title="Zoom out" aria-label="Zoom out">−</button><button data-z="home" title="Reset view" aria-label="Reset view">⌂</button></div></div>
+      <div class="rm-float rm-card" id="rm-pv" hidden></div>
       <div class="rm-tip" id="rm-tip"></div>
       <div class="rm-deny" id="rm-deny"><div class="tb"><span class="t">AREA LOCKED</span></div><div style="padding:8px 12px">Only Southeast Asia is available.</div></div>
-      <div class="rm-scan"></div></div>
-    <div class="rm-leg" id="rm-leg"></div><div class="rm-pv" id="rm-pv"></div></div>`,
+      <div class="rm-scan"></div></div></div>`,
     { left: "122px", top: "6px", right: "8px", bottom: "8px" }
   );
   Object.assign(W.querySelector(".bd").style, { padding: "0", overflow: "hidden" });

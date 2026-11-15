@@ -1,8 +1,10 @@
 import { SFX } from "../audio/sfx.js";
 import { play } from "../scene/office.js";
+import { enterFullscreen, toggleFullscreen } from "./scale.js";
 const $ = (s) => document.querySelector(s);
 $("#play").onclick = () => {
   SFX.click();
+  enterFullscreen();
   play();
 };
 const tog = (id) => {
@@ -17,4 +19,11 @@ const snd = () => {
 };
 $("#b-snd").onclick = snd;
 $("#h-snd").onclick = snd;
+$("#h-fs").onclick = () => {
+  SFX.click();
+  toggleFullscreen();
+};
+document.addEventListener("fullscreenchange", () => {
+  $("#h-fs").textContent = document.fullscreenElement ? "EXIT FULLSCREEN" : "FULLSCREEN";
+});
 document.querySelectorAll(".mbtn").forEach((b) => b.addEventListener("mouseenter", () => SFX.click()));

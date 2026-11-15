@@ -21,7 +21,8 @@ body.playing #menu {
 }
 .left {
   position: absolute;
-  left: 7vw;
+  zoom: var(--ui, 1);
+  left: calc(7vw / var(--ui, 1));
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -187,8 +188,9 @@ body.playing #menu {
 }
 .det {
   position: absolute;
+  zoom: var(--ui, 1);
   left: 56%;
-  bottom: 5vh;
+  bottom: calc(5vh / var(--ui, 1));
   width: 341px;
   height: 539px;
   background-image: url(../assets/sprites/detective.png);
@@ -209,7 +211,8 @@ body.playing #menu {
 }
 .panel {
   position: absolute;
-  left: calc(7vw + 600px);
+  zoom: var(--ui, 1);
+  left: calc(7vw / var(--ui, 1) + 600px);
   top: 50%;
   transform: translateY(-50%);
   width: 380px;

@@ -1,3 +1,4 @@
+import "./ui/scale.js";
 import "./styles/base.css";
 import "./styles/menu.css";
 import "./styles/room.css";
