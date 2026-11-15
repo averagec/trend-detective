@@ -116,11 +116,14 @@ Pick a city from the CITIES dropdown (grouped by region, with search) or click a
 zoom to it. Inland cities (more than 20 km from the sea) show no sea level.
 
 **CIRCLE** works like Earthdata Search: press CIRCLE, then press on the map and drag to draw. The
-card shows the ECCO ocean cells whose centres are inside (`indonesia_cells.json`, made by
-`python scripts/export_cells.py`: one core trend per cell, Benjamini-Hochberg across all 2,478
-cells), how many rise clearly, the spread of cell trends, the cities inside, and the cells'
-yearly average. A circle under 75 km or over 250 km, or with fewer than 4 ocean cells, gets a
-pop-up instead (limits from ADR 0005). Esc cancels. Works offline.
+server (`POST /api/ocean-circle`) takes the ECCO ocean cells whose **centre is inside the circle** (a
+cell whose centre is outside is left out, even if it overlaps) and corrects them **together**, for
+this circle only (Benjamini-Hochberg, both tests, ADR 0009). The card shows how many rise clearly, how
+many are unclear, the spread of cell trends, the cities inside and the cells' yearly average. Each
+cell's own tests come from `python scripts/export_cells.py` (`indonesia_cells.json` for drawing,
+`data/processed/ocean/ecco_cell_stats.json` for the server). A circle under 75 km or over 250 km, or
+with fewer than 4 ocean cells, gets a pop-up instead (limits from ADR 0005). Esc cancels. **Needs the
+Flask server running**, because the correction depends on which cells you draw around.
 SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 

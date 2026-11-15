@@ -43,6 +43,7 @@ Regional tables are in `data/processed/<group>/` and are committed. The per-cell
 | `merra2/monthly_regional.csv` | 13,467 | t2m, t2mmax, qv2m, ps, vpd, precip, evap, tsurf | 3 | 1980-01 to 2026-10 | `process/merra2_clean.py` |
 | `witness/witness_regional.csv` | 7,110 | gldas_sm_0_10cm, gldas_sm_10_40cm, gldas_sm_40_100cm, gldas_sm_100_200cm, gldas_rain, gpcp_precip, grace_lwe | 3 | GLDAS 2000-01 to 2026-07; GPCP 1983-01 to 2025-12; GRACE 2002-04 to 2026-09 | `process/witness_clean.py` |
 | `ocean/ocean_regional.csv` | 3,744 | ssh (metres), 4 products: ECCO 0.5° and LLC90, each V4R4 and V4R4B | 3 | 1992-01 to 2017-12 | `process/ocean_clean.py` |
+| `ocean/ecco_cell_stats.json` | 2,478 cells | each ECCO 0.5° ocean cell's own test results (OLS, Mann-Kendall, Sen), **not corrected**; the server corrects the cells inside a drawn circle (`POST /api/ocean-circle`) | Indonesia box | 1992-2017 | `scripts/export_cells.py` |
 
 The regions are `se_asia_maritime`, `east_asia_land` and `north_asia_siberia` (`catalog/regions.py`).
 North Asia has no ocean cells, so its ocean rows are blank. The t2mmax rows are monthly means of the

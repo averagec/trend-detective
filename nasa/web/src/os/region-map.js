@@ -1495,7 +1495,7 @@ function circleDraw() {
     }
   });
 }
-function circleResult() {
+async function circleResult() {
   const c = st.circ, D = st.cells, [lo, hi] = circleLimits(), R = Math.round(c.r);
   c.res = null;
   if (!D) {
@@ -1515,17 +1515,35 @@ function circleResult() {
     circleDraw();
     return;
   }
-  const cells = D.list.filter((q) => kmBetween(c.lat, c.lon, q.lat, q.lon) <= c.r);
-  if (cells.length < D.min_cells) {
+  // The server takes the cells whose centre is inside the circle and judges them together: one
+  // family, both tests, corrected for the cells in THIS circle (POST /api/ocean-circle, ADR 0009).
+  // The page decides nothing statistical; it draws what comes back.
+  let J;
+  try {
+    const r = await fetch("api/ocean-circle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat: c.lat, lon: c.lon, radius_km: c.r }),
+    });
+    J = await r.json().catch(() => null);
+    if (!r.ok) J = { failed: true, error: (J && J.error) || `Request failed (${r.status})` };
+  } catch (e) {
+    J = { failed: true, error: "Cannot reach the analysis server. Is it running?" };
+  }
+  if (st.circ !== c) return; // a newer circle was drawn while this one was being judged
+  if (J.failed) {
     sfx("err");
     const inBox = c.lon >= D.lon[0] - 1 && c.lon <= D.lon[D.lon.length - 1] + 1 && c.lat >= D.lat[0] - 1 && c.lat <= D.lat[D.lat.length - 1] + 1;
-    toast(inBox ? `<b>NOT ENOUGH SEA DATA</b> Only ${cells.length} ocean cell${cells.length === 1 ? "" : "s"} inside (need ${D.min_cells}). Sea level is measured at sea: draw the circle over the coast or the water.` : "<b>OUTSIDE OUR DATA AREA</b> Draw the circle over Indonesia.", true);
+    toast(/at least/.test(J.error)
+      ? (inBox ? `<b>NOT ENOUGH SEA DATA</b> ${J.error}. Sea level is measured at sea: draw the circle over the coast or the water.` : "<b>OUTSIDE OUR DATA AREA</b> Draw the circle over Indonesia.")
+      : `<b>CIRCLE NOT READ</b> ${J.error}`, true);
+    st.city = -1;
     circleDraw();
+    card(); // the previous circle's card must not stay next to this circle's error
     return;
   }
-  const S = D.slope_mm_per_decade, PA = D.p_adjusted;
-  const sig = cells.filter((q) => PA[q.k] < 0.05), up = sig.filter((q) => S[q.k] > 0).length, down = sig.length - up;
-  const sl = cells.map((q) => S[q.k]).sort((a, b) => a - b), med = sl[Math.floor(sl.length / 2)];
+  const cells = J.cells, up = J.counts.rise, down = J.counts.fall, unclear = J.counts.unclear;
+  const sl = cells.map((q) => q.slope_per_decade).filter((v) => v != null).sort((a, b) => a - b), med = sl[Math.floor(sl.length / 2)];
   const years = D.yearly_anomaly_tenth_mm[cells[0].k].length, yrs = [];
   for (let y = 0; y < years; y++) {
     let sw = 0, sv = 0;
@@ -1539,7 +1557,7 @@ function circleResult() {
     yrs.push([D.period[0] + y + 0.5, sw ? sv / sw : null]);
   }
   const cities = st.ssl ? st.ssl.cities.map((ct, i) => [ct, i]).filter(([ct]) => kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) : [];
-  c.res = { n: cells.length, up, down, flat: cells.length - sig.length, min: sl[0], max: sl[sl.length - 1], med, yrs, cities };
+  c.res = { n: J.cells_inside, up, down, unclear, flat: J.cells_inside - up - down, min: sl[0], max: sl[sl.length - 1], med, yrs, cities, note: J.note };
   sfx("chime");
   st.city = -1;
   st.bx = false;
@@ -1573,12 +1591,13 @@ function circleCard(box) {
       <tr><td>Cell trends</td><td>${f(r.min)} to ${f(r.max)} mm/dec</td></tr>
       <tr><td>Middle cell</td><td>${f(r.med)} mm/dec</td></tr>
       <tr><td>Not clear / falling</td><td>${r.flat} / ${r.down}</td></tr>
+      ${r.unclear ? `<tr><td>Unclear (one test only)</td><td>${r.unclear}</td></tr>` : ""}
     </table>
     ${mixed ? '<div class="rm-note" style="color:var(--red)">Cells disagree: some rise and some fall clearly. Look at them separately before trusting one number.</div>' : ""}
     <div class="rm-sec">CITIES INSIDE (${r.cities.length})</div>
     <div class="rm-ccs">${cityRows}</div>
     ${L.box ? `<div class="rm-note">${L.name}: this layer only has one value for the whole Maritime SE Asia box, not per circle. Click the box for it.</div>` : ""}
-    <div class="rm-note">${D.method}</div>
+    <div class="rm-note">${r.note}</div>
     <div class="rm-note">NASA DATA · ${D.dataset}</div>
     <button class="obtn" id="rm-redraw">DRAW ANOTHER CIRCLE ▸</button>`;
   box.querySelector("#rm-close").onclick = closeCard;
@@ -1598,8 +1617,8 @@ function circleCard(box) {
       seriesLabel: `Average of the ${r.n} cells inside the circle`,
       zero: true,
       dp: 1,
-      stats: [["CELLS INSIDE", `${r.n}`], ["RISING CLEARLY", `${r.up}`], ["NO CLEAR TREND", `${r.flat}`], ["FALLING CLEARLY", `${r.down}`], ["CELL TRENDS", `${f(r.min)} to ${f(r.max)} mm/dec`], ["MIDDLE CELL", `${f(r.med)} mm/dec`]],
-      notes: ["The line is the cells' yearly average, drawn for reading. The trend numbers come from each cell's own test in the Python core, not from this line.", D.method],
+      stats: [["CELLS INSIDE", `${r.n}`], ["RISING CLEARLY", `${r.up}`], ["NO CLEAR TREND", `${r.flat - r.unclear}`], ["UNCLEAR (ONE TEST ONLY)", `${r.unclear}`], ["FALLING CLEARLY", `${r.down}`], ["CELL TRENDS", `${f(r.min)} to ${f(r.max)} mm/dec`], ["MIDDLE CELL", `${f(r.med)} mm/dec`]],
+      notes: ["The line is the cells' yearly average, drawn for reading. The trend numbers come from each cell's own test in the Python core, not from this line.", r.note],
       source: D.dataset
     });
   };

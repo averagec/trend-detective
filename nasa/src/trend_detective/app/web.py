@@ -48,6 +48,8 @@ from trend_detective.process.incidents import HAZARDS  # noqa: E402
 from trend_detective.process.incidents import circle as circle_incidents  # noqa: E402
 from trend_detective.process.incidents import city as city_incidents  # noqa: E402
 from trend_detective.process.incidents import load_counts as load_incidents  # noqa: E402
+from trend_detective.process.ocean_circle import analyse_circle as analyse_ocean_circle  # noqa: E402
+from trend_detective.process.ocean_circle import load as load_ocean_cells  # noqa: E402
 from trend_detective.process.regional_map import build_map  # noqa: E402
 from trend_detective.process.selection import (  # noqa: E402
     KM_PER_DEG,
@@ -66,6 +68,7 @@ DEFAULT_CITIES = ROOT / "data" / "catalog" / "cities_idn.csv"  # supplied by the
 DEFAULT_CUBES = ROOT / "data" / "processed" / "cells"  # made by process/cell_cube.py
 DEFAULT_PROCESSED = ROOT / "data" / "processed"  # regional CSVs for /api/map
 DEFAULT_GDIS = DEFAULT_PROCESSED / "gdis" / "gdis_counts_idn.npz"  # made by process/gdis.py
+DEFAULT_OCEAN_CELLS = DEFAULT_PROCESSED / "ocean" / "ecco_cell_stats.json"  # export_cells.py
 CUBE_FILES = {"merra2": "merra2_idn.npz", "gpcp": "gpcp_idn.npz", "gldas": "gldas_idn.npz"}
 OCEAN_IMAGES = ("ocean_ssh_mean.png", "sar_browse_scenes.png")
 SUMMARY_KEYS = (
@@ -161,6 +164,24 @@ class Store:
     def years(self) -> tuple[int, int]:
         periods = [p for entry in self.series().values() for p in entry["values"]]
         return int(min(periods)[:4]), int(max(periods)[:4])
+
+
+class OceanCellStore:
+    """Reads each ocean cell's test results once and reloads them when the file changes."""
+
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self._mtime: float | None = None
+        self._cells = None
+
+    def get(self):
+        if not self.path.exists():
+            raise FileNotFoundError(f"{self.path} not found. Run scripts/export_cells.py first.")
+        mtime = self.path.stat().st_mtime
+        if mtime != self._mtime:
+            self._cells = load_ocean_cells(self.path)
+            self._mtime = mtime
+        return self._cells
 
 
 class CubeStore:
@@ -271,12 +292,14 @@ def create_app(
     cubes_dir: Path = DEFAULT_CUBES,
     processed_dir: Path = DEFAULT_PROCESSED,
     web_dir: Path | None = None,
+    ocean_cells_json: Path = DEFAULT_OCEAN_CELLS,
 ) -> Flask:
     """`web_dir`: a built website to serve at / (needs an index.html). None: the plain page."""
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = MAX_BODY_BYTES  # a larger body is refused with a 413
     store = Store(Path(input_csv))
     cubes = CubeStore(Path(cubes_dir))
+    ocean_cells = OceanCellStore(Path(ocean_cells_json))
     cities_path = Path(cities_csv)
     images_dir = Path(images_dir)
     site = Path(web_dir) if web_dir else None
@@ -422,6 +445,21 @@ def create_app(
         except ValueError as err:
             abort(400, description=str(err))
         return jsonify(result)
+
+    @app.post("/api/ocean-circle")
+    def ocean_circle():
+        """A circle drawn on the sea-level map: the ocean cells whose centre is inside it, corrected
+        together and judged by both tests (process/ocean_circle.py, ADR 0009)."""
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            abort(400, description="send a JSON object")
+        lat, lon = parse_float(body, "lat"), parse_float(body, "lon")
+        radius = parse_float(body, "radius_km")
+        if not (math.isfinite(lat) and math.isfinite(lon) and math.isfinite(radius)):
+            abort(400, description="lat, lon and radius_km must be finite numbers")
+        if not (-90 <= lat <= 90 and -360 <= lon <= 360):
+            abort(400, description="lat must be within 90 degrees and lon within 360")
+        return jsonify(analyse_ocean_circle(ocean_cells.get(), lat, lon, radius))
 
     @app.post("/api/analyse-series")
     def analyse_series():
