@@ -38,6 +38,7 @@ from trend_detective.catalog.variables import VARIABLES  # noqa: E402
 from trend_detective.process.analyse_trends import (  # noqa: E402
     build,
     build_custom,
+    build_lineup,
     layer_assessments,
     load,
     scan,
@@ -144,6 +145,19 @@ def parse_series_body(body: object) -> tuple[str, str, int, int, list[float | No
     if year + (month - 1 + len(values) - 1) // 12 > 9999:
         abort(400, description="the series would run past the year 9999")
     return label, unit, year, month, values
+
+
+def parse_gap_years(body: dict) -> tuple[int, int] | None:
+    """The optional `gap_years` of POST /api/lineup: [first, last] year of a known change of
+    instrument (e.g. GRACE to GRACE-FO, [2017, 2018]). Aborts with a 400 on anything else."""
+    raw = body.get("gap_years")
+    if raw is None:
+        return None
+    ok = isinstance(raw, list) and len(raw) == 2
+    ok = ok and all(isinstance(v, int) and not isinstance(v, bool) and 1 <= v <= 9999 for v in raw)
+    if not ok or raw[0] > raw[1]:
+        abort(400, description="gap_years must be two years such as [2017, 2018], first <= last")
+    return raw[0], raw[1]
 
 
 class Store:
@@ -481,6 +495,19 @@ def create_app(
             body = None
         label, unit, year, month, values = parse_series_body(body)
         return jsonify(build_custom(label, unit, year, month, values))
+
+    @app.post("/api/lineup")
+    def lineup():
+        """The case flow's LINEUP: the same series analysis as /api/analyse-series, plus the noise
+        lineup (1,000 trend-free fakes), the robustness checks and the case verdict. Nothing is
+        stored. The series is analysed as sent (no project-window cut), like /api/analyse-series."""
+        try:
+            body = request.get_json(silent=True)
+        except RecursionError:
+            body = None
+        label, unit, year, month, values = parse_series_body(body)
+        gap = parse_gap_years(body)
+        return jsonify(build_lineup(label, unit, year, month, values, gap))
 
     @app.get("/map")
     def map_page():

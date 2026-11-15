@@ -2,7 +2,7 @@
 // No statistics here: it only reshapes numbers the server already computed. The verdict, the
 // q-values and the sentence come from the response's `significance` block (docs/api.md).
 // Time is `year + (month - 1) / 12`, as chart-view expects.
-import { VERDICT } from "./verdict-wording.js";
+import { VERDICT, CASE_VERDICT } from "./verdict-wording.js";
 
 const MINUS = "−";
 const finite = (x) => typeof x === "number" && Number.isFinite(x);
@@ -70,4 +70,19 @@ export function trendSpec(data, opts = {}) {
     notes,
     source: custom ? "YOUR DATA, ANALYSED BY THE PROJECT'S PYTHON CORE" : "NASA MERRA-2 (GES DISC) · ANALYSED BY THE PROJECT'S PYTHON CORE"
   };
+}
+
+// A /api/lineup response as a chart: the same chart as TREND.EXE plus the lineup and the case verdict.
+// opts: {title, source, notes}. Still no statistics: every number is the server's.
+export function caseSpec(data, opts = {}) {
+  const spec = trendSpec(data, opts), lu = data.lineup;
+  if (opts.title) spec.title = opts.title;
+  if (opts.source) spec.source = opts.source;
+  if (!lu) return spec;
+  spec.stats = spec.stats.filter(([k]) => k !== "VERDICT");
+  if (lu.n_sims) spec.stats.push(["NOISE LINEUP", `${lu.beat} of ${lu.n_sims} trend-free fakes as strong (${(lu.share * 100).toFixed(1)}%)`]);
+  if (finite(lu.years_needed)) spec.stats.push(["YEARS NEEDED", `about ${lu.years_needed.toFixed(0)}`]);
+  spec.stats.push(["CASE VERDICT", CASE_VERDICT[lu.verdict] || String(lu.verdict).toUpperCase()]);
+  spec.notes = [data.significance.sentence, lu.explanation, ...data.significance.warnings.map((w) => w.text), ...(opts.notes || [])];
+  return spec;
 }

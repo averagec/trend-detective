@@ -46,6 +46,11 @@ export const getScan = ({ variable, from, to }) => get(`api/scan?${query({ varia
 export const analyseOwn = (body) =>
   request("api/analyse-series", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+// The CASES flow's LINEUP: the same answer as analyseOwn plus the noise lineup (1,000 trend-free
+// fakes), the robustness checks and the case verdict. {label, unit, start, values, gap_years?}
+export const getLineup = (body) =>
+  request("api/lineup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
 // For rapid changes (a year box, a picker): only the newest request may update the screen.
 //   const latest = newest();  latest(getTrend(...)).then((data) => { if (data !== STALE) draw(data); });
 export const STALE = Symbol("stale");

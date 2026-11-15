@@ -1,6 +1,9 @@
 import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
-import { analysis } from "../stats/trend-analysis.js";
+import { caseData } from "../data/case-data.js";
+import { analyseOwn, getLineup } from "../data/api.js";
+import { caseSpec } from "../data/to-chart.js";
+import { CASE_VERDICT, CASE_VERDICT_COLOR, CASE_VERDICT_MARK } from "../data/verdict-wording.js";
 import { openChart } from "../ui/chart-view.js";
 import { regionMap } from "./region-map.js";
 import { trendApp } from "./trend-app.js";
@@ -18,7 +21,9 @@ const CASES = [
 let current = 0, z = 10, noiseTimer = null, booting = false;
 const LOG = [];
 const S = { setup: null, guess: null, look: null, runs: 0, exploratory: false, lastKey: null, deseason: false };
-const D = () => analysis.DATASETS;
+const D = () => caseData.DATASETS;
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const num = (x, d = 2) => (Number.isFinite(x) ? fmt(x, d) : "n/a");
 const unlock = (id) => {
   const ic = document.querySelector(`.icon[data-id="${id}"]`);
   if (ic) ic.classList.remove("locked");
@@ -155,8 +160,8 @@ function plotHist(cv, sims, obs) {
 }
 function openCases() {
   guideDone("cases");
-  if (!analysis.load.done) {
-    analysis.load().then(openCases, () => {
+  if (!caseData.load.done) {
+    caseData.load().then(openCases, () => {
       SFX.err();
       log("CASE DATA MISSING: data/cases_data.json", "hi");
     });
@@ -244,7 +249,7 @@ function openSetup() {
     "w-setup",
     "SETUP.EXE",
     `
-    <div class="step"><h4>1. WHAT ARE YOU MEASURING?</h4><div class="chips">${Object.entries(D()).map(([k, d]) => `<button class="chip${k === s.v ? " on" : ""}" data-v="${k}">${d.label}<br><small>${d.source}</small></button>`).join("")}</div></div>
+    <div class="step"><h4>1. WHAT ARE YOU MEASURING?</h4><div class="chips">${caseData.monthlyKeys().map((k) => [k, D()[k]]).map(([k, d]) => `<button class="chip${k === s.v ? " on" : ""}" data-v="${k}">${d.label}<br><small>${d.source}</small></button>`).join("")}</div></div>
     <div class="step"><h4>2. WHERE?</h4><div class="chips">${Object.entries(ds.regions).map(([k, r]) => `<button class="chip${k === s.r ? " on" : ""}" data-r="${k}">${r.name}</button>`).join("")}</div></div>
     <div class="step"><h4>3. WHICH YEARS?</h4><label>FROM <button class="ypick" id="y0">${s.y0} ▾</button></label> <label>TO <button class="ypick" id="y1">${s.y1} ▾</button></label> <span class="dim">(${nYears} ${nYears === 1 ? "year" : "years"}${nYears < 10 ? " · under 10: the verdict can’t call a trend" : ""})</span></div>
     ${S.runs && setupKey(s) !== S.lastKey ? '<div><span class="flag">EXPLORATORY</span> <span class="dim">Changed after seeing results.</span></div>' : ""}
@@ -311,7 +316,24 @@ function openHyp() {
     }), 400);
   });
 }
-function openPlot() {
+// The series with each calendar month's average taken out, from the server (the page subtracts nothing).
+const anomalyCache = new Map();
+async function seasonsRemoved(s, cw, ds) {
+  const key = setupKey(s);
+  if (!anomalyCache.has(key)) {
+    const res = await analyseOwn({ label: `${ds.label}, ${ds.regions[s.r].name}`, unit: ds.unit, start: cw.start, values: cw.values });
+    const t = [], v = [];
+    res.series.forEach((r) => {
+      if (Number.isFinite(r.anomaly)) {
+        t.push(Number(r.period.slice(0, 4)) + (Number(r.period.slice(5, 7)) - 0.5) / 12);
+        v.push(r.anomaly);
+      }
+    });
+    anomalyCache.set(key, { t, v });
+  }
+  return anomalyCache.get(key);
+}
+async function openPlot() {
   if (!S.setup || S.guess === null) {
     SFX.err();
     say(["Not yet. Which city, which years? And I write my guess down first."]);
@@ -319,8 +341,17 @@ function openPlot() {
   }
   closeId("w-hyp");
   const s = S.setup, ds = D()[s.v];
-  let ser = analysis.slice(analysis.makeSeries(s.v, s.r), s.y0, s.y1);
-  if (S.deseason) ser = analysis.deseason(ser);
+  const cw = caseData.caseWindow(s.v, s.r, s.y0, s.y1), gap = caseData.instrumentGap(s.v);
+  let ser = { t: cw.t, v: cw.v };
+  if (S.deseason) {
+    try {
+      ser = await seasonsRemoved(s, cw, ds);
+    } catch (err) {
+      S.deseason = false;
+      SFX.err();
+      log(`ANALYSIS ENGINE: ${err.message}`, "hi");
+    }
+  }
   const w = win(
     "w-plot",
     "PLOT.PCX",
@@ -333,7 +364,7 @@ function openPlot() {
     ${S.look !== null ? '<div style="text-align:right;margin-top:8px"><button class="obtn" id="go-lineup">RUN THE LINEUP ▸</button></div>' : ""}`,
     { left: "200px", top: "30px", width: "640px" }
   );
-  plotLine(w.querySelector("#cv-plot"), ser.t, ser.v, { gap: ds.gap && s.y0 < ds.gap[0] && s.y1 + 1 > ds.gap[1] ? ds.gap : null });
+  plotLine(w.querySelector("#cv-plot"), ser.t, ser.v, { gap: gap && s.y0 <= gap.years[0] && s.y1 >= gap.years[1] ? gap.draw : null });
   w.querySelector("#cv-plot").onclick = () => openChart({
     title: `${ds.regions[s.r].name.toUpperCase()} · ${ds.label.toUpperCase()}`,
     sub: `${s.y0}-${s.y1} · MONTHLY${S.deseason ? " · SEASONAL CYCLE REMOVED" : ""} · NO TREND LINE UNTIL THE LINEUP`,
@@ -377,73 +408,67 @@ function openTest() {
   closeId("w-plot");
   const w = win("w-test", "LINEUP.EXE", `
     <div>Is this trend real, or could random noise have made it?</div>
-    <div class="dim">We build 1,000 fake records with the same wobble and no trend, and see how many look this strong.</div>
+    <div class="dim">The analysis engine builds 1,000 fake records with the same wobble and no trend, and counts how many look this strong.</div>
     <div style="margin:10px 0;text-align:right"><button class="obtn" id="go-run">RUN 1,000 SIMULATIONS ▸</button></div>
     <div id="test-out"></div>`, { left: "300px", top: "20px", width: "660px", maxHeight: "96%" });
   w.querySelector("#go-run").onclick = async () => {
     const out = w.querySelector("#test-out");
     SFX.click();
+    out.innerHTML = '<div class="dim">ASKING THE ANALYSIS ENGINE...</div>';
+    const cw = caseData.caseWindow(s.v, s.r, s.y0, s.y1), gap = caseData.instrumentGap(s.v);
+    const place = ds.regions[s.r].name;
+    let R;
+    try {
+      R = await getLineup({ label: `${ds.label}, ${place}`, unit: ds.unit, start: cw.start, values: cw.values, ...(gap ? { gap_years: gap.years } : {}) });
+    } catch (err) {
+      SFX.err();
+      out.innerHTML = `<div class="tr-err" role="alert">${esc(err.message)}</div>`;
+      log(`LINEUP: ${err.message}`, "hi");
+      return;
+    }
+    const lu = R.lineup, st = R.statistics, sig = R.significance, perDec = ds.unit + " / decade";
+    const verdict = lu.verdict, word = CASE_VERDICT[verdict] || String(verdict).toUpperCase();
     out.innerHTML = '<canvas class="cv" id="cv-h" width="360" height="110"></canvas><div id="cnt">SIMULATING... 0 / 1000</div>';
-    const R = analysis.analyse(s);
-    for (let k = 100; k <= 1e3; k += 100) {
-      plotHist(out.querySelector("#cv-h"), R.sims.slice(0, k), R.obs);
-      out.querySelector("#cnt").textContent = `SIMULATING... ${k} / 1000`;
+    for (let k = 100; k <= lu.sims_per_decade.length; k += 100) {
+      plotHist(out.querySelector("#cv-h"), lu.sims_per_decade.slice(0, k), lu.observed_per_decade);
+      out.querySelector("#cnt").textContent = `SIMULATING... ${k} / ${lu.n_sims}`;
       SFX.key();
       await wait(110);
     }
     S.runs++;
     S.lastKey = setupKey(s);
-    const perDec = 10, unit = ds.unit + " / decade", core = ds.regions[s.r].core, full = s.y0 === ds.start && s.y1 === ds.end;
-    const V = { "DETECTED": ["#2c7a2a", "●"], "NOT YET DETECTABLE": ["#1f4fa0", "◌"], "SUSPECT": ["#d94a36", "▲"] }[R.verdict];
-    const guessDir = ["UP", "DOWN", "NONE", null][S.guess], realDir = R.verdict === "DETECTED" ? R.slope > 0 ? "UP" : "DOWN" : "NONE";
+    const col = CASE_VERDICT_COLOR[verdict] || "#1f4fa0", mark = CASE_VERDICT_MARK[verdict] || "";
+    const guessDir = ["UP", "DOWN", "NONE", null][S.guess], slope = st.ols_per_decade;
+    const realDir = verdict === "detected" ? (slope > 0 ? "UP" : "DOWN") : "NONE";
+    const pv = (p) => (!Number.isFinite(p) ? "n/a" : p < 1e-4 ? "< 0.0001" : p.toFixed(4));
     out.innerHTML = `
       <canvas class="cv" id="cv-h" width="360" height="110"></canvas>
-      <div class="axis"><span>FAKE RECORDS (BLUE / GOLD) VS REAL (RED LINE)</span><span>${R.beat} / 1000 AS STRONG</span></div>
-      <div class="verdict" style="color:${V[0]};border-color:${V[0]}">${V[1]} ${R.verdict}</div> ${S.exploratory ? '<span class="flag">EXPLORATORY</span>' : ""}
+      <div class="axis"><span>FAKE RECORDS (BLUE / GOLD) VS REAL (RED LINE)</span><span>${lu.beat} / ${lu.n_sims} AS STRONG</span></div>
+      <div class="verdict" style="color:${col};border-color:${col}">${mark} ${esc(word)}</div> ${S.exploratory ? '<span class="flag">EXPLORATORY</span>' : ""}
       <div class="res">
-        <span>TREND</span><span>${fmt(R.slope * perDec)} ${unit}</span>
-        <span>95% RANGE</span><span>${fmt(R.ci[0] * perDec)} to ${fmt(R.ci[1] * perDec)}</span>
-        <span>MANN-KENDALL</span><span>p = ${R.mk.p < 1e-4 ? "< 0.0001" : R.mk.p.toFixed(4)} (autocorrelation-adjusted)</span>
-        <span>NOISE LINEUP</span><span>${R.beat} of 1,000 fakes as strong (${(R.beat / 10).toFixed(1)}%)</span>
-        ${core ? `<span>PYTHON CORE</span><span>${fmt(core.per_decade, 2)} ${unit} over the ${full ? "same" : "full"} record (OLS, ${core.significant ? "significant" : "not significant"})</span>` : ""}
-        ${R.needed ? `<span>YEARS NEEDED</span><span>about ${R.needed} years of record for a change this size (you have ${R.years})</span>` : ""}
+        <span>TREND</span><span>${num(slope)} ${esc(perDec)}</span>
+        <span>95% RANGE</span><span>${num(st.ols_ci_per_decade[0])} to ${num(st.ols_ci_per_decade[1])}</span>
+        <span>OLS</span><span>p = ${pv(sig.ols_p)} (autocorrelation-adjusted)</span>
+        <span>MANN-KENDALL</span><span>p = ${pv(sig.mk_p_ar1)} (autocorrelation-adjusted)</span>
+        <span>NOISE LINEUP</span><span>${lu.beat} of ${lu.n_sims} fakes as strong (${(lu.share * 100).toFixed(1)}%)</span>
+        ${Number.isFinite(lu.years_needed) ? `<span>YEARS NEEDED</span><span>about ${lu.years_needed.toFixed(0)} years of record for a change this size (you have ${Math.round(lu.years)})</span>` : ""}
       </div>
-      <div style="margin-top:8px">${R.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${c.k}</div>`).join("")}</div>
-      <div class="dim" style="margin-top:8px">${R.verdict === "NOT YET DETECTABLE" ? "Not detecting a trend does not mean nothing is changing. The record is too short or too noisy to tell yet." : R.verdict === "SUSPECT" ? "Something in the checks above makes this result unsafe to trust as it stands." : "The trend survives every check."}</div>
+      <div style="margin-top:8px">${lu.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${esc(c.text)}</div>`).join("")}</div>
+      <div class="dim" style="margin-top:8px">${esc(lu.explanation)}</div>
       <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"}</div>
       <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-chart">VIEW FULL CHART ▸</button> <button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
-    plotHist(out.querySelector("#cv-h"), R.sims, R.obs);
+    plotHist(out.querySelector("#cv-h"), lu.sims_per_decade, lu.observed_per_decade);
     SFX.stamp();
     const crt = document.querySelector(".crt");
     crt.classList.remove("jolt");
     void crt.offsetWidth;
     crt.classList.add("jolt");
-    log(`VERDICT: ${R.verdict}${S.exploratory ? " (EXPLORATORY)" : ""}`, "hi");
-    const showChart = () => {
-      const an = R.an, tm = an.t.reduce((p, c) => p + c, 0) / an.t.length, vm = an.v.reduce((p, c) => p + c, 0) / an.v.length;
-      const yrs = [];
-      for (let y = s.y0; y <= s.y1; y++) {
-        const vs = an.v.filter((_, i) => Math.floor(an.t[i]) === y);
-        if (vs.length) yrs.push([y + 0.5, vs.reduce((p, c) => p + c, 0) / vs.length]);
-      }
-      const at = (x, b) => vm + b * (x - tm);
-      openChart({
-        title: `CASE · ${ds.regions[s.r].name.toUpperCase()} · ${ds.label.toUpperCase()}`,
-        sub: `${s.y0}-${s.y1} · YEARLY AVERAGE OF THE DESEASONALISED RECORD · VERDICT: ${R.verdict}`,
-        unit: ds.unit,
-        series: yrs,
-        seriesLabel: "Yearly average, seasons removed",
-        fit: [[s.y0 + 0.5, at(s.y0 + 0.5, R.slope)], [s.y1 + 0.5, at(s.y1 + 0.5, R.slope)]],
-        fitLabel: `Sen’s slope ${fmt(R.slope * perDec)} ${unit}`,
-        band: [s.y0 + 0.5, (s.y0 + s.y1 + 1) / 2, s.y1 + 0.5].map((x) => [x, Math.min(at(x, R.ci[0]), at(x, R.ci[1])), Math.max(at(x, R.ci[0]), at(x, R.ci[1]))]),
-        bandLabel: "Range of slopes inside the 95% interval",
-        zero: true,
-        dp: ds.unit === "mm" ? 1 : 2,
-        stats: [["TREND", `${fmt(R.slope * perDec)} ${unit}`], ["95% RANGE", `${fmt(R.ci[0] * perDec)} to ${fmt(R.ci[1] * perDec)}`], ["MANN-KENDALL P", R.mk.p < 1e-4 ? "< 0.0001" : R.mk.p.toFixed(4)], ["NOISE LINEUP", `${R.beat} / 1000 as strong`], ["AUTOCORRELATION", `r1 = ${R.r1.toFixed(2)}`], ["VERDICT", R.verdict]],
-        notes: [core ? `Python core, full record: ${core.sentence}` : "", ds.regions[s.r].long ? `Region: ${ds.regions[s.r].long}.` : ""].filter(Boolean),
-        source: ds.source
-      });
-    };
+    log(`VERDICT: ${word}${S.exploratory ? " (EXPLORATORY)" : ""}`, "hi");
+    const showChart = () => openChart(caseSpec(R, {
+      title: `CASE · ${place.toUpperCase()} · ${ds.label.toUpperCase()}`,
+      source: `${ds.source} · ANALYSED BY THE PROJECT'S PYTHON CORE`,
+      notes: ds.regions[s.r].long ? [`Region: ${ds.regions[s.r].long}.`] : []
+    }));
     out.querySelector("#go-chart").onclick = showChart;
     out.querySelector("#cv-h").classList.add("zoomable");
     out.querySelector("#cv-h").onclick = showChart;
@@ -451,7 +476,7 @@ function openTest() {
       closeId("w-test");
       openSetup();
     };
-    const lines = { "DETECTED": [`It holds up. ${ds.regions[s.r].name}, ${fmt(R.slope * perDec, ds.unit === "mm" ? 0 : 2)} ${unit}.`, "Every way I push on it, the same answer. That goes in the report."], "NOT YET DETECTABLE": ["Can’t call it yet. Too few years, too much wobble.", s.v === "ssl" ? "El Niño years shove the sea up and down out east. That noise hides the climb." : "That doesn’t mean nothing’s happening. It means I can’t prove it yet."], "SUSPECT": ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[R.verdict];
+    const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "Every way I push on it, the same answer. That goes in the report."], not_detected: ["Can’t call it yet. Too few years, too much wobble.", s.v === "ssl" ? "El Niño years shove the sea up and down out east. That noise hides the climb." : "That doesn’t mean nothing’s happening. It means I can’t prove it yet."], suspect: ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[verdict] || ["The engine gave an answer I don’t have words for."];
     setTimeout(() => say(lines), 600);
   };
 }
@@ -485,6 +510,12 @@ const map = () => {
 };
 const trend = (preset) => trendApp.open(win, { log }, preset);
 function startCase(setup) {
+  const set = D()[setup.v];
+  if (!set || set.freq !== "monthly" || !set.regions[setup.r]) {
+    SFX.err();
+    log(`NO CASE DATA FOR ${setup.v} / ${setup.r}`, "hi");
+    return;
+  }
   Object.assign(S, { setup: Object.assign({}, setup), guess: null, look: null, runs: 0, exploratory: false, lastKey: null, deseason: false });
   ["evidence", "lineup"].forEach((id) => {
     const ic = document.querySelector(`.icon[data-id="${id}"]`);
@@ -495,8 +526,8 @@ function startCase(setup) {
   openSetup();
 }
 const data = () => {
-  if (!analysis.load.done) {
-    analysis.load().then(data, () => SFX.err());
+  if (!caseData.load.done) {
+    caseData.load().then(data, () => SFX.err());
     return;
   }
   win("w-data", "DATA.LNK", Object.values(D()).map((d) => `<div style="margin-bottom:8px"><span style="color:var(--blue)">${d.label}</span><br>${d.source} · ${d.start} to ${d.end} · ${d.unit} · ${Object.keys(d.regions).length === 1 ? Object.values(d.regions)[0].long || Object.values(d.regions)[0].name : Object.keys(d.regions).length + " coastal cities"}</div>`).join("") + '<div class="dim">All case data is real NASA data, processed by the Python core (scripts/export_indonesia.py). It works offline.</div>', { left: "520px", top: "90px", width: "480px" });

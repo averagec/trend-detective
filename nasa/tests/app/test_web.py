@@ -715,6 +715,7 @@ def test_web_fixtures_have_the_shape_of_the_live_api(client, scan_client):
         "trend": client.get("/api/trend?variable=t2m&region=east_asia_land").get_json(),
         "scan": scan_client.get("/api/scan?variable=t2m").get_json(),
         "analyse": client.post("/api/analyse-series", json=body()).get_json(),
+        "lineup": client.post("/api/lineup", json=body()).get_json(),
     }
     for name, response in live.items():
         fixture = json.loads((WEB_FIXTURES / f"{name}.json").read_text(encoding="utf-8"))

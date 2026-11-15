@@ -78,6 +78,11 @@ PROVINCE_FIX = {"Bekasi": "Jawa Barat"}
 MIN_RING_AREA = 0.002  # square degrees; drops islets too small to see on the map
 
 
+def write_utf8(path, text) -> None:
+    """Write as UTF-8 (the default is cp1252 on Windows)."""
+    path.write_text(text, encoding="utf-8")
+
+
 def rings(geom):
     polys = geom["coordinates"] if geom["type"] == "MultiPolygon" else [geom["coordinates"]]
     return polys
@@ -155,7 +160,7 @@ def main() -> None:
             continue
         name = PROVINCE_NAMES.get(f["properties"]["name"], f["properties"]["name"])
         provinces[name] = f["geometry"]
-    OUT_PROV.write_text(
+    write_utf8(OUT_PROV, 
         json.dumps(
             {
                 "source": "Natural Earth 1:10m admin-1 (public domain)",

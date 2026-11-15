@@ -42,6 +42,12 @@ MERRA_DIR = ROOT / "data" / "demo" / "json" / "se_asia_maritime"
 KELVIN = 273.15
 
 
+def write_utf8(path: Path, text: str) -> None:
+    """Write JSON as UTF-8. The default encoding is cp1252 on Windows, which turns the degree sign
+    into a byte the browser cannot read."""
+    path.write_text(text, encoding="utf-8")
+
+
 def slug(name: str) -> str:
     return "".join(ch for ch in name.lower() if ch.isalnum())
 
@@ -214,7 +220,7 @@ def main() -> None:
         x["p_adjusted"] = r(a, 6)
         x["significant"] = bool(x.pop("_ols_significant") and a < 0.05)
 
-    OUT.write_text(
+    write_utf8(OUT, 
         json.dumps(
             {
                 "variable": "Sea level next to the city (ECCO dynamic sea surface height)",
@@ -252,7 +258,7 @@ def main() -> None:
             separators=(",", ":"),
         )
     )
-    OUT_CASES.write_text(
+    write_utf8(OUT_CASES, 
         json.dumps(
             {
                 "note": "Made by scripts/export_indonesia.py from NASA data; do not edit.",

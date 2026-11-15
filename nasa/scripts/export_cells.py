@@ -167,7 +167,9 @@ def main(argv: list[str] | None = None) -> None:
         "layers": layers,
         "skipped": skipped,
     }
-    a.out.write_text(json.dumps(payload, separators=(",", ":"), ensure_ascii=False))
+    a.out.write_text(
+        json.dumps(payload, separators=(",", ":"), ensure_ascii=False), encoding="utf-8"
+    )
     a.stats_dir.mkdir(parents=True, exist_ok=True)
     for k, v in layers.items():
         record = {
@@ -177,7 +179,9 @@ def main(argv: list[str] | None = None) -> None:
             "period": v["period"],
             "cells": stats_by_layer[k],
         }
-        (a.stats_dir / f"{k}.json").write_text(json.dumps(record, separators=(",", ":")))
+        (a.stats_dir / f"{k}.json").write_text(
+            json.dumps(record, separators=(",", ":")), encoding="utf-8"
+        )
         print(f"{k}: {v['cells']} cells with data -> {a.stats_dir.name}/{k}.json")
     for k, why in skipped.items():
         print(f"skipped {k}: {why}")

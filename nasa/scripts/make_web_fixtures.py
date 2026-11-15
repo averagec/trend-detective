@@ -68,6 +68,25 @@ def main() -> None:
             "/api/analyse-series",
             json={"label": "Station", "unit": "K", "start": "2000-03", "values": values},
         ),
+        # CASES flow: 20 years, a trend spanning a made-up instrument change (a failed check)
+        "lineup": client.post(
+            "/api/lineup",
+            json={
+                "label": "Water, Maritime SE Asia",
+                "unit": "cm",
+                "start": "2002-01",
+                "values": [
+                    round(
+                        6 * math.sin(2 * math.pi * (i % 12) / 12)
+                        + 0.012 * i
+                        + 0.8 * math.sin(i * 1.7) * math.cos(i * 0.31),
+                        3,
+                    )
+                    for i in range(240)
+                ],
+                "gap_years": [2017, 2018],
+            },
+        ),
         "trend_short": client.get(
             "/api/trend?variable=t2m&region=east_asia_land&from=2000&to=2000"
         ),

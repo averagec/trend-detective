@@ -275,6 +275,27 @@ decides what counts as significant. It never computes a trend itself: every slop
 - **Not covered:** `years_needed` (`core/detect.py`) simulates the OLS test only, so under the two-test
   rule more years are needed than it says. `core/events.py` still tests its own trend at p < 0.05.
 
+### 4.9 The noise lineup and the case verdict (`core/lineup.py`, ADR 0010)
+
+Question: could random noise with the same wobble have made this trend? The lineup builds 1,000 records
+with **no trend**: AR(1) noise with the real record's lag-1 autocorrelation (floored at 0, capped at 0.95)
+and the standard deviation of the real OLS residuals, with the real record's missing months left missing.
+Each fake gets the same OLS slope as the real record (`ols_trend`). The share of fakes whose slope is at
+least as strong as the real one (either direction) is `beat / 1000`. Under 5% counts as evidence. The
+random generator is seeded from the data, so the same record always gets the same fakes.
+
+The case verdict combines three things: the engine's ladder for the series alone (`assess_single`, both
+tests, same sign), the lineup, and the checks. `detected` needs all three; `suspect` is significant
+evidence with a failed check, or a significant test across a known change of instrument; `not_detected`
+is everything else, always under 10 years. Checks: record length; the two tests and the lineup agree;
+later start years (cut 3, 5, 8 years, each only if 10 remain: same Sen sign and adjusted Mann-Kendall
+p below 0.1); leave one year out (the OLS slope may not flip or move by 35% or more); known instrument
+change (GRACE to GRACE-FO, 2017 to 2018, inside the window). The 0.1 and 35% thresholds are our choices,
+not from a reference. The later-start and one-year checks run only when there is a trend to protect.
+
+Limits: the fakes are linear-trend-free AR(1), not a model of El Nino or of any physical cycle. A
+significant trend that fails the lineup is not proof of noise; a trend that passes is not proof of cause.
+
 ## 5. Interpretation rules
 - Say "statistically significant at 95%", never "proves". Never say "caused by" unless a
   cited source does.
