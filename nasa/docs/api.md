@@ -231,27 +231,31 @@ A window with no months in any region is a `400`.
 Limit: Benjamini-Hochberg assumes independent or positively dependent tests. Regions of one variable
 are positively related; ADR 0009 measures this.
 
-## `POST /api/ocean-circle`
+## `POST /api/cell-circle`
 
-A circle drawn on the sea-level map (MAP.EXE, CIRCLE). The server takes the ECCO ocean cells whose
-**centre** is inside the circle, corrects them together, and judges each by both tests (the "circle"
-family, ADR 0009). A cell whose centre is outside is left out, even if it overlaps the circle. The cells'
-own tests are made once by `scripts/export_cells.py` (`data/processed/ocean/ecco_cell_stats.json`);
+A circle drawn on the map (MAP.EXE, CIRCLE), for the selected layer. The server takes the layer's grid
+cells whose **centre** is inside the circle, corrects them together, and judges each by both tests (the
+"circle" family, ADR 0009). A cell whose centre is outside is left out, even if it overlaps the circle.
+The cells' own tests are made once by `scripts/export_cells.py` (`data/processed/cell_stats/<layer>.json`);
 only the correction, which depends on the circle, happens per request.
 
-Body (JSON): `{"lat": number, "lon": number, "radius_km": number}`. The radius must be 75 to 250 km and at
-least 4 ocean cells must be inside, otherwise `400` with the reason. A missing cell file is a `503`
-that says to run `scripts/export_cells.py`.
+Body (JSON): `{"layer": string, "lat": number, "lon": number, "radius_km": number}`.
+- `layer`: `"ssl"` (sea level, the default), `"t2m"`, `"precip"` or `"tws"`: a short lower-case name, never
+  a path (anything else is a `400`).
+- The radius must be 75 to 250 km and at least 4 cells with data must be inside, otherwise `400` with the
+  reason.
+- A layer whose cell file is missing is a `503` that says what to run: `scripts/export_cells.py`, and for
+  `t2m` and `precip` the MERRA-2 cell cube (`process/cell_cube.py`), for `tws` a GRACE cube (not built yet).
 
 | Key | Type | Meaning |
 |---|---|---|
-| `dataset`, `unit`, `period` | | The sea-level product, `"mm"`, first and last year |
+| `layer`, `dataset`, `unit`, `period` | | The layer, its product, its unit (for example `"mm"`), first and last year |
 | `centre`, `radius_km` | | The circle as received |
 | `cells_inside` | integer | Cells with their centre inside |
 | `counts` | object | Cells per verdict: `rise`, `fall`, `unclear`, `none`, `no_data` (they add up to `cells_inside`) |
 | `expected_by_chance` | number | Cells that would look significant in one direction by luck if each were tested alone at 5% |
 | `note` | string | One sentence explaining the correction, for the page |
-| `cells` | array | One per cell: `k` (its position in `indonesia_cells.json`), `lat`, `lon`, `slope_per_decade` (mm), and the `significance` block |
+| `cells` | array | One per cell: `k` (its position in that layer's grid in `indonesia_cells.json`), `lat`, `lon`, `slope_per_decade` (in the layer's unit), and the `significance` block |
 
 ## Selection and map routes (the trend engine)
 

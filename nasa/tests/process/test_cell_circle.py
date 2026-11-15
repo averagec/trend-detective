@@ -1,5 +1,5 @@
-"""A circle drawn on the sea-level map: the cells whose centre is inside it are corrected together
-(process/ocean_circle.py, ADR 0009). Synthetic cells, offline."""
+"""A circle drawn on the map: the cells of a layer whose centre is inside it are corrected together
+(process/cell_circle.py, ADR 0009). Synthetic cells, offline."""
 
 import json
 from dataclasses import replace
@@ -10,11 +10,12 @@ import pytest
 from scipy import stats
 
 from trend_detective.core.summary import Summary, summarise
-from trend_detective.process.ocean_circle import (
-    OceanCells,
+from trend_detective.process.cell_circle import (
+    CellStats,
     analyse_circle,
     cells_inside,
     load,
+    missing_hint,
     summary_from_record,
     summary_to_record,
 )
@@ -34,11 +35,11 @@ def fake(ols_p, mk_p, slope=1.0):
 
 
 def cells_at(points, summaries):
-    """OceanCells from (lat, lon) points; k is the position in the list."""
+    """CellStats from (lat, lon) points; k is the position in the list."""
     lat = np.array([p[0] for p in points], dtype=float)
     lon = np.array([p[1] for p in points], dtype=float)
-    return OceanCells(
-        k=np.arange(len(points)), lat=lat, lon=lon, summaries=list(summaries),
+    return CellStats(
+        layer="ssl", k=np.arange(len(points)), lat=lat, lon=lon, summaries=list(summaries),
         unit="mm", dataset="TEST", period=(1992, 2017),
     )  # fmt: skip
 
@@ -140,7 +141,7 @@ def test_cells_keep_their_grid_position_and_the_counts_add_up():
     base = (0.0, 100.0)
     pts = ring(base, [0, 10, 20, 30, 40, 50])
     cells = cells_at(pts, [fake(0.5, 0.5)] * 6)
-    cells = OceanCells(**{**cells.__dict__, "k": np.array([7, 9, 12, 14, 30, 31])})
+    cells = CellStats(**{**cells.__dict__, "k": np.array([7, 9, 12, 14, 30, 31])})
     out = analyse_circle(cells, *base, 100.0)
     assert [c["k"] for c in out["cells"]] == [7, 9, 12, 14, 30, 31]
     assert sum(out["counts"].values()) == out["cells_inside"] == 6
@@ -185,7 +186,7 @@ def test_missing_file_says_what_to_run(tmp_path):
 
 # --- on the real exported cells (skipped when the file is absent) ---------------------------------
 
-REAL = Path(__file__).resolve().parents[2] / "data" / "processed" / "ocean" / "ecco_cell_stats.json"
+REAL = Path(__file__).resolve().parents[2] / "data" / "processed" / "cell_stats" / "ssl.json"
 
 
 @pytest.mark.skipif(not REAL.exists(), reason="run scripts/export_cells.py first")
@@ -205,3 +206,18 @@ def test_real_cells_are_corrected_across_the_circle_only():
     box_q = dict(zip(cells.k.tolist(), adjusted, strict=True))
     harder = [box_q[c["k"]] > c["significance"]["ols_q"] + 1e-12 for c in out["cells"]]
     assert any(harder)
+
+
+def test_the_hint_says_which_layers_need_a_cell_cube():
+    assert "export_cells.py" in missing_hint("ssl") and "cube" not in missing_hint("ssl")
+    for layer in ("t2m", "precip"):
+        assert "MERRA-2 cell cube" in missing_hint(layer)
+    assert "GRACE" in missing_hint("tws")
+
+
+def test_the_layer_is_carried_through_to_the_answer():
+    base = (0.0, 100.0)
+    cells = cells_at(ring(base, [0, 10, 20, 30, 40]), [fake(0.5, 0.5)] * 5)
+    assert analyse_circle(cells, *base, 100.0)["layer"] == "ssl"
+    other = CellStats(**{**cells.__dict__, "layer": "t2m"})
+    assert analyse_circle(other, *base, 100.0)["layer"] == "t2m"

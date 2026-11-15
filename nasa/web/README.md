@@ -116,14 +116,22 @@ Pick a city from the CITIES dropdown (grouped by region, with search) or click a
 zoom to it. Inland cities (more than 20 km from the sea) show no sea level.
 
 **CIRCLE** works like Earthdata Search: press CIRCLE, then press on the map and drag to draw. The
-server (`POST /api/ocean-circle`) takes the ECCO ocean cells whose **centre is inside the circle** (a
-cell whose centre is outside is left out, even if it overlaps) and corrects them **together**, for
-this circle only (Benjamini-Hochberg, both tests, ADR 0009). The card shows how many rise clearly, how
-many are unclear, the spread of cell trends, the cities inside and the cells' yearly average. Each
-cell's own tests come from `python scripts/export_cells.py` (`indonesia_cells.json` for drawing,
-`data/processed/ocean/ecco_cell_stats.json` for the server). A circle under 75 km or over 250 km, or
-with fewer than 4 ocean cells, gets a pop-up instead (limits from ADR 0005). Esc cancels. **Needs the
-Flask server running**, because the correction depends on which cells you draw around.
+answer follows the selected layer: switch SEA LVL / TEMP / RAIN / WATER and the same circle is
+read again for that variable. The server (`POST /api/cell-circle`) takes the layer's grid cells whose
+**centre is inside the circle** (a cell whose centre is outside is left out, even if it overlaps) and
+corrects them **together**, for this circle only (Benjamini-Hochberg, both tests, ADR 0009). The card
+shows how many go up or down clearly, how many are unclear, the spread of cell trends, the cities
+inside and the cells' yearly average. Each cell's own tests come from `python scripts/export_cells.py`
+(`indonesia_cells.json` for drawing, `data/processed/cell_stats/<layer>.json` for the server). A circle
+under 75 km or over 250 km, or with fewer than 4 cells with data, gets a pop-up (ADR 0005 limits). Esc
+cancels. **Needs the Flask server running**, because the correction depends on which cells you draw
+around.
+
+Grid data per layer: SEA LVL from the ECCO files in the repo (works now). TEMP and RAIN need
+`data/processed/cells/merra2_idn.npz` (built by `process/cell_cube.py` from the raw MERRA-2
+files); then re-run `scripts/export_cells.py`, which writes both the page file and the server's
+`cell_stats/<layer>.json`. WATER needs a GRACE cube (`grace_idn.npz`), not built yet. Until then
+those layers show "no grid data yet".
 SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 

@@ -1,4 +1,4 @@
-"""POST /api/ocean-circle: a circle drawn on the sea-level map. Synthetic cells in a temp file."""
+"""POST /api/cell-circle: a circle drawn on the map, for the selected layer. Synthetic cells."""
 
 import json
 import os
@@ -8,7 +8,7 @@ import pytest
 
 from trend_detective.app.web import create_app
 from trend_detective.core.summary import Summary
-from trend_detective.process.ocean_circle import summary_to_record
+from trend_detective.process.cell_circle import summary_to_record
 
 
 def fake(ols_p, mk_p, slope=1.0):
@@ -20,11 +20,12 @@ def fake(ols_p, mk_p, slope=1.0):
     )  # fmt: skip
 
 
-def write_cells(path, cells):
+def write_cells(path, cells, layer="ssl", unit="mm"):
     records = [{**c, "summary": summary_to_record(c["summary"])} for c in cells]
-    path.write_text(
-        json.dumps({"dataset": "TEST", "unit": "mm", "period": [1992, 2017], "cells": records})
-    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    meta = {"layer": layer, "dataset": "TEST", "unit": unit, "period": [1992, 2017]}
+    doc = {**meta, "cells": records}
+    path.write_text(json.dumps(doc))
 
 
 @pytest.fixture
@@ -45,15 +46,15 @@ def cells():
 
 @pytest.fixture
 def client(tmp_path, cells):
-    path = tmp_path / "ecco_cell_stats.json"
-    write_cells(path, cells)
-    app = create_app(input_csv=tmp_path / "unused.csv", images_dir=tmp_path, ocean_cells_json=path)
+    write_cells(tmp_path / "cell_stats" / "ssl.json", cells)
+    stats_dir = tmp_path / "cell_stats"
+    app = create_app(input_csv=tmp_path / "x.csv", images_dir=tmp_path, cell_stats_dir=stats_dir)
     return app.test_client()
 
 
-def circle(client, lat=0.0, lon=100.1, radius_km=75):
-    body = {"lat": lat, "lon": lon, "radius_km": radius_km}
-    return client.post("/api/ocean-circle", json=body)
+def circle(client, lat=0.0, lon=100.1, radius_km=75, **extra):
+    body = {"lat": lat, "lon": lon, "radius_km": radius_km, **extra}
+    return client.post("/api/cell-circle", json=body)
 
 
 def test_a_circle_returns_its_cells_and_a_verdict_for_each(client):
@@ -63,7 +64,7 @@ def test_a_circle_returns_its_cells_and_a_verdict_for_each(client):
     assert d["cells_inside"] == 5
     assert d["counts"] == {"rise": 5, "fall": 0, "unclear": 0, "none": 0, "no_data": 0}
     assert [c["k"] for c in d["cells"]] == [0, 1, 2, 3, 4]
-    assert (d["dataset"], d["period"], d["unit"]) == ("TEST", [1992, 2017], "mm")
+    assert (d["layer"], d["dataset"], d["period"], d["unit"]) == ("ssl", "TEST", [1992, 2017], "mm")
     sig = d["cells"][0]["significance"]
     assert sig["family"] == {
         "name": "circle", "n_tests": 5, "method": "benjamini-hochberg", "alpha": 0.05,
@@ -102,24 +103,24 @@ def test_bad_requests_are_json_errors(client):
     assert circle(client, radius_km=50).get_json()["status"] == 400  # under 75 km
     assert circle(client, radius_km=251).status_code == 400  # over 250 km
     for body in ({"lat": "x", "lon": 100, "radius_km": 100}, {"lon": 100}, {}, [1, 2]):
-        r = client.post("/api/ocean-circle", json=body)
+        r = client.post("/api/cell-circle", json=body)
         assert r.status_code == 400 and set(r.get_json()) == {"error", "status"}
-    not_json = client.post("/api/ocean-circle", data="nope", content_type="application/json")
+    not_json = client.post("/api/cell-circle", data="nope", content_type="application/json")
     assert not_json.status_code == 400
     assert circle(client, lat=95).status_code == 400
     assert circle(client, lon=500).status_code == 400
     for bad in ("nan", "inf"):
         body = {"lat": bad, "lon": 100, "radius_km": 100}
-        assert client.post("/api/ocean-circle", json=body).status_code == 400
-    r = client.get("/api/ocean-circle")
+        assert client.post("/api/cell-circle", json=body).status_code == 400
+    r = client.get("/api/cell-circle")
     assert r.status_code == 405 and "POST" in r.headers["Allow"]
 
 
 def test_missing_cell_file_says_what_to_run(tmp_path):
     app = create_app(
-        input_csv=tmp_path / "x.csv", images_dir=tmp_path, ocean_cells_json=tmp_path / "no.json"
+        input_csv=tmp_path / "x.csv", images_dir=tmp_path, cell_stats_dir=tmp_path / "none"
     )
-    r = app.test_client().post("/api/ocean-circle", json={"lat": 0, "lon": 100, "radius_km": 100})
+    r = app.test_client().post("/api/cell-circle", json={"lat": 0, "lon": 100, "radius_km": 100})
     assert r.status_code == 503 and "export_cells.py" in r.get_json()["error"]
 
 
@@ -128,7 +129,39 @@ def test_the_file_is_reread_when_it_changes(client, tmp_path, cells):
     assert circle(client).get_json()["counts"]["rise"] == 5
     falling = replace(fake(0.02, 0.02), ols_per_decade=-2.0, sen_per_decade=-2.0)
     changed = [{**c, "summary": falling} if c["k"] < 5 else c for c in cells]
-    path = tmp_path / "ecco_cell_stats.json"
+    path = tmp_path / "cell_stats" / "ssl.json"
     write_cells(path, changed)
     os.utime(path, (path.stat().st_atime, path.stat().st_mtime + 5))
     assert circle(client).get_json()["counts"]["fall"] == 5
+
+
+# --- layers: the circle is read again for the selected layer -----------------------------------
+
+
+def test_the_layer_picks_which_cells_are_judged(client, tmp_path, cells):
+    falling = replace(fake(0.02, 0.02), ols_per_decade=-0.5, sen_per_decade=-0.5)
+    other = [{**c, "summary": falling} if c["k"] < 5 else c for c in cells]
+    write_cells(tmp_path / "cell_stats" / "t2m.json", other, layer="t2m", unit="degC")
+    sea = circle(client).get_json()  # no layer given: sea level, as the page's first layer
+    assert sea["layer"] == "ssl" and sea["counts"]["rise"] == 5
+    temp = circle(client, layer="t2m").get_json()
+    assert temp["layer"] == "t2m" and temp["unit"] == "degC" and temp["counts"]["fall"] == 5
+    assert "degC per decade" in temp["cells"][0]["significance"]["sentence"]
+
+
+def test_a_layer_without_a_file_says_what_it_needs(client):
+    r = circle(client, layer="precip")
+    err = assert_error(r, 503)
+    assert "precip.json" in err and "export_cells.py" in err and "MERRA-2 cell cube" in err
+    assert "GRACE" in assert_error(circle(client, layer="tws"), 503)
+
+
+def test_a_layer_name_is_never_a_path(client):
+    for bad in ("../ssl", "ssl/../ssl", "SSL", "a b", "", "x" * 21, 5, None, ["ssl"], "ssl.json"):
+        r = circle(client, layer=bad)
+        assert r.status_code == 400 and "layer must be a name" in r.get_json()["error"], bad
+
+
+def assert_error(response, status):
+    assert response.status_code == status and set(response.get_json()) == {"error", "status"}
+    return response.get_json()["error"]

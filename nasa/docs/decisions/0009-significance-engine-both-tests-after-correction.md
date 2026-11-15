@@ -30,8 +30,8 @@ q-values on different screens.
 4. **Families (user decision 2): regions within a layer.** One variable across the regions, in the
    chosen window, for the map and TREND.EXE. A circle's family is the cells **inside the circle the user
    draws**: a cell belongs when its centre lies inside it, and a cell whose centre is outside is left out even if it
-   overlaps (user decision, 2026-11-15; this also applies to the ECCO ocean cells of the sea-level map, via
-   `POST /api/ocean-circle`, so the correction is done per drawn circle, never once for a whole box). The earlier "every
+   overlaps (user decision, 2026-11-15; this also applies to the cells of every layer of the map's CIRCLE tool, via
+   `POST /api/cell-circle`, so the correction is done per drawn circle, never once for a whole box). The earlier "every
    region x variable" family of `/api/scan` is dropped.
 5. **Which Mann-Kendall p-value.** The ladder uses the adjusted one. The unadjusted p-value calls 29%
    of trend-free AR(1) series (phi 0.6) significant (ADR 0007), so it must not decide a verdict. The

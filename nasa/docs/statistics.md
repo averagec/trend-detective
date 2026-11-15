@@ -227,14 +227,15 @@ of the 18 trends significant at 5%; for 1990-2019 it turns one (East China air t
   Manado) rise fastest but are not yet significant: ENSO makes their records noisy. Cross-check:
   the whole Southeast Asia box rises +38.8 mm per decade (95% CI +7.6 to +69.9) with the same
   code, inside the city range.
-- Map CIRCLE tool: `scripts/export_cells.py` runs `core.summary.summarise` on every ECCO ocean
-  cell in the Indonesia box (94-142°E, 12°S-7°N; 2,478 cells) and saves each cell's own, uncorrected
-  results. The correction is **not** done there: it depends on the circle a user draws.
-  `POST /api/ocean-circle` takes the cells whose centre is inside that circle (a centre outside is
-  left out) and corrects only them, together (§4.8, ADR 0009). So "rising clearly" means both tests
-  significant after correcting for the cells in this circle; a different circle is a different family.
-  An earlier version corrected once across all 2,478 cells (and on the OLS test alone); that made the
-  count independent of the circle but not of the sea around it.
+- Map CIRCLE tool: `scripts/export_cells.py` runs `core.summary.summarise` on every grid cell of
+  each layer in the Indonesia box (94-142°E, 12°S-7°N) and saves each cell's own, uncorrected results.
+  Sea level (2,478 ECCO cells) is built; TEMP and RAIN use the MERRA-2 cube from `process/cell_cube.py`
+  when present. The correction is **not** done there: it depends on the circle a user draws.
+  `POST /api/cell-circle` takes the cells of the selected layer whose centre is inside that circle (a
+  centre outside is left out) and corrects only them, together (§4.8, ADR 0009). So "rising clearly"
+  means both tests significant after correcting for the cells in this circle; a different circle is a
+  different family. An earlier version corrected once across all of a layer's cells (and on the OLS
+  test alone); that made the count independent of the circle but not of the sea around it.
 - The CASES workflow uses the same monthly city series (`web/public/data/cases_data.json`) plus
   the MERRA-2 Maritime Southeast Asia temperature and rain series. Its lineup runs in the
   browser (Sen's slope, autocorrelation-adjusted Mann-Kendall, 1,000 AR(1) fakes) and always

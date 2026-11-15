@@ -1,13 +1,14 @@
-"""A circle drawn on the sea-level map: the ocean cells inside it, judged together.
+"""A circle drawn on the map: the grid cells inside it, for the selected layer, judged together.
 
-Owns: reading the per-cell test results saved by scripts/export_cells.py, choosing the cells for a
-circle, and handing them to core/significance.py as ONE family. No statistics here.
+Owns: reading the per-cell test results saved by scripts/export_cells.py (one file per layer: sea
+level, temperature, rainfall, water), choosing the cells for a circle, and handing them to
+core/significance.py as ONE family. No statistics here.
 
 Rules (docs/decisions/0005-spatial-selection.md and 0009):
   - A cell belongs to the circle when its CENTRE lies inside it (great-circle distance to the
     centre at most the radius). A cell whose centre is outside is left out, even if the circle
     overlaps it.
-  - The radius is 75 to 250 km and at least 4 ocean cells must be inside.
+  - The radius is 75 to 250 km and at least 4 cells with data must be inside.
   - The correction (Benjamini-Hochberg) runs across the cells inside THIS circle only, for the OLS
     and for the autocorrelation-adjusted Mann-Kendall p-values. A cell is rising or falling only
     when both are significant after that and the slopes agree in sign. Draw a different circle and
@@ -88,10 +89,11 @@ def summary_from_record(r: dict) -> Summary:
 
 
 @dataclass(frozen=True)
-class OceanCells:
-    """The ocean cells with a series, each with its own test results."""
+class CellStats:
+    """The grid cells of one layer that have a series, each with its own test results."""
 
-    k: np.ndarray  # position in the full lat x lon grid (land included), as the page numbers it
+    layer: str
+    k: np.ndarray  # position in the layer's full lat x lon grid, as the page numbers cells
     lat: np.ndarray
     lon: np.ndarray
     summaries: list[Summary]
@@ -100,13 +102,14 @@ class OceanCells:
     period: tuple[int, int]
 
 
-def load(path: Path) -> OceanCells:
+def load(path: Path) -> CellStats:
     path = Path(path)
     if not path.exists():
-        raise FileNotFoundError(f"{path} not found. Run scripts/export_cells.py first.")
+        raise FileNotFoundError(f"{path} not found. {missing_hint(path.stem)}")
     d = json.loads(path.read_text(encoding="utf-8"))
     cells = d["cells"]
-    return OceanCells(
+    return CellStats(
+        layer=d.get("layer", path.stem),
         k=np.array([c["k"] for c in cells], dtype=int),
         lat=np.array([c["lat"] for c in cells], dtype=float),
         lon=np.array([c["lon"] for c in cells], dtype=float),
@@ -117,7 +120,17 @@ def load(path: Path) -> OceanCells:
     )
 
 
-def cells_inside(cells: OceanCells, lat: float, lon: float, radius_km: float) -> np.ndarray:
+def missing_hint(layer: str) -> str:
+    """What to run when a layer's cell results are missing."""
+    base = "Run scripts/export_cells.py first."
+    if layer in ("t2m", "precip"):
+        return base + " This layer also needs the MERRA-2 cell cube (process/cell_cube.py)."
+    if layer == "tws":
+        return base + " This layer also needs a GRACE cell cube (grace_idn.npz), not built yet."
+    return base
+
+
+def cells_inside(cells: CellStats, lat: float, lon: float, radius_km: float) -> np.ndarray:
     """Indices (into `cells`) of the cells whose centre is inside the circle."""
     if not RADIUS_MIN_KM <= radius_km <= RADIUS_MAX_KM:
         raise SelectionError(
@@ -127,13 +140,13 @@ def cells_inside(cells: OceanCells, lat: float, lon: float, radius_km: float) ->
     inside = np.flatnonzero(dist <= radius_km)  # a centre exactly on the edge is inside
     if inside.size < MIN_CELLS:
         raise SelectionError(
-            f"only {inside.size} ocean cell(s) have their centre inside the circle; "
+            f"only {inside.size} cell(s) with data have their centre inside the circle; "
             f"at least {MIN_CELLS} are needed"
         )
     return inside
 
 
-def analyse_circle(cells: OceanCells, lat: float, lon: float, radius_km: float) -> dict:
+def analyse_circle(cells: CellStats, lat: float, lon: float, radius_km: float) -> dict:
     """The cells inside a drawn circle, corrected together and judged by both tests."""
     inside = cells_inside(cells, lat, lon, radius_km)
     items = [
@@ -157,6 +170,7 @@ def analyse_circle(cells: OceanCells, lat: float, lon: float, radius_km: float) 
         )
     n_tests = verdicts[0].n_tests
     return {
+        "layer": cells.layer,
         "dataset": cells.dataset,
         "unit": cells.unit,
         "period": list(cells.period),
@@ -166,7 +180,7 @@ def analyse_circle(cells: OceanCells, lat: float, lon: float, radius_km: float) 
         "counts": counts,
         "expected_by_chance": verdicts[0].expected_by_chance,
         "note": (
-            f"{n_tests} ocean cells have their centre inside the circle. They are corrected "
+            f"{n_tests} cells have their centre inside the circle. They are corrected "
             "together (Benjamini-Hochberg), once for the OLS test and once for the "
             "autocorrelation-adjusted Mann-Kendall test. A cell counts as rising or falling only "
             "when both are significant after that and the two slopes agree in sign. A cell whose "

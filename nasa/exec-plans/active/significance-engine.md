@@ -146,7 +146,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - `core/events.py` tests its own trend with OLS at p < 0.05; it does not follow the ladder yet.
 - ~~`scripts/export_cells.py` was a fourth family (all 2,478 ECCO cells, OLS only)~~ resolved 2026-11-15 on the user's
   decision: the family is the cells whose centre is inside the drawn circle. The script saves each cell's own
-  results; `POST /api/ocean-circle` corrects them per circle through `assess_family(..., "circle")`.
+  results; `POST /api/cell-circle` (per layer) corrects them per circle through `assess_family(..., "circle")`.
 - City, circle and event on real data need the cell cubes (`data/processed/cells/*.npz`, not in the
   repo); until then those paths are tested on synthetic data only.
 - JS statistics still in `web/src/stats/` and the MAP synthetic layers.
@@ -161,7 +161,8 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — Phase 5 done: docs/api.md, statistics.md 4.8, science-rules 3 and 7, ADR 0007/0008/0009 cross-references, ARCHITECTURE (stale duplicate app row removed). Real data: East China temperature 1990-2019 `unclear` (OLS q 0.061, MK q 0.007); full record 18 rises unchanged. Everything is local; nothing pushed.
 - 2026-11-15 — Merged origin/main (762ba82: Sen fix PR #4, project window 1980-2018, GDIS counts, MAP layers) into the branch (5b7027d). User chose option A: the project window now limits /api/trend, /api/scan and /api/meta too. xfail removed (Sen fixed on main). Regional export regenerated (it was stale: made before main's own window change). Found: main's window change pads series that begin later (GRACE 2002, GLDAS 2000, ENSO 1993) from 1980 and reported the padding as '65% of months are missing'; fixed with leading_pad in regional_map (their test that the timeline starts in 1980 still holds). Not pushed since e11fe41.
 - 2026-11-15 — Merged origin/main again (9aa55e3: Earthdata-style CIRCLE tool, city dots; 9 files, no conflicts) and pushed the branch.
-- 2026-11-15 — CIRCLE correction per drawn circle: process/ocean_circle.py, POST /api/ocean-circle, export_cells.py no longer corrects across the box, region-map.js calls the route; 17 new tests. CIRCLE now needs the Flask server. Checked live in the browser: a 199 km circle over the Java Sea reads 30 of 30 cells rising clearly with the server's per-circle note; a circle over Borneo gives the server's 'not enough sea data' message and clears the previous card; with the server stopped the page says 'Cannot reach the analysis server'.
+- 2026-11-15 — CIRCLE correction per drawn circle: process/cell_circle.py, POST /api/cell-circle (layer-aware), export_cells.py no longer corrects across the box, region-map.js calls the route; 17 new tests. CIRCLE now needs the Flask server. Checked live in the browser: a 199 km circle over the Java Sea reads 30 of 30 cells rising clearly with the server's per-circle note; a circle over Borneo gives the server's 'not enough sea data' message and clears the previous card; with the server stopped the page says 'Cannot reach the analysis server'.
+- 2026-11-15 — Merged origin/main da29a82 (CIRCLE answers for the selected layer; 5 conflicts, all CIRCLE files). Took their layered page and export script as the base and re-applied the per-circle correction per layer. Their t2m/precip/tws cell layers are still not built (no cubes on any machine yet): those layers answer with a 503 that says what to build, instead of a whole-box OLS-only count.
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after
