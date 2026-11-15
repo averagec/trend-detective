@@ -38,22 +38,11 @@ const LAYERS = [
     downV: "falling"
   },
   { k: "t2m", short: "TEMP", name: "Air temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2m", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer", down: "Cooler", noun: "temperature", upV: "warming", downV: "cooling" },
-  { k: "t2mmax", short: "HOT DAYS", name: "Hottest daily temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2mmax", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Hotter days", down: "Cooler days", noun: "daily maximum temperature", upV: "getting hotter", downV: "getting cooler" },
   { k: "tsurf", short: "LAND T", name: "Land surface temperature", src: "MERRA-2 · NASA GES DISC", box: "merra2:tsurf", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer ground", down: "Cooler ground", noun: "land surface temperature", upV: "warming", downV: "cooling" },
   { k: "precip", short: "RAIN", name: "Rainfall", src: "MERRA-2 · NASA GES DISC", box: "merra2:precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
-  { k: "gpcp_precip", short: "GPCP", name: "Rainfall (GPCP satellite + gauge)", src: "GPCP v3.3 · NASA GES DISC", box: "gpcp:gpcp_precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
-  { k: "gldas_rain", short: "GLDAS RAIN", name: "Rainfall (GLDAS model)", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_rain", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
-  { k: "tws", short: "WATER", name: "Water stored on land", src: "GRACE / GRACE-FO · NASA JPL", box: "grace:grace_lwe", unit: "cm", ud: "cm/dec", pal: "w", dp: 1, fxUp: "rain", fxDown: "drought", up: "More water stored", down: "Less water stored", noun: "water storage", upV: "gaining water", downV: "losing water" },
-  { k: "sm_0_10", short: "SOIL 0-10", name: "Soil moisture, top 10 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_0_10cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
-  { k: "sm_10_40", short: "SOIL 10-40", name: "Soil moisture, 10 to 40 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_10_40cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
-  { k: "sm_40_100", short: "SOIL 40-100", name: "Soil moisture, 40 to 100 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_40_100cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
-  { k: "sm_100_200", short: "SOIL 100-200", name: "Soil moisture, 100 to 200 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_100_200cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
   { k: "qv2m", short: "HUMID", name: "Air humidity (2 m specific humidity)", src: "MERRA-2 · NASA GES DISC", box: "merra2:qv2m", unit: "g/kg", ud: "g/kg per dec", pal: "w", dp: 2, fxUp: null, fxDown: null, up: "More humid", down: "Less humid", noun: "humidity", upV: "getting more humid", downV: "getting less humid" },
   { k: "vpd", short: "VPD", name: "Dryness of the air (vapour pressure deficit)", src: "MERRA-2 · NASA GES DISC", box: "merra2:vpd", unit: "kPa", ud: "kPa per dec", pal: "t", dp: 3, fxUp: "drought", fxDown: null, up: "Drier air", down: "Moister air", noun: "vapour pressure deficit", upV: "getting drier", downV: "getting moister" },
-  { k: "evap", short: "EVAP", name: "Surface evaporation", src: "MERRA-2 · NASA GES DISC", box: "merra2:evap", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: null, fxDown: null, up: "More evaporation", down: "Less evaporation", noun: "evaporation", upV: "evaporating more", downV: "evaporating less" },
-  { k: "sst", name: "Sea surface temperature", src: "MUR SST · PO.DAAC", y0: 2003, y1: 2024, lock: "a sea surface temperature series (not in the Python pipeline yet)" },
-  { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "a vegetation series (not in the Python pipeline yet)" },
-  { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "an aerosol series (not in the Python pipeline yet)" }
+  { k: "evap", short: "EVAP", name: "Surface evaporation", src: "MERRA-2 · NASA GES DISC", box: "merra2:evap", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: null, fxDown: null, up: "More evaporation", down: "Less evaporation", noun: "evaporation", upV: "evaporating more", downV: "evaporating less" }
 ];
 const SSL_BINS = [30, 36, 42, 48];
 const BOX_KEY = "se_asia_maritime", BOX = [95, -10, 141, 10];
@@ -723,8 +712,6 @@ function fxOf(r) {
   const k = LAYERS[st.v].k, b = r.bin;
   if (k === "t2m") return b === 4 ? "drought" : null;
   if (k === "precip") return b === 4 ? "storm" : b === 3 ? "rain" : b <= 1 ? "drought" : null;
-  if (k === "tws") return b >= 3 ? "rain" : b <= 1 ? "drought" : null;
-  if (k === "sst") return b === 4 ? "storm" : null;
   return null;
 }
 function placeFx() {
@@ -832,7 +819,7 @@ function hud() {
 }
 function toolbar() {
   const fixed = LAYERS[st.v].real || LAYERS[st.v].box, [lo, hi] = fixed ? [0, 0] : span(st.v), locked = LAYERS.filter((L) => L.lock);
-  $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button></div>
+  $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}${locked.length ? `<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button>` : ""}</div>
     ${fixed ? `<span class="rm-fixed" title="Trends are computed once over the full record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
     <span class="rm-yrs" id="rm-yrs">${fixed ? `${st.span[0]}-${st.span[1]}` : ""}</span>
     <div class="rm-dd" id="rm-dd"><button class="rm-ddb${st.city >= 0 ? " on" : ""}" id="rm-ddb" aria-haspopup="listbox" aria-expanded="false"><i class="pin"></i><span>${st.city >= 0 && st.ssl ? st.ssl.cities[st.city].name.toUpperCase() : "CITIES"}</span><b>▾</b></button>

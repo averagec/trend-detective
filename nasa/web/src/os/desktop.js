@@ -13,7 +13,6 @@ const CASES = [
   { id: "002", name: "THE_EAST", q: "Ambon’s sea rose fastest. Can we prove it?", preset: { v: "ssl", r: "ambon", y0: 1992, y1: 2017 }, open: true },
   { id: "003", name: "HOTTER_ISLANDS", q: "Are the islands getting hotter?", preset: { v: "t2m", r: "idn", y0: 1980, y1: 2025 }, open: true },
   { id: "004", name: "MORE_RAIN", q: "Is more rain falling on the islands?", preset: { v: "precip", r: "idn", y0: 1980, y1: 2025 }, open: true },
-  { id: "005", name: "WETTER_GROUND", q: "Is more water soaking into the islands?", preset: { v: "tws", r: "idn", y0: 2002, y1: 2025 }, open: true },
   { id: "006", name: "SINKING_CITY", q: "How fast is Jakarta’s ground sinking?", open: false, lock: "NEEDS LAND SUBSIDENCE DATA (INSAR, E.G. NASA-ISRO NISAR)" }
 ];
 let current = 0, z = 10, noiseTimer = null, booting = false;
