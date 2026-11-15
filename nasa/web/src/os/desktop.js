@@ -186,7 +186,7 @@ function openBrief() {
   if (!c.open) {
     SFX.err();
     log(`CASE_${c.id}: LOCKED. ${c.lock}.`, "hi");
-    say(["Not that one. Sea level from the ocean can’t see the ground sinking under the city.", "That needs satellite radar of the land. Not in my files yet."]);
+    say(["Can’t pick that. It’s not done yet."]);
     return;
   }
   const p = c.preset, ds = D()[p.v];
@@ -311,10 +311,10 @@ function openHyp() {
     openHyp();
     log(`GUESS LOCKED: ${opts[S.guess]}`, "hi");
     unlock("evidence");
-    setTimeout(() => say(["Written down. No changing my mind once I’ve seen the data.", "Now let’s look at the actual record."], () => {
+    setTimeout(() => {
       closeId("w-hyp");
       openPlot();
-    }), 400);
+    }, 700);
   });
 }
 // The series with each calendar month's average taken out, from the server (the page subtracts nothing).
@@ -337,7 +337,6 @@ async function seasonsRemoved(s, cw, ds) {
 async function openPlot() {
   if (!S.setup || S.guess === null) {
     SFX.err();
-    say(["Not yet. Which city, which years? And I write my guess down first."]);
     return;
   }
   closeId("w-hyp");
@@ -383,7 +382,7 @@ async function openPlot() {
     S.deseason = e.target.checked;
     SFX.select();
     openPlot();
-    if (S.deseason) say(["There. With the seasons taken out, it’s easier to see what’s left."]);
+    if (S.deseason) say(["Hm. Seasons out of the way. That’s a lot easier to read."]);
   };
   w.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     S.look = +b.dataset.l;
@@ -391,7 +390,7 @@ async function openPlot() {
     openPlot();
     unlock("lineup");
     log(`EYEBALL CALL: ${["UP", "DOWN", "CAN’T TELL"][S.look]}`);
-    say(["That’s my gut talking. It’s been wrong before.", "Time to check it properly. LINEUP."]);
+    say(["Looks like it’s heading somewhere... but my eyes have fooled me before.", "Let’s see if it survives the lineup."]);
   });
   const gl = w.querySelector("#go-lineup");
   if (gl) gl.onclick = () => {
@@ -402,7 +401,7 @@ async function openPlot() {
 function openTest() {
   if (!S.setup || S.look === null) {
     SFX.err();
-    say(["Not yet. I haven’t even looked at the record."]);
+    say(["I haven’t even looked at the record yet."]);
     return;
   }
   const s = S.setup, ds = D()[s.v];
@@ -478,7 +477,7 @@ function openTest() {
       closeId("w-test");
       openSetup();
     };
-    const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "Every way I push on it, the same answer. That goes in the report."], not_detected: ["Can’t call it yet. Too few years, too much wobble.", s.v === "ssl" ? "El Niño years shove the sea up and down out east. That noise hides the climb." : "That doesn’t mean nothing’s happening. It means I can’t prove it yet."], suspect: ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[verdict] || ["The engine gave an answer I don’t have words for."];
+    const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "No matter how I poke at it, same answer. Into the report it goes."], not_detected: ["Hm. Too much wobble to call it.", s.v === "ssl" ? "All those El Niño years jerking the sea around. The climb’s buried in there somewhere." : "Something might be happening. I just can’t prove it yet."], suspect: ["Strong... maybe too strong. Something’s off.", "One of the checks failed. I’m not putting my name on this."] }[verdict] || ["Huh. That answer doesn’t make sense to me."];
     setTimeout(() => say(lines), 600);
   };
 }
@@ -551,8 +550,8 @@ const ICONS = [
   ["trend", "chart", "TREND.EXE", () => trend()],
   ["log", "disk", "LOG.TXT", logw],
   ["id", "id", "ID.CARD", idcard],
-  ["evidence", "mag", "EVIDENCE", () => isLocked("evidence") ? (SFX.err(), say(["Guess first. Then the evidence."])) : openPlot(), true],
-  ["lineup", "chart", "LINEUP", () => isLocked("lineup") ? (SFX.err(), say(["Not yet. I haven’t even looked at the record."])) : openTest(), true],
+  ["evidence", "mag", "EVIDENCE", () => isLocked("evidence") ? (SFX.err(), say(["I should probably decide what I think first."])) : openPlot(), true],
+  ["lineup", "chart", "LINEUP", () => isLocked("lineup") ? (SFX.err(), say(["I haven’t even looked at the record yet."])) : openTest(), true],
   ["trash", "trash", "TRASH", trash]
 ];
 let guide = 0;
@@ -683,7 +682,6 @@ async function open() {
   }
   booting = false;
   endSkip();
-  setTimeout(() => say(["Okay. I’m in.", "Thirty-one cities across Indonesia. The tide keeps coming further in.", "Is the sea really rising, or does it just feel that way? MAP.EXE first, then the case files."]), 400);
 }
 async function shutdown() {
   closeSay();

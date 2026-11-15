@@ -1,5 +1,4 @@
 import { SFX } from "../audio/sfx.js";
-import { say } from "../ui/dialogue.js";
 import { caseData } from "../data/case-data.js";
 import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
@@ -54,11 +53,6 @@ let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
 const sfx = (k) => SFX[k] && SFX[k]();
-const talk = (lines, key) => {
-  if (key && st.seen[key]) return;
-  if (key) st.seen[key] = 1;
-  say(lines);
-};
 // The rows the map draws, one per country. They carry no statistics: every number on the map comes
 // from the server (the sea level cells, the region boxes, the circle). Only the span is set here.
 function compute() {
@@ -341,12 +335,8 @@ function pickCity(i, fly) {
   if (L.real) {
     const k = cityState(c);
     sfx(k === "inland" ? "err" : "select");
-    if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "Want a bigger picture? Press CIRCLE and drag over the sea around it."], "sig");
-    else if (k === "ns") talk([`${c.name}. The sea climbs fast here too.`, "But it swings so much from year to year that I can’t prove it yet. That’s a different answer from no."], "ns");
-    else talk(["Inland. The ocean data can’t speak for this one.", "I’m not inventing a number to fill the gap."], "inland");
   } else {
     sfx("select");
-    talk([`${c.name}. Its number comes from the grid cells around it.`, "Each cell is about 55 km wide, so this is an area, not one spot."], "city-" + L.k);
   }
   if (fly) flyTo(cityBox(c));
   paint(false);
@@ -716,7 +706,6 @@ function toolbar() {
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
-    if (LAYERS[st.v].box && !st.circ) talk(["This one is a single box over the whole region. Indonesia, Malaysia, the Philippines.", "One honest number for the box. Not city by city. The grid is too coarse for that."], "box");
     st.yr = null;
     st.bx = false;
     st.c = -1;
@@ -1143,7 +1132,6 @@ async function open(win, helpers) {
   });
   setTimeout(() => paint(true), 350);
   setTimeout(() => zoom("idn"), 1700);
-  if (st.ssl) setTimeout(() => talk([`${st.ssl.cities.length} cities. ${st.ssl.tests} of them on the coast.`, "Click a city dot. Or press CIRCLE and drag on the map to draw your own area."], "map"), 2900);
   H.log && H.log(st.ssl ? `MAP: ECCO SEA LEVEL FOR ${st.ssl.tests} COASTAL CITIES LOADED.` : "MAP: SAMPLE DATA.");
 }
 // CIRCLE tool (like Earthdata Search): press the CIRCLE button, then press on the map and drag
@@ -1330,11 +1318,6 @@ async function circleResult() {
   circleDraw();
   card();
   placeFx();
-  if (!st.seen["circle" + L.k]) {
-    st.seen["circle" + L.k] = 1;
-    const word = up >= down ? L.upV : L.downV;
-    say(["Switch the layer and the same circle tells a different story."]);
-  }
 }
 // The server's verdicts for one area, turned into the numbers the cards show. Nothing is judged here.
 function areaResult(J, D, cities, layer) {
