@@ -1,7 +1,8 @@
 // TREND.EXE: pick a question, a place and the years; the analysis engine (Flask + Python core)
 // returns the monthly series and every statistic, and this window only draws them.
-// All numbers come from /api/trend and /api/scan through data/api.js; nothing is computed here.
-import { getMeta, getTrend, getScan, newest, STALE } from "../data/api.js";
+// All numbers come from /api/trend through data/api.js (its `significance` block already accounts
+// for the other regions of the same variable); nothing is computed here.
+import { getMeta, getTrend, newest, STALE } from "../data/api.js";
 import { trendSpec } from "../data/to-chart.js";
 import { renderChart, openChart } from "../ui/chart-view.js";
 import { SFX } from "../audio/sfx.js";
@@ -50,10 +51,10 @@ async function open(win, ctx, preset) {
     <div class="cv-inline" id="tr-out"></div>`);
 
   const $ = (q) => w.querySelector(q), out = $("#tr-out");
-  let last_ = null; // {data, scan}: the toggle redraws without asking the server again
+  let last_ = null; // the last response: the toggle redraws without asking the server again
   const draw = () => {
     if (!last_) return;
-    const spec = trendSpec(last_.data, { scan: last_.scan, view: sel.view });
+    const spec = trendSpec(last_, { view: sel.view });
     renderChart(out, spec);
     $("#tr-full").disabled = false;
     $("#tr-full").onclick = () => (SFX.select(), openChart(spec));
@@ -71,11 +72,11 @@ async function open(win, ctx, preset) {
     out.classList.add("tr-busy");
     try {
       const params = { variable: sel.variable, region: sel.region, from: sel.from, to: sel.to };
-      const result = await latest(Promise.all([getTrend(params), getScan({ from: sel.from, to: sel.to }).catch(() => null)]));
+      const result = await latest(getTrend(params));
       if (result === STALE) return;
-      last_ = { data: result[0], scan: result[1] };
+      last_ = result;
       draw();
-      ctx.log(`TREND.EXE: ${result[0].label} / ${result[0].region_name} ${sel.from}-${sel.to}`);
+      ctx.log(`TREND.EXE: ${result.label} / ${result.region_name} ${sel.from}-${sel.to}: ${result.significance.verdict.toUpperCase()}`);
     } catch (err) {
       SFX.err();
       last_ = null;

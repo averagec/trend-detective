@@ -129,14 +129,23 @@ function chartSVG(data) {
   return out;
 }
 
-function panelHTML(data, scan) {
+const VERDICT = {
+  rise: "Rising: both tests significant", fall: "Falling: both tests significant",
+  unclear: "Unclear: the two tests do not agree", none: "No significant trend (yet)",
+  no_data: "Not enough data",
+};
+
+function panelHTML(data) {
   const s = data.statistics;
-  // q-value from /api/scan: the p-value corrected for all the trends tested at once
-  const q = scan && scan.results.find((r) => r.region === data.region && r.variable === data.variable);
+  // The verdict, q-values and sentence come from the server's `significance` block: it already
+  // accounts for the other regions of this variable (the "layer" family).
+  const sig = data.significance;
+  const fam = sig.family;
+  const qLabel = fam.name === "none" ? "p-values (no correction)" : `q-values (corrected for ${fam.n_tests} regions tested together)`;
   const ci = Array.isArray(s.ols_ci_per_decade) ? s.ols_ci_per_decade : [null, null];
   const hasTrend = finite(s.ols_per_decade);
   let html = `<section class="panel"><h3>${esc(data.region_name)}</h3>`;
-  html += `<p class="headline">${esc(data.sentence)}</p>`;
+  html += `<p class="headline">${esc(sig.sentence)}</p>`;
   html += chartSVG(data);
   if (hasTrend) {
     html += `<div class="cards" style="margin-top:12px">
@@ -156,24 +165,23 @@ function panelHTML(data, scan) {
         <td>${fmt(s.n_eff, 0)} of ${s.n_months} months</td></tr>
       <tr><th scope="row">Mann-Kendall p-value (not adjusted)</th><td>${fmtP(s.mk_p)}</td></tr>
       <tr><th scope="row">Mann-Kendall p-value (adjusted for autocorrelation)</th><td>${fmtP(s.mk_p_ar1)}</td></tr>
-      ${q && finite(q.ols_q) ? `<tr><th scope="row">OLS q-value (corrected for ${scan.n_tests} trends tested at once)</th>
-        <td>${fmtP(q.ols_q)}</td></tr>
-      <tr><th scope="row">After the correction</th>
-        <td>${q.significant_q ? "statistically significant at 95%" : "no significant trend detected (yet)"}</td></tr>` : ""}
+      <tr><th scope="row">OLS and Mann-Kendall ${esc(qLabel)}</th>
+        <td>${fmtP(sig.ols_q)} · ${fmtP(sig.mk_q)}</td></tr>
     </tbody></table>
+    <p class="muted"><b>${esc(VERDICT[sig.verdict] || sig.verdict)}</b></p>
     <p class="muted">Neighbouring months resemble each other, so ${s.n_months} months hold about as much
       independent information as ${fmt(s.n_eff, 0)}. The OLS p-value, its confidence interval and the adjusted
       Mann-Kendall p-value use that smaller number.</p>`;
   }
-  if (data.warnings.length) {
-    html += `<ul class="warnings" role="note">${data.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  if (sig.warnings.length) {
+    html += `<ul class="warnings" role="note">${sig.warnings.map((w) => `<li>${esc(w.text)}</li>`).join("")}</ul>`;
   }
   return html + `</section>`;
 }
 
 function comparisonNote(a, b) {
   const sa = a.statistics, sb = b.statistics;
-  const bothSig = sa.ols_significant && sb.ols_significant;
+  const bothSig = a.significance.significant && b.significance.significant; // after correction
   const sameSign = Math.sign(sa.ols_per_decade) === Math.sign(sb.ols_per_decade);
   if (bothSig && !sameSign) {
     return `${a.region_name} and ${b.region_name} show opposite trends, and both are statistically significant at 95%.`;
@@ -231,16 +239,15 @@ function refresh() {
   return (async () => {
     showError("");
     try {
-      const [a, b, scan] = await Promise.all([
+      const [a, b] = await Promise.all([
         api(query(state.regionA)),
         state.regionB ? api(query(state.regionB)) : null,
-        api(`api/scan?${new URLSearchParams(range)}`).catch(() => null), // the q-value is optional
       ]);
       if (id !== state.request) return; // a newer request has started
       $("result").innerHTML = b
-        ? `<div class="compare-grid">${panelHTML(a, scan)}${panelHTML(b, scan)}</div>` +
+        ? `<div class="compare-grid">${panelHTML(a)}${panelHTML(b)}</div>` +
           `<p class="comparison">${esc(comparisonNote(a, b))}</p>`
-        : `<div class="result">${panelHTML(a, scan)}</div>`;
+        : `<div class="result">${panelHTML(a)}</div>`;
     } catch (err) {
       if (id === state.request) showError(err.message);
     }
@@ -263,7 +270,7 @@ async function analyseOwn() {
       body: JSON.stringify({ label: $("own-label").value, unit: $("own-unit").value,
         start: $("own-start").value.trim(), values: parseValues($("own-values").value) }),
     });
-    $("own-result").innerHTML = panelHTML(data, null);
+    $("own-result").innerHTML = panelHTML(data);
   } catch (err) {
     $("own-result").innerHTML = "";
     showError(err.message);

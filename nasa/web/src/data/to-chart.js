@@ -1,6 +1,7 @@
 // Turns an /api/trend (or /api/analyse-series) response into the spec that ui/chart-view.js draws.
-// No statistics here: it only reshapes numbers the server already computed.
-// Field meanings: docs/api.md. Time is `year + (month - 1) / 12`, as chart-view expects.
+// No statistics here: it only reshapes numbers the server already computed. The verdict, the
+// q-values and the sentence come from the response's `significance` block (docs/api.md).
+// Time is `year + (month - 1) / 12`, as chart-view expects.
 
 const MINUS = "−";
 const finite = (x) => typeof x === "number" && Number.isFinite(x);
@@ -8,9 +9,16 @@ const when = (period) => Number(period.slice(0, 4)) + (Number(period.slice(5, 7)
 const dp = (x) => (Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : Math.abs(x) >= 1 ? 2 : 3);
 const sgn = (v) => (finite(v) ? `${v < 0 ? MINUS : "+"}${Math.abs(v).toFixed(dp(v))}` : "n/a");
 const pv = (v) => (!finite(v) ? "n/a" : v < 0.001 ? "< 0.001" : v.toFixed(3));
+const VERDICT = {
+  rise: "RISING: both tests significant",
+  fall: "FALLING: both tests significant",
+  unclear: "UNCLEAR: the two tests do not agree",
+  none: "NO SIGNIFICANT TREND (YET)",
+  no_data: "NOT ENOUGH DATA",
+};
+const UNIT_OF_FAMILY = { layer: "REGIONS", circle: "CELLS" };
 
-// data: the server response. opts.scan: the /api/scan response (for the q-value), optional.
-// opts.view: "anomaly" (seasons removed, default: the trend line and band apply) or "raw".
+// data: the server response. opts.view: "anomaly" (seasons removed, default: the trend line and band apply) or "raw".
 export function trendSpec(data, opts = {}) {
   const view = opts.view === "raw" ? "raw" : "anomaly";
   const s = data.statistics, unit = data.unit, field = view === "raw" ? "value" : "anomaly";
@@ -27,9 +35,7 @@ export function trendSpec(data, opts = {}) {
     band = (data.band || []).filter((b) => finite(b.low) && finite(b.high)).map((b) => [b.year + 0.5, b.low, b.high]);
   }
 
-  const row = opts.scan && !custom
-    ? opts.scan.results.find((r) => r.region === data.region && r.variable === data.variable)
-    : null;
+  const sig = data.significance;
   const per = `${unit} / decade`;
   const stats = [["RECORD", `${s.n_years.toFixed(1)} years · ${s.n_months} months with data`]];
   if (hasTrend) {
@@ -42,15 +48,15 @@ export function trendSpec(data, opts = {}) {
       ["MANN-KENDALL P", `${pv(s.mk_p)} unadjusted · ${pv(s.mk_p_ar1)} adjusted`],
       ["SEN'S SLOPE", `${sgn(s.sen_per_decade)} ${per}`]
     );
-    if (row && finite(row.ols_q)) {
-      stats.push(
-        [`Q (${opts.scan.n_tests} TRENDS TESTED)`, pv(row.ols_q)],
-        ["AFTER THE CORRECTION", row.significant_q ? "statistically significant at 95%" : "no significant trend detected (yet)"]
-      );
-    }
+    const fam = sig.family;
+    const label = fam.name === "none"
+      ? "P-VALUES (NO CORRECTION)"
+      : `Q, CORRECTED FOR ${fam.n_tests} ${UNIT_OF_FAMILY[fam.name] || "TESTS"}`;
+    stats.push([label, `OLS ${pv(sig.ols_q)} · MANN-KENDALL ${pv(sig.mk_q)}`]);
   }
-  const notes = [data.sentence, ...data.warnings];
-  if (row && finite(row.ols_q)) notes.push(opts.scan.note);
+  stats.push(["VERDICT", VERDICT[sig.verdict] || sig.verdict.toUpperCase()]);
+  // The sentence and warnings are the server's, built from the verdict (never from one p-value).
+  const notes = [sig.sentence, ...sig.warnings.map((w) => w.text)];
 
   return {
     title: `${(custom ? data.label : `${data.region_name} · ${data.label}`).toUpperCase()}`,

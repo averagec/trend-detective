@@ -119,11 +119,11 @@ uncorrected sentence. The page shows `significance.sentence`.
       Frozen key tests: add the new keys, remove none.
 
 ### Phase 4: website
-- [ ] 4.1 `web/src/data/to-chart.js` reads `significance`: verdict, both q-values, family text
+- [x] 4.1 `web/src/data/to-chart.js` reads `significance`: verdict, both q-values, family text
       ("tested across 3 regions for this variable"), sentence. TREND.EXE no longer calls `/api/scan`.
-- [ ] 4.2 Regenerate `web/tests/fixtures/*.json`, extend the node tests, keep the shape test in step.
-- [ ] 4.3 Their `region-map.js` and the circle tool read `direction` and the counts; confirm they still
-      draw, edit only if a key moved (none should).
+- [x] 4.2 Regenerate `web/tests/fixtures/*.json`, extend the node tests, keep the shape test in step.
+- [x] 4.3 Their `region-map.js` and the circle tool read `direction` and the counts: no key moved (checked by their
+      tests passing); not re-checked in a browser. The classic page was also switched to the block.
 
 ### Phase 5: docs and sign-off
 - [ ] 5.1 `docs/api.md`, `docs/statistics.md` (reporting section, families, verdict),
@@ -155,6 +155,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — Phase 0 done: our work committed (e758415) on feature/trend-exe-api-integration, branch feature/significance-engine merges main (a7185e0). Route renamed to /api/analyse-series, leading_pad keyword-only, their errors now carry `status`, our ADRs are 0007 and 0008, their events section is statistics.md 3.6. Not pushed. Next: Phase 1 (freeze today's numbers).
 - 2026-11-15 — Phase 1 done (snapshots of today's numbers and decisions). Phase 2 done: ADR 0009, `core/significance.py` (ladder, per-test BH, verdict sentence), 24 golden tests, 4 seeded simulations. Finding: the pre-registered criterion (d) was the wrong statistic (BH controls FDR, not the chance of any false flag); amended in the ADR with the reasoning, measured FDR 5.5% vs the 4.7% bound. Limitation: autocorrelated nulls (phi 0.6, 10 years) give 15% of families with a false flag. Next: Phase 3.
 - 2026-11-15 — Phase 3 done: city, circle, map, /api/trend, /api/scan (now `?variable=`, layer family) and /api/analyse-series return the `significance` block (shared `process/significance_json.py`); circle cells and map `direction` follow the ladder; legacy keys kept, `mk_p_ar1`, `mk_p_ar1_adj` added. Trend/CI/p numbers unchanged (snapshot). Proven behaviour change: an AR(1) region with unadjusted MK p 0.0006 but adjusted 0.087 was a `rise`, is now `unclear`. Fixtures regenerate with `scripts/make_web_fixtures.py`. Next: Phase 4 (website).
+- 2026-11-15 — Phase 4 done: TREND.EXE and the classic page read the `significance` block (verdict, both q-values, family label, server sentence); TREND.EXE no longer calls /api/scan; web tests 12. Next: Phase 5 (docs, science rules, real-data check).
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after

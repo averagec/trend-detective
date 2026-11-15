@@ -40,7 +40,8 @@ const query = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !
 
 export const getMeta = () => get("api/meta"); // {variables, regions, years}
 export const getTrend = ({ variable, region, from, to }) => get(`api/trend?${query({ variable, region, from, to })}`);
-export const getScan = ({ from, to } = {}) => get(`api/scan?${query({ from, to })}`);
+// One variable across all its regions, judged together (the "layer" family).
+export const getScan = ({ variable, from, to }) => get(`api/scan?${query({ variable, from, to })}`);
 // Your own monthly series: {label, unit, start: "YYYY-MM", values: [number|null, ...]}
 export const analyseOwn = (body) =>
   request("api/analyse-series", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
