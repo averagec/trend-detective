@@ -2,6 +2,7 @@
 // No statistics here: it only reshapes numbers the server already computed. The verdict, the
 // q-values and the sentence come from the response's `significance` block (docs/api.md).
 // Time is `year + (month - 1) / 12`, as chart-view expects.
+import { VERDICT } from "./verdict-wording.js";
 
 const MINUS = "−";
 const finite = (x) => typeof x === "number" && Number.isFinite(x);
@@ -9,13 +10,6 @@ const when = (period) => Number(period.slice(0, 4)) + (Number(period.slice(5, 7)
 const dp = (x) => (Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : Math.abs(x) >= 1 ? 2 : 3);
 const sgn = (v) => (finite(v) ? `${v < 0 ? MINUS : "+"}${Math.abs(v).toFixed(dp(v))}` : "n/a");
 const pv = (v) => (!finite(v) ? "n/a" : v < 0.001 ? "< 0.001" : v.toFixed(3));
-const VERDICT = {
-  rise: "RISING: both tests significant",
-  fall: "FALLING: both tests significant",
-  unclear: "UNCLEAR: the two tests do not agree",
-  none: "NO SIGNIFICANT TREND (YET)",
-  no_data: "NOT ENOUGH DATA",
-};
 const UNIT_OF_FAMILY = { layer: "REGIONS", circle: "CELLS" };
 
 // data: the server response. opts.view: "anomaly" (seasons removed, default: the trend line and band apply) or "raw".

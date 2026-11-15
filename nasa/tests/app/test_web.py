@@ -204,7 +204,7 @@ TREND_KEYS = {
 }  # fmt: skip
 SIGNIFICANCE_KEYS = {
     "family", "ols_p", "ols_q", "mk_p_ar1", "mk_q", "verdict", "significant", "expected_by_chance",
-    "sentence", "warnings",
+    "sentence", "explanation", "warnings",
 }  # fmt: skip
 STATISTICS_KEYS = {
     "n_months", "n_years", "ols_per_decade", "ols_ci_per_decade", "ols_p", "ols_significant",

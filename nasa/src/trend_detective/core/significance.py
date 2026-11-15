@@ -51,6 +51,7 @@ class Assessment:
     significant: bool  # the verdict is "rise" or "fall"
     expected_by_chance: float | None  # series per direction that would look significant by luck
     sentence: str
+    explanation: str  # why the verdict, in plain words: both tests, their q-values, the slopes
     warnings: tuple[tuple[str, str], ...]  # (machine code, text)
 
 
@@ -104,6 +105,44 @@ def _sentence(item: Item, verdict: str, family: str, n_tests: int | None) -> str
     return (
         f"{item.label}: no significant trend detected (yet). "
         f"The estimated change is {s.ols_per_decade:+.2f} {item.unit} per decade."
+    )
+
+
+def _q(p: float) -> str:
+    return "< 0.001" if p < 0.001 else f"{p:.3f}"
+
+
+def _explanation(
+    item: Item, verdict: str, ols_q: float, mk_q: float, family: str, n_tests: int | None
+) -> str:
+    """Why the verdict: what each test found and whether the slopes agree. Built only from the
+    verdict, the q-values (p-values when there is no family) and the two slopes."""
+    if verdict == "no_data":
+        return "Too few valid values to run both tests."
+    s = item.summary
+    corrected = family != "none" and n_tests is not None and n_tests > 1
+    scope = f" after correcting for {n_tests} tests at once" if corrected else ""
+    tag = "q" if corrected else "p"
+    ols, sen, unit = s.ols_per_decade, s.sen_per_decade, item.unit
+    slopes = f"OLS {ols:+.2f} and Sen {sen:+.2f} {unit} per decade"
+    if verdict in ("rise", "fall"):
+        return f"Both tests are below 0.05{scope}, and their slopes have the same sign: {slopes}."
+    if verdict == "unclear" and ols_q < ALPHA and mk_q < ALPHA:
+        return (
+            f"Both tests are below 0.05{scope}, but their slopes have opposite signs ({slopes}), "
+            "so the direction is not clear."
+        )
+    if verdict == "unclear":
+        ols_only = ols_q < ALPHA
+        name, val = ("OLS", ols_q) if ols_only else ("Mann-Kendall", mk_q)
+        other, other_val = ("Mann-Kendall", mk_q) if ols_only else ("OLS", ols_q)
+        return (
+            f"Only the {name} test is below 0.05{scope} ({name} {tag} {_q(val)}; "
+            f"{other} {tag} {_q(other_val)}). The two tests do not agree."
+        )
+    return (
+        f"Neither test is below 0.05{scope} (OLS {tag} {_q(ols_q)}; "
+        f"Mann-Kendall {tag} {_q(mk_q)})."
     )
 
 
@@ -162,6 +201,9 @@ def assess_family(items: Sequence[Item], family: str) -> list[Assessment]:
                 significant=verdict in ("rise", "fall"),
                 expected_by_chance=chance,
                 sentence=_sentence(item, verdict, family, n_tests),
+                explanation=_explanation(
+                    item, verdict, float(ols_q[k]), float(mk_q[k]), family, n_tests
+                ),
                 warnings=_warnings(item, verdict, float(ols_q[k]), float(mk_q[k])),
             )
         )

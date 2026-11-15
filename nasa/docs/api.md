@@ -136,6 +136,7 @@ region, by the selection and map routes.
 | `significant` | boolean | The verdict is `"rise"` or `"fall"` |
 | `expected_by_chance` | number or null | How many series of the family would look significant in one direction by luck alone if each were tested at 5% (2.5% per direction); `null` for a single series |
 | `sentence` | string | Built from the verdict: only "statistically significant at 95%" (with "after correcting for N tests at once" when the family has more than one) or "no significant trend detected (yet)" |
+| `explanation` | string | Why the verdict, built from the verdict, the q-values (p-values with no family, written `p`) and the two slopes: which tests are below 0.05, and whether their slopes agree in sign. Example: "Both tests are below 0.05 after correcting for 3 tests at once, and their slopes have the same sign: OLS +0.04 and Sen +0.04 mm day-1 per decade." Use it next to `sentence`, not instead of it |
 | `warnings` | array | `{code, text}`: `short_record`, `missing_months`, `not_enough_data`, `one_test_significant`, `tests_disagree`, `note` |
 
 Why a region can be significant on its own and still not be `rise`: with 4 regions tested, a p-value

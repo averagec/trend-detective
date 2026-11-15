@@ -5,6 +5,7 @@ import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
 import { uiScale } from "../ui/scale.js";
 import { openChart } from "../ui/chart-view.js";
+import { isSignificant, shortVerdict } from "../data/verdict-wording.js";
 const NAMES = ["Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam"];
 const LAB = {
   Brunei: [114.6, 5.9],
@@ -590,7 +591,10 @@ function boxStat() {
   if (!L.box || !st.reg || !st.reg.layers[L.box]) return null;
   return st.reg.layers[L.box].regions.find((x) => x.key === BOX_KEY) || null;
 }
-const boxSig = (b) => b && b.status === "ok" && b.ols_p_adj < 0.05 && b.tests_agree;
+// The box's verdict is the engine's: both tests below 0.05 after correction, slopes agreeing (ADR 0009).
+const boxSig = (b) => !!b && b.status === "ok" && isSignificant(b.significance);
+// The badge: the verdict in words, with the direction only when a trend is detected.
+const badgeOf = (S, L) => (isSignificant(S) ? `TREND DETECTED · ${(S.verdict === "rise" ? L.up : L.down).toUpperCase()}` : shortVerdict(S));
 const fmtBox = (v, L) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(L.dp);
 function drawBox() {
   const g = W.querySelector("#rm-boxg");
@@ -629,12 +633,14 @@ function boxSeries(b) {
 }
 function boxCard(box) {
   const L = LAYERS[st.v], b = boxStat(), ds = analysis.DATASETS[L.k], f = (v) => fmtBox(v, L), p = (v) => v < 1e-4 ? "< 0.0001" : v.toFixed(4);
-  if (!b) {
+  if (!b || !b.significance) {
     box.innerHTML = `<div class="hd"><h3>NO DATA</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>`;
     box.querySelector("#rm-close").onclick = closeCard;
     return;
   }
-  const sig = boxSig(b), ser = ds ? analysis.SERIES[L.k + "|idn"] : boxSeries(b), yrs = [];
+  // The chart uses the same monthly series as the statistics above (regional_data.json, 1980 to 2018).
+  const S = b.significance, sig = boxSig(b), ser = boxSeries(b), yrs = [];
+  const qNote = S.family.name === "layer" ? ` The q-values are p-values corrected across the ${S.family.n_tests} regions tested together (Benjamini-Hochberg).` : "";
   if (ser) {
     const clim = Array(12).fill(0), n = Array(12).fill(0), mo = (t) => Math.min(11, Math.floor(t % 1 * 12)), by = {};
     ser.t.forEach((t, i) => {
@@ -655,26 +661,28 @@ function boxCard(box) {
     spark = `<svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart"><path class="ln" d="${d}"/><path class="tr" d="M${X(a0)} ${Y(line(a0, b.slope_per_decade))}L${X(a1)} ${Y(line(a1, b.slope_per_decade))}"/></svg>
       <div class="zoom-hint">${Math.floor(a0)} · CLICK CHART TO ENLARGE · ${Math.floor(a1)}</div>`;
   }
-  const warn = (b.warnings || []).map((w) => w.text || w).join(" ");
+  const warn = (S.warnings || []).map((w) => w.text).join(" ");
   box.innerHTML = `<div class="hd"><h3>MARITIME SE ASIA</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
     <div class="sub">${L.name.toUpperCase()} · ${b.first_period} TO ${b.last_period} · MONTHLY</div>
     <div class="big"><b>${f(b.slope_per_decade)}</b><span>${L.ud.replace("/dec", " / decade").replace(" per dec", " per decade")}</span></div>
-    <span class="rm-verd" style="background:${sig ? "var(--grn)" : "var(--mus)"}">${sig ? `TREND DETECTED · ${(b.slope_per_decade > 0 ? L.up : L.down).toUpperCase()}` : "NO CLEAR TREND"}</span>
+    <span class="rm-verd" style="background:${sig ? "var(--grn)" : "var(--mus)"}">${badgeOf(S, L)}</span>
     ${spark}
     <table class="rm-tab">
       <tr><td>95% range</td><td>${f(b.ci_low)} to ${f(b.ci_high)}</td></tr>
-      <tr><td>OLS p (adj.)</td><td>${p(b.ols_p_adj)}</td></tr>
+      <tr><td>OLS q (corrected)</td><td>${p(S.ols_q)}</td></tr>
+      <tr><td>Mann-Kendall q (corrected)</td><td>${p(S.mk_q)}</td></tr>
     </table>
     <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
     ${st.more ? `<table class="rm-tab">
       <tr><td>Sen's slope</td><td>${f(b.sen_per_decade)}</td></tr>
-      <tr><td>Mann-Kendall p (adj.)</td><td>${p(b.mk_p_adj)}</td></tr>
-      <tr><td>Tests agree</td><td>${b.tests_agree ? "yes" : "no"}</td></tr>
+      <tr><td>Mann-Kendall p (autocorrelation-adjusted, before correction)</td><td>${p(S.mk_p_ar1)}</td></tr>
+      <tr><td>Regions corrected together</td><td>${S.family.n_tests ?? "none"}</td></tr>
       <tr><td>Month-to-month memory</td><td>r1 = ${b.noise_lag1.toFixed(2)}</td></tr>
       <tr><td>Years to see it</td><td>${b.years_needed_90 ? `about ${Math.round(b.years_needed_90)} (have ${Math.floor(b.n_years)})` : "n/a"}</td></tr>
       <tr><td>Grid cells</td><td>${b.cells_in_box}</td></tr></table>` : ""}
-    <div class="rm-note">${coreText(b.sentence, L)} ${warn}</div>
-    <div class="rm-note">One average over the box 95-141°E, 10°S-10°N (land and sea). It does not say which island changed most. P-values adjusted across 3 regions (Benjamini-Hochberg).</div>
+    <div class="rm-note">${coreText(S.sentence, L)} ${warn}</div>
+    <div class="rm-note">${S.explanation}</div>
+    <div class="rm-note">One average over the box 95-141°E, 10°S-10°N (land and sea). It does not say which island changed most.${qNote}</div>
     <div class="rm-note">NASA DATA · ${L.src}</div>
     ${ds ? `<button class="obtn" id="rm-open">INVESTIGATE AS A CASE ▸</button>` : ""}`;
   box.querySelector("#rm-close").onclick = closeCard;
@@ -693,7 +701,7 @@ function boxCard(box) {
     sfx("select");
     openChart({
       title: `MARITIME SE ASIA · ${L.name.toUpperCase()}`,
-      sub: `${b.first_period} TO ${b.last_period} · DIFFERENCE FROM THE AVERAGE FOR THAT MONTH, YEARLY · ${sig ? "TREND DETECTED" : "NO CLEAR TREND"}`,
+      sub: `${b.first_period} TO ${b.last_period} · DIFFERENCE FROM THE AVERAGE FOR THAT MONTH, YEARLY · ${badgeOf(S, L)}`,
       unit: `${L.unit} vs normal`,
       zero: true,
       series: yrs,
@@ -703,8 +711,8 @@ function boxCard(box) {
       band: [yrs[0][0], ym, yrs[yrs.length - 1][0]].map((x) => [x, Math.min(line(x, b.ci_low), line(x, b.ci_high)), Math.max(line(x, b.ci_low), line(x, b.ci_high))]),
       bandLabel: "Lines inside the 95% range",
       dp: L.dp,
-      stats: [["TREND", `${f(b.slope_per_decade)} ${L.ud}`], ["95% RANGE", `${f(b.ci_low)} to ${f(b.ci_high)}`], ["OLS P (ADJ.)", p(b.ols_p_adj)], ["MANN-KENDALL P (ADJ.)", p(b.mk_p_adj)], ["MONTHS", `${b.n_points}`], ["VERDICT", sig ? "TREND DETECTED" : "NO CLEAR TREND"]],
-      notes: [coreText(b.sentence, L), "The trend line is the core's slope drawn through the middle of the yearly averages, for reading only.", warn].filter(Boolean),
+      stats: [["TREND", `${f(b.slope_per_decade)} ${L.ud}`], ["95% RANGE", `${f(b.ci_low)} to ${f(b.ci_high)}`], ["OLS Q", p(S.ols_q)], ["MANN-KENDALL Q", p(S.mk_q)], ["MONTHS", `${b.n_points}`], ["VERDICT", shortVerdict(S)]],
+      notes: [coreText(S.sentence, L), S.explanation, "The trend line is the core's slope drawn through the middle of the yearly averages, for reading only.", warn].filter(Boolean),
       source: L.src
     });
   };
