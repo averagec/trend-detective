@@ -1,0 +1,144 @@
+{
+  "dataset": "merra2",
+  "cell_size_deg": {
+    "lon": 0.625,
+    "lat": 0.5
+  },
+  "files_read": {
+    "M2TMNXSLV": 561,
+    "M2TMNXFLX": 561,
+    "M2TMNXLND": 561
+  },
+  "errors": [],
+  "units": {
+    "t2m": "K",
+    "qv2m": "g kg-1",
+    "ps": "Pa",
+    "precip": "mm day-1",
+    "evap": "mm day-1",
+    "tsurf": "K",
+    "vpd": "kPa"
+  },
+  "qc": {
+    "t2m": {
+      "cells": 1684683,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "qv2m": {
+      "cells": 1684683,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "ps": {
+      "cells": 1684683,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "evap": {
+      "cells": 1684683,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "precip": {
+      "cells": 1684683,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "tsurf": {
+      "cells": 1684683,
+      "fill_masked": 878526,
+      "out_of_range_masked": 0
+    }
+  },
+  "generated_utc": "2026-11-15T06:40:32+00:00",
+  "box_west_south_east_north": [
+    94.0,
+    -12.0,
+    142.0,
+    7.0
+  ],
+  "cell_centres": {
+    "lat": 39,
+    "lon": 77
+  },
+  "variables": {
+    "t2m": {
+      "unit": "K",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "qv2m": {
+      "unit": "g kg-1",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "ps": {
+      "unit": "Pa",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "precip": {
+      "unit": "mm day-1",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "evap": {
+      "unit": "mm day-1",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "tsurf": {
+      "unit": "K",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    },
+    "vpd": {
+      "unit": "kPa",
+      "months": 561,
+      "first": "198001",
+      "last": "202609",
+      "shape": [
+        561,
+        39,
+        77
+      ]
+    }
+  }
+}

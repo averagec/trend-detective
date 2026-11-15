@@ -1,0 +1,41 @@
+{
+  "dataset": "gpcp",
+  "files_read": {
+    "gpcp": 516
+  },
+  "errors": [],
+  "units": {
+    "gpcp_precip": "mm day-1"
+  },
+  "qc": {
+    "gpcp_precip": {
+      "cells": 1882368,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    }
+  },
+  "generated_utc": "2026-11-15T06:40:40+00:00",
+  "box_west_south_east_north": [
+    94.0,
+    -12.0,
+    142.0,
+    7.0
+  ],
+  "cell_centres": {
+    "lat": 38,
+    "lon": 96
+  },
+  "variables": {
+    "gpcp_precip": {
+      "unit": "mm day-1",
+      "months": 516,
+      "first": "198301",
+      "last": "202512",
+      "shape": [
+        516,
+        38,
+        96
+      ]
+    }
+  }
+}

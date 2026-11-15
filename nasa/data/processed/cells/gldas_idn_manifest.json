@@ -1,0 +1,41 @@
+{
+  "dataset": "gldas",
+  "files_read": {
+    "gldas": 319
+  },
+  "errors": [],
+  "units": {
+    "gldas_sm_0_10cm": "kg m-2"
+  },
+  "qc": {
+    "gldas_sm_0_10cm": {
+      "cells": 4654848,
+      "fill_masked": 3677432,
+      "out_of_range_masked": 0
+    }
+  },
+  "generated_utc": "2026-11-15T08:43:40+00:00",
+  "box_west_south_east_north": [
+    94.0,
+    -12.0,
+    142.0,
+    7.0
+  ],
+  "cell_centres": {
+    "lat": 76,
+    "lon": 192
+  },
+  "variables": {
+    "gldas_sm_0_10cm": {
+      "unit": "kg m-2",
+      "months": 319,
+      "first": "200001",
+      "last": "202607",
+      "shape": [
+        319,
+        76,
+        192
+      ]
+    }
+  }
+}
