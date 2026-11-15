@@ -556,9 +556,41 @@ const trash = () => {
   SFX.err();
   log("TRASH IS EMPTY. NO DATA WAS HARMED.", "dim");
 };
+// TUTORIAL: walks through the desk in the order a case is played. Each step lights up the
+// icon it is about and gives one line from the detective. The player moves on with NEXT.
+const TUT = [
+  { icon: "map", title: "MAP.EXE", line: "Start with the map.", body: "Each dot is a coastal city. Click a dot to zoom in and see that city’s sea level trend." },
+  { icon: "map", title: "LAYERS", line: "The map can show other data too.", body: "The buttons at the top switch the layer: SEA LVL, TEMP, RAIN and more. Each one is real NASA data for the same places." },
+  { icon: "map", title: "CIRCLE", line: "To look at an area, draw a circle.", body: "Press CIRCLE, then press on the map and drag outwards. The app reads the grid cells inside the circle and gives one trend for the whole area." },
+  { icon: "trend", title: "TREND.EXE", line: "TREND shows the full record for one place.", body: "Pick a dataset and a place. You see the trend, its range and the tests behind it. This window needs the local server to be running." },
+  { icon: "cases", title: "CASES", line: "A case is one question.", body: "Open a case from the list, or press INVESTIGATE AS A CASE on a city or circle on the map." },
+  { icon: "cases", title: "SET UP", line: "Choose what, where and which years.", body: "Pick the measurement, the place and the years. Then lock your guess before you look at anything." },
+  { icon: "evidence", title: "GUESS AND EVIDENCE", line: "Lock your guess first, then look.", body: "Choose going up, going down or can’t tell. Your guess can’t be changed. EVIDENCE then shows the record, and LINEUP unlocks." },
+  { icon: "lineup", title: "LINEUP", line: "Now test it against noise.", body: "LINEUP builds 1,000 fake records with the same wobble and no trend. Run it to see how many of them look as strong as your record." },
+  { icon: "lineup", title: "VERDICT", line: "Here is what the result means.", body: "DETECTED: the trend is strong, the tests agree, and fewer than 5% of the fakes are as strong. SUSPECT: the trend is significant but a check fails. NOT YET DETECTABLE: there isn’t enough evidence yet." }
+];
+let tutAt = 0;
+function tutorial(i = 0) {
+  tutAt = Math.max(0, Math.min(TUT.length - 1, i));
+  const t = TUT[tutAt];
+  const last = tutAt === TUT.length - 1;
+  hl = t.icon;
+  glow();
+  say([t.line]);
+  const w = win("w-tut", "TUTORIAL.EXE", `<div class="tut"><div class="dim">STEP ${tutAt + 1} OF ${TUT.length} · ${t.title}</div><h3>${t.line}</h3><p>${t.body}</p><div class="tutnav"><button class="chip" id="tut-back"${tutAt === 0 ? " disabled" : ""}>◂ BACK</button><button class="obtn" id="tut-go">${last ? "DONE ▸" : "NEXT ▸"}</button></div></div>`, { left: "300px", top: "40px", width: "460px" });
+  w.querySelector(".bx").onclick = () => {
+    closeWin(w);
+    hl = null;
+    setTimeout(glow, 170);
+  };
+  w.querySelector("#tut-back").onclick = () => tutorial(tutAt - 1);
+  w.querySelector("#tut-go").onclick = () => (last ? w.querySelector(".bx").onclick() : tutorial(tutAt + 1));
+  return w;
+}
 const ICONS = [
   ["cases", "folder", "CASES", openCases],
   ["readme", "doc", "ABOUT.TXT", readme],
+  ["tutorial", "question", "TUTORIAL", () => tutorial(0)],
   ["data", "dish", "DATA.LNK", data],
   ["earth", "picture", "EARTH.PCX", earth],
   ["map", "globe", "MAP.EXE", map],
@@ -570,14 +602,15 @@ const ICONS = [
   ["trash", "trash", "TRASH", trash]
 ];
 let guide = 0;
+let hl = null; // the icon the TUTORIAL is pointing at, while its window is open
 const GUIDE = [["map", "START HERE · DOUBLE-CLICK"], ["cases", "NEXT · DOUBLE-CLICK"]];
 function glow() {
   document.querySelectorAll(".icon").forEach((b) => {
-    const g = GUIDE[guide] && GUIDE[guide][0] === b.dataset.id;
+    const g = hl ? b.dataset.id === hl : GUIDE[guide] && GUIDE[guide][0] === b.dataset.id;
     b.classList.toggle("glow", !!g);
     const old = b.querySelector(".hint");
     if (old) old.remove();
-    if (g) b.insertAdjacentHTML("beforeend", `<em class="hint">${GUIDE[guide][1]}</em>`);
+    if (g && !hl) b.insertAdjacentHTML("beforeend", `<em class="hint">${GUIDE[guide][1]}</em>`);
   });
 }
 function guideDone(id) {

@@ -195,15 +195,16 @@ def cards():
 
 def poster():
     src = Image.open(f'{W}/tex/img30.png').convert('RGB').resize((1024, 1024), Image.LANCZOS)
-    logo = Image.open('assets/source/spaceapps_sg.png').convert('RGB')
-    bg = logo.getpixel((5, 5))
+    # The pixel Earth (public/images/earth.png), the same picture as the EARTH.PCX wallpaper.
+    earth = Image.open('public/images/earth.png').convert('RGB')
+    bg = earth.getpixel((2, 2))
     P = Image.new('RGB', (736, 1024), (250, 238, 210))
     inner = Image.new('RGB', (680, 968), bg)
-    L = logo.crop((150, 150, 874, 874)).resize((680, 680), Image.LANCZOS)
+    L = earth.resize((680, 680), Image.NEAREST)
     inner.paste(L, (0, 120))
     d = ImageDraw.Draw(inner)
     f2 = F('PlexMono', 40)
-    for i, t in enumerate(['EARTH SYSTEM', 'TREND DETECTIVE']):
+    for i, t in enumerate(['EARTH SYSTEM', 'TRENDSEN']):
         d.text(((680 - d.textlength(t, font=f2)) / 2, 816 + i * 54), t, font=f2, fill=(230, 232, 240))
     P.paste(inner, (28, 28))
     src.paste(flipv(P), (0, 0))
