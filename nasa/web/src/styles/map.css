@@ -511,8 +511,13 @@
   filter: brightness(1.4);
 }
 .rm-city.on {
-  stroke: #ece6d6;
-  stroke-width: 2.5;
+  filter: drop-shadow(0 0 1px #f7d678) drop-shadow(0 0 1px #f7d678);
+}
+.rm-city.inl .pin-r {
+  fill: #8b93ad;
+}
+.rm-city.inl .pin-d {
+  fill: #56628a;
 }
 .rm-city.fade {
   opacity: .2;
@@ -746,4 +751,19 @@
 }
 .rm-map {
   min-height: 320px;
+}
+.rm-box {
+  cursor: pointer;
+  transition: fill-opacity .2s;
+}
+.rm-box:hover {
+  fill-opacity: .3;
+}
+.rm-boxlab {
+  font-family: VT323, monospace;
+  fill: #fff;
+  stroke: #06090f;
+  stroke-width: .3;
+  paint-order: stroke;
+  pointer-events: none;
 }

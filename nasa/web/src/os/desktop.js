@@ -6,13 +6,14 @@ import { regionMap } from "./region-map.js";
 import { leaveDesk } from "../scene/office.js";
 import { toLocal } from "../ui/scale.js";
 const $ = (s) => document.querySelector(s);
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+import { beginSkip, endSkip, skipWait as wait } from "../ui/skip.js";
 const CASES = [
   { id: "001", name: "JAKARTA_TIDE", q: "Is the sea rising at Jakarta?", preset: { v: "ssl", r: "jakarta", y0: 1992, y1: 2017 }, open: true },
   { id: "002", name: "THE_EAST", q: "Ambon’s sea rose fastest. Can we prove it?", preset: { v: "ssl", r: "ambon", y0: 1992, y1: 2017 }, open: true },
   { id: "003", name: "HOTTER_ISLANDS", q: "Are the islands getting hotter?", preset: { v: "t2m", r: "idn", y0: 1980, y1: 2025 }, open: true },
   { id: "004", name: "MORE_RAIN", q: "Is more rain falling on the islands?", preset: { v: "precip", r: "idn", y0: 1980, y1: 2025 }, open: true },
-  { id: "005", name: "SINKING_CITY", q: "How fast is Jakarta’s ground sinking?", open: false, lock: "NEEDS LAND SUBSIDENCE DATA (INSAR, E.G. NASA-ISRO NISAR)" }
+  { id: "005", name: "WETTER_GROUND", q: "Is more water soaking into the islands?", preset: { v: "tws", r: "idn", y0: 2002, y1: 2025 }, open: true },
+  { id: "006", name: "SINKING_CITY", q: "How fast is Jakarta’s ground sinking?", open: false, lock: "NEEDS LAND SUBSIDENCE DATA (INSAR, E.G. NASA-ISRO NISAR)" }
 ];
 let current = 0, z = 10, noiseTimer = null, booting = false;
 const LOG = [];
@@ -153,6 +154,7 @@ function plotHist(cv, sims, obs) {
   c.fillRect(xo - 1, 0, 3, H);
 }
 function openCases() {
+  guideDone("cases");
   if (!analysis.load.done) {
     analysis.load().then(openCases, () => {
       SFX.err();
@@ -475,7 +477,10 @@ const ABOUT_HTML = `<div class="about">
 </div>`;
 const readme = () => win("w-readme", "ABOUT.TXT", ABOUT_HTML, { left: "190px", top: "24px", width: "640px", maxHeight: "92%" });
 const earth = () => win("w-earth", "EARTH.PCX", '<img class="pcx" src="images/earth.png" alt="Pixel art Earth from orbit"><div class="dim" style="margin-top:6px;font-size:18px">Wallpaper only. Case data comes from NASA records.</div>', { left: "640px", top: "60px", width: "360px" });
-const map = () => regionMap.open(win, { log, closeId });
+const map = () => {
+  guideDone("map");
+  return regionMap.open(win, { log, closeId });
+};
 function startCase(setup) {
   Object.assign(S, { setup: Object.assign({}, setup), guess: null, look: null, runs: 0, exploratory: false, lastKey: null, deseason: false });
   ["evidence", "lineup"].forEach((id) => {
@@ -513,6 +518,23 @@ const ICONS = [
   ["lineup", "chart", "LINEUP", () => isLocked("lineup") ? (SFX.err(), say(["Not yet. I haven’t even looked at the record."])) : openTest(), true],
   ["trash", "trash", "TRASH", trash]
 ];
+let guide = 0;
+const GUIDE = [["map", "START HERE · DOUBLE-CLICK"], ["cases", "NEXT · DOUBLE-CLICK"]];
+function glow() {
+  document.querySelectorAll(".icon").forEach((b) => {
+    const g = GUIDE[guide] && GUIDE[guide][0] === b.dataset.id;
+    b.classList.toggle("glow", !!g);
+    const old = b.querySelector(".hint");
+    if (old) old.remove();
+    if (g) b.insertAdjacentHTML("beforeend", `<em class="hint">${GUIDE[guide][1]}</em>`);
+  });
+}
+function guideDone(id) {
+  if (GUIDE[guide] && GUIDE[guide][0] === id) {
+    guide++;
+    glow();
+  }
+}
 let built = false;
 function buildDesk() {
   if (built) return;
@@ -532,6 +554,7 @@ function buildDesk() {
       if (e.key === "Enter") ic[3]();
     };
   });
+  glow();
   document.querySelectorAll(".fk").forEach((b) => b.onclick = () => key(b.dataset.k));
 }
 function key(k) {
@@ -552,6 +575,7 @@ async function typeField(el, text, mask) {
 async function open() {
   if (booting) return;
   booting = true;
+  beginSkip();
   document.body.classList.add("in-os");
   ["#desk", "#login", "#bios"].forEach((s) => $(s).style.display = "none");
   clearInterval(noiseTimer);
@@ -572,7 +596,7 @@ async function open() {
   const bios = $("#bios");
   bios.style.display = "block";
   bios.innerHTML = "";
-  for (const L of ["<b>TD-OS 1.0</b>  EARTH SYSTEM DESK", "MEMORY ........ 640K OK", "LINK MERRA-2 .. OK", "LINK GRACE-FO . OK", "LINK GLDAS .... OK"]) {
+  for (const L of ["<b>TD-OS 1.0</b>  EARTH SYSTEM DESK", "MEMORY ........ 640K OK", "LINK ECCO ..... OK", "LINK MERRA-2 .. OK", "LINK GRACE-FO . OK"]) {
     bios.innerHTML += L + "\n";
     SFX.click();
     await wait(70);
@@ -618,9 +642,10 @@ async function open() {
   buildDesk();
   if (!LOG.length) {
     log("LOGGED IN AS DETECTIVE.");
-    log("CASE_001 FLAGGED: STATION RECORD SAYS WARMING.", "hi");
+    log("CASE_001 FLAGGED: IS THE SEA RISING AT JAKARTA?", "hi");
   }
   booting = false;
+  endSkip();
   setTimeout(() => say(["Okay. I’m in.", "Thirty-one cities across Indonesia. The tide keeps coming further in.", "Is the sea really rising, or does it just feel that way? MAP.EXE first, then the case files."]), 400);
 }
 async function shutdown() {

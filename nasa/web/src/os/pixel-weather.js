@@ -98,6 +98,32 @@ function flood(f) {
   });
   return { w, h, px };
 }
+const SUN = [247, 214, 120], SUN2 = [233, 169, 58], HOT = [217, 74, 54], GLASS = [236, 230, 214];
+function heat(f) {
+  const px = [], put = (x, y, c) => px.push([x, y, c]), cx = 6, cy = 6;
+  for (let y = 0; y < 13; y++) for (let x = 0; x < 13; x++) {
+    const d = Math.hypot(x - cx, y - cy);
+    if (d <= 3.6) put(x, y, d > 2.8 ? INK : d < 1.6 && (x + y) % 2 ? SUN : d < 2.2 ? SUN : SUN2);
+  }
+  const ray = f % 4 < 2 ? 1 : 0;
+  [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]].forEach(([dx, dy], i) => {
+    const r0 = i < 4 ? 5 : 4, len = i < 4 ? 1 + ray : 1 + (1 - ray);
+    for (let k = 0; k < len; k++) put(cx + dx * (r0 + k), cy + dy * (r0 + k), i % 2 ? SUN2 : SUN);
+  });
+  const tx = 14, lvl = [3, 4, 5, 6, 6, 5, 4, 3][f % 8];
+  for (let y = 1; y < 12; y++) {
+    put(tx - 1, y, INK);
+    put(tx + 1, y, INK);
+    put(tx, y, 11 - y <= lvl ? HOT : GLASS);
+  }
+  put(tx, 0, INK);
+  for (let y = 11; y < 14; y++) for (let x = tx - 1; x <= tx + 1; x++) put(x, y, Math.abs(x - tx) + (y - 12) > 1 ? INK : HOT);
+  for (let x = 1; x < 12; x++) {
+    const y = 15 + Math.round(Math.sin((x + f) * 0.9));
+    if ((x + f) % 3) put(x, y, x % 2 ? SUN2 : DUST);
+  }
+  return { w: 16, h: 17, px };
+}
 function paintSprite(img, W, H, s, ax, ay) {
   const ox = ax - Math.floor(s.w / 2), oy = ay - s.h + 1, d = img.data;
   for (const [x, y, c] of s.px) {
@@ -160,7 +186,7 @@ function paintDrought(img, st, f) {
     d[p + 3] = 255;
   }
 }
-const pixelWeather = { rain, storm, flood, paintSprite, drought, paintDrought, INK };
+const pixelWeather = { rain, storm, flood, heat, paintSprite, drought, paintDrought, INK };
 export {
   pixelWeather
 };

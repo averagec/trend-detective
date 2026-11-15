@@ -1,6 +1,7 @@
 import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
 import { desktop } from "../os/desktop.js";
+import { skip, beginSkip, endSkip } from "../ui/skip.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -174,7 +175,9 @@ function play() {
   SFX.whoosh();
   document.body.classList.add("playing");
   state.mode = "flying";
+  beginSkip();
   flyTo(views.room, 3200, () => {
+    endSkip();
     state.mode = "room";
     enableRoomControls();
     $("#hud").classList.add("on");
@@ -219,14 +222,28 @@ canvas.addEventListener("pointerup", (e) => {
   if (state.mode !== "room" || !roomRoot) return;
   if (pcUnderPointer(e)) bootOS();
 });
+const beacon = $("#beacon"), bpos = new THREE.Vector3();
+beacon.addEventListener("click", () => {
+  if (state.mode === "room") bootOS();
+});
+function placeBeacon() {
+  const show = state.mode === "room" && !state.loggedIn && !document.getElementById("say").classList.contains("on");
+  beacon.classList.toggle("on", show);
+  if (!show) return;
+  bpos.copy(SCREEN).project(camera);
+  beacon.style.left = (bpos.x * 0.5 + 0.5) * innerWidth + "px";
+  beacon.style.top = (-bpos.y * 0.5 + 0.5) * innerHeight + "px";
+}
 function bootOS() {
   if (state.mode === "os") return;
+  state.loggedIn = true;
   state.mode = "os";
   state.hoverPC = false;
   $("#tip").classList.remove("on");
   $("#hud").classList.remove("on");
   closeSay();
   SFX.whoosh();
+  beginSkip();
   flyTo(views.screen, 1700, () => desktop.open(), 52);
 }
 function leaveDesk() {
@@ -248,7 +265,7 @@ const clock = new THREE.Clock();
   requestAnimationFrame(loop);
   const t = clock.getElapsedTime();
   if (tween) {
-    const k = Math.min(1, (performance.now() - tween.start) / tween.ms), e = ease(k);
+    const k = skip.req ? 1 : Math.min(1, (performance.now() - tween.start) / tween.ms), e = ease(k);
     camera.position.lerpVectors(tween.p0, tween.p1, e);
     controls.target.lerpVectors(tween.t0, tween.t1, e);
     camera.fov = tween.f0 + (tween.f1 - tween.f0) * e;
@@ -265,6 +282,7 @@ const clock = new THREE.Clock();
     camera.lookAt(v.target);
   }
   if (controls.enabled) controls.update();
+  placeBeacon();
   if (t > nextSweep && sweepT < 0) {
     sweepT = 0;
     nextSweep = t + 18 + Math.random() * 10;
