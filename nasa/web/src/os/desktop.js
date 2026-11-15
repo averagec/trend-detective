@@ -454,10 +454,10 @@ function openTest() {
         <span>NOISE LINEUP</span><span>${lu.beat} of ${lu.n_sims} fakes as strong (${(lu.share * 100).toFixed(1)}%)</span>
         ${Number.isFinite(lu.years_needed) ? `<span>YEARS NEEDED</span><span>about ${lu.years_needed.toFixed(0)} years of record for a change this size (you have ${Math.round(lu.years)})</span>` : ""}
       </div>
-      ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="margin-top:8px">${lu.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${esc(c.text)}</div>`).join("")}</div>
       <div class="dim" style="margin-top:8px">${esc(lu.explanation)}</div>
       <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"}</div>
+      ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-chart">VIEW FULL CHART ▸</button> <button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
     plotHist(out.querySelector("#cv-h"), lu.sims_per_decade, lu.observed_per_decade);
     SFX.stamp();
