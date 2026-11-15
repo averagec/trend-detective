@@ -47,7 +47,7 @@ const LAYERS = [
     base: 27,
     amp: 1.2,
     s: [0.2, 0.22, 0.17, 0.24, 0.21, 0.23, 0.19, 0.245, 0.25, 0.14, 0.22],
-    lock: "the regional panel (real 3-region values, not built yet)"
+    regional: "merra2:t2m"
   },
   {
     k: "precip",
@@ -63,7 +63,7 @@ const LAYERS = [
     base: 210,
     amp: 90,
     s: [6, -4, 3, -2, 8, -6, 12, 5, -3, -9, 4],
-    lock: "the regional panel (real 3-region values, not built yet)"
+    regional: "merra2:precip"
   },
   {
     k: "tws",
@@ -81,7 +81,7 @@ const LAYERS = [
     gap: [2017, 2018],
     s: [-0.5, 1.8, -2.4, 0.6, -1.2, -1, 0.8, -0.3, 1.5, -0.4, 2.2],
     na: { Singapore: "No data. Too small for GRACE satellites.", Brunei: "No data. Too small for GRACE satellites.", "Timor-Leste": "No data. Too small for GRACE satellites." },
-    lock: "the regional panel (real 3-region values, not built yet)"
+    regional: "grace:grace_lwe"
   },
   {
     k: "sst",
@@ -331,6 +331,8 @@ function buildSvg() {
   });
 }
 function paint(sweep) {
+  regionalPanel(!!LAYERS[st.v].regional);
+  if (LAYERS[st.v].regional) return paintRegional();
   const rows = compute(), L = LAYERS[st.v];
   W.querySelectorAll(".rm-c").forEach((p) => {
     const r = rows[+p.dataset.c];
@@ -721,6 +723,11 @@ function fades() {
   });
 }
 function hud() {
+  if (LAYERS[st.v].regional) {
+    const ok = (st.regional?.layers[LAYERS[st.v].regional]?.regions || []).filter((r) => r.status === "ok").length;
+    $("#rm-hud").innerHTML = `${LAYERS[st.v].name.toUpperCase()} · <b>${ok}</b> regional boxes · 1980–2018`;
+    return;
+  }
   if (LAYERS[st.v].real && st.ssl) {
     const cs = st.ssl.cities, tested = cs.filter((c) => c.trend_mm_per_decade != null), sig = tested.filter((c) => c.significant).length;
     $("#rm-hud").innerHTML = `SEA LEVEL · <b>${sig} of ${tested.length}</b> coastal cities rising clearly · ${st.ssl.period[0]}-${st.ssl.period[1]}`;
@@ -732,7 +739,7 @@ function hud() {
 function toolbar() {
   const [lo, hi] = span(st.v), locked = LAYERS.filter((L) => L.lock);
   $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button></div>
-    ${LAYERS[st.v].real ? `<span class="rm-fixed" title="Trends are computed once over the full ECCO record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
+    ${LAYERS[st.v].real || LAYERS[st.v].regional ? `<span class="rm-fixed" title="Trends are computed once over the full ECCO record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
     <span class="rm-yrs" id="rm-yrs">${LAYERS[st.v].real ? `${st.span[0]}-${st.span[1]}` : ""}</span>
     <div class="rm-dd" id="rm-dd"><button class="rm-ddb${st.city >= 0 ? " on" : ""}" id="rm-ddb" aria-haspopup="listbox" aria-expanded="false"><i class="pin"></i><span>${st.city >= 0 && st.ssl ? st.ssl.cities[st.city].name.toUpperCase() : "CITIES"}</span><b>▾</b></button>
       <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
@@ -742,7 +749,7 @@ function toolbar() {
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
-    if (!LAYERS[st.v].real) talk(["Careful. This layer is sample data. It shows how the map works, not what’s real.", "Real temperature and rain are in CASES."], "sample");
+    if (!LAYERS[st.v].real && !LAYERS[st.v].regional) talk(["Careful. This layer is sample data. It shows how the map works, not what’s real.", "Real temperature and rain are in CASES."], "sample");
     st.yr = null;
     if (!LAYERS[st.v].real) st.city = -1;
     st.c = -1;
@@ -773,7 +780,7 @@ function toolbar() {
     satRefresh();
   };
   W.querySelector("[data-circ]").onclick = () => circleToggle(!st.circ.on);
-  if (!LAYERS[st.v].real) bindRange(lo, hi);
+  if (!LAYERS[st.v].real && !LAYERS[st.v].regional) bindRange(lo, hi);
   bindSearch();
 }
 function bindSearch() {
@@ -1241,6 +1248,7 @@ async function load() {
   if (!st.prov) st.prov = await opt("data/indonesia_provinces.json");
   if (!st.ssl) st.ssl = await opt("data/indonesia_sea_level.json");
   if (!st.ssl && LAYERS[0].real) LAYERS.shift();
+  st.regional = await opt("data/regional_data.json");
 }
 async function open(win, helpers) {
   H = helpers;
@@ -1466,6 +1474,102 @@ async function circleRun() {
   ];
   circleDraw();
   circlePanel();
+}
+// Regional panel: the three regional boxes for TEMP, RAIN and WATER. Numbers come from
+// data/regional_data.json, which scripts/export_regional.py writes from the Python core.
+function paintRegional() {
+  W.querySelectorAll(".rm-c").forEach((p) => {
+    p.setAttribute("fill", "#2b3762");
+    p.classList.remove("na", "fade");
+  });
+  const cg = W.querySelector("#rm-cities");
+  if (cg) cg.classList.add("off");
+  const gg = W.querySelector("#rm-gridg");
+  if (gg) gg.innerHTML = "";
+  clearInterval(placeFx.iv);
+  const fx = W.querySelector("#rm-fxc");
+  if (fx) fx.style.display = "none";
+  $("#rm-leg").innerHTML = "";
+  hud();
+  toolbar();
+}
+function regionalPanel(show) {
+  let p = $("#rm-reg");
+  if (!show) {
+    if (p) p.remove();
+    return;
+  }
+  if (!p) {
+    p = document.createElement("div");
+    p.id = "rm-reg";
+    p.className = "rm-float rm-card";
+    p.style.cssText = "left:12px;bottom:12px;right:auto;top:auto;width:340px;max-height:72%";
+    $("#rm-mapc").appendChild(p);
+  }
+  regionalRender(p);
+}
+function regionalRender(p) {
+  const L = LAYERS[st.v];
+  const lay = st.regional?.layers[L.regional];
+  if (!lay) {
+    p.innerHTML = `<div class="hd"><h3>${L.name.toUpperCase()}</h3></div><div class="sub">Regional data file not found.</div>`;
+    return;
+  }
+  st.regSel = st.regSel || 0;
+  const boxes = lay.regions;
+  const sel = boxes[st.regSel] && boxes[st.regSel].status === "ok" ? boxes[st.regSel] : boxes.find((r) => r.status === "ok");
+  const word = { rise: "rising", fall: "falling", unclear: "unclear", none: "no clear trend" };
+  const num = (x, d = 2) => (x == null ? "n/a" : `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(d)}`);
+  const rows = boxes
+    .map((r, i) => {
+      if (r.status !== "ok") return `<div class="sub">${r.name}: no data</div>`;
+      const on = sel && sel.key === r.key ? " on" : "";
+      return `<button class="rm-chip${on}" data-rg="${i}" style="display:block;width:100%;text-align:left;margin:3px 0">
+        ${r.name}: <b>${num(r.slope_per_decade)} ${lay.unit}/dec</b> · ${word[r.direction] || r.direction}</button>`;
+    })
+    .join("");
+  const detail = sel
+    ? `<div class="sub" style="margin-top:6px">${sel.name}, ${sel.first_period} to ${sel.last_period}</div>
+       <div style="font-size:14px;line-height:1.4">
+         Trend ${num(sel.slope_per_decade)} ${lay.unit} per decade, 95% range ${num(sel.ci_low)} to ${num(sel.ci_high)}.<br>
+         Adjusted p (OLS) ${sel.ols_p_adj == null ? "n/a" : sel.ols_p_adj.toPrecision(2)}; Mann-Kendall ${sel.mk_p_adj == null ? "n/a" : sel.mk_p_adj.toPrecision(2)}.<br>
+         Record needed to detect this trend with 90% chance: ${sel.years_needed_90 == null ? "not reachable" : Math.round(sel.years_needed_90) + " years"}.
+       </div>${regionalChart(sel)}
+       <div style="font-size:12px;margin-top:4px">Chart: monthly values (seasonal cycle included).</div>
+       ${(sel.warnings || []).map((w) => `<div style="font-size:12px">Note: ${w.text}</div>`).join("")}`
+    : `<div class="sub">No box has data for this layer.</div>`;
+  p.innerHTML = `<div class="hd"><h3>${L.name.toUpperCase()}</h3><button class="x" id="rm-rx" aria-label="Close">×</button></div>
+    <div class="sub">${lay.label} · three regional boxes · trends from the Python core</div>
+    ${rows}${detail}`;
+  p.querySelector("#rm-rx").onclick = () => {
+    st.v = LAYERS.findIndex((x) => x.real);
+    paint(true);
+  };
+  p.querySelectorAll("[data-rg]").forEach((b) => {
+    b.onclick = () => {
+      st.regSel = +b.dataset.rg;
+      regionalRender(p);
+    };
+  });
+}
+function regionalChart(r) {
+  const s = r.series || [];
+  const pts = s.map((v, i) => [i, v.value]).filter(([, v]) => v != null);
+  if (pts.length < 2) return "";
+  const W = 300, H = 110, L0 = 36, R0 = 292, T0 = 6, B0 = 92;
+  const ys = pts.map((q) => q[1]);
+  const lo = Math.min(...ys), hi = Math.max(...ys), span = hi - lo || 1;
+  const x = (i) => L0 + (i / (s.length - 1)) * (R0 - L0);
+  const y = (v) => B0 - ((v - lo) / span) * (B0 - T0);
+  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly values for ${r.name}" style="margin-top:4px">
+    <line x1="${L0}" y1="${B0}" x2="${R0}" y2="${B0}" stroke="#56628a" stroke-width="1"/>
+    <path d="${d}" fill="none" stroke="#1b2440" stroke-width="1.2"/>
+    <text x="2" y="${T0 + 8}" font-size="10" fill="#1b2440">${hi.toFixed(2)}</text>
+    <text x="2" y="${B0}" font-size="10" fill="#1b2440">${lo.toFixed(2)}</text>
+    <text x="${L0}" y="${H - 2}" font-size="10" fill="#1b2440">${s[0].period.slice(0, 4)}</text>
+    <text x="${R0 - 24}" y="${H - 2}" font-size="10" fill="#1b2440">${s[s.length - 1].period.slice(0, 4)}</text>
+  </svg>`;
 }
 const regionMap = { open };
 export {

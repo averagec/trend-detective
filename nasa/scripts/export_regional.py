@@ -35,7 +35,7 @@ def export(processed_dir: Path = PROCESSED) -> dict:
     skipped: dict[str, str] = {}
     for key in LAYERS:
         try:
-            layers[key] = build_map(processed_dir, key, freq="monthly")
+            layers[key] = build_map(processed_dir, key, freq="monthly", include_series=True)
         except FileNotFoundError as err:
             skipped[key] = str(err)
     return {
