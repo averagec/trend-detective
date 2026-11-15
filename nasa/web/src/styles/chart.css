@@ -237,12 +237,14 @@
   background: var(--ink);
 }
 
-/* short definitions under significance stats: same font, size and colour as the text around them */
+/* short definitions under significance stats: the app's pixel font, readable on cream and white */
 .gloss {
-  margin-top: 8px;
-  font: inherit;
-  line-height: inherit;
-  color: inherit;
+  margin-top: 10px;
+  font-family: "VT323", monospace;
+  font-size: 19px;
+  line-height: 1.15;
+  color: #3d4c7c;
+  letter-spacing: 0.5px;
 }
 .gloss div { margin: 4px 0; }
-.gloss b { color: inherit; font-weight: bold; }
+.gloss b { color: #1f2a4a; font-weight: 400; }
