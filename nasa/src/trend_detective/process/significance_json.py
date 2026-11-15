@@ -31,5 +31,6 @@ def significance_json(a: Assessment) -> dict:
         "significant": a.significant,
         "expected_by_chance": _n(a.expected_by_chance),
         "sentence": a.sentence,
+        "explanation": a.explanation,
         "warnings": [{"code": code, "text": text} for code, text in a.warnings],
     }

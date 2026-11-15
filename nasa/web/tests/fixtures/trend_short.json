@@ -77,6 +77,7 @@
  ],
  "significance": {
   "expected_by_chance": 0.0,
+  "explanation": "Too few valid values to run both tests.",
   "family": {
    "alpha": 0.05,
    "method": "benjamini-hochberg",

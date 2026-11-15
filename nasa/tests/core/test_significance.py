@@ -220,3 +220,66 @@ def test_a_family_of_real_series_gives_rise_fall_and_none():
         item(summarise(series(0.0), "K", "flat"), "flat"),
     ]
     assert [a.verdict for a in assess_family(items, "layer")] == ["rise", "fall", "none"]
+
+
+# --- explanation: why the verdict, in plain words ----------------------------------------------
+
+
+def test_each_verdict_has_an_explanation_that_names_the_tests_and_the_slopes():
+    s = fake(0.01, 0.01, slope=0.2, sen=0.18)
+    rise = assess_single(s, "x", "K").explanation
+    assert rise == (
+        "Both tests are below 0.05, and their slopes have the same sign: "
+        "OLS +0.20 and Sen +0.18 K per decade."
+    )
+    pair = [item(fake(0.01, 0.01, slope=0.2, sen=0.18)), item(fake(0.9, 0.9))]
+    family = assess_family(pair, "layer")
+    assert family[0].explanation.startswith(
+        "Both tests are below 0.05 after correcting for 2 tests at once"
+    )
+    opposite = assess_single(fake(0.01, 0.01, slope=0.2, sen=-0.18), "x", "K").explanation
+    assert "opposite signs" in opposite and "not clear" in opposite
+    only_ols = assess_single(fake(0.01, 0.20, slope=0.2, sen=0.2), "x", "K").explanation
+    assert only_ols == (
+        "Only the OLS test is below 0.05 (OLS p 0.010; Mann-Kendall p 0.200). "
+        "The two tests do not agree."
+    )
+    only_mk = assess_single(fake(0.20, 0.01, slope=0.2, sen=0.2), "x", "K").explanation
+    assert only_mk.startswith(
+        "Only the Mann-Kendall test is below 0.05 (Mann-Kendall p 0.010; OLS p 0.200)"
+    )
+    none = assess_single(fake(0.30, 0.40), "x", "K").explanation
+    assert none == "Neither test is below 0.05 (OLS p 0.300; Mann-Kendall p 0.400)."
+
+
+def test_explanation_reads_q_values_and_small_values_are_written_as_below_0_001():
+    strong = [fake(1e-6, 1e-6, slope=0.3, sen=0.3), fake(0.9, 0.9)]
+    out = assess_family([item(s) for s in strong], "layer")
+    assert out[0].verdict == "rise"
+    assert out[0].explanation == (
+        "Both tests are below 0.05 after correcting for 2 tests at once, and their slopes have the "
+        "same sign: OLS +0.30 and Sen +0.30 K per decade."
+    )
+    lone = assess_family([item(fake(1e-6, 0.9)), item(fake(0.9, 0.9))], "layer")[0]
+    assert lone.verdict == "unclear"
+    assert lone.explanation == (
+        "Only the OLS test is below 0.05 after correcting for 2 tests at once "
+        "(OLS q < 0.001; Mann-Kendall q 0.900). The two tests do not agree."
+    )
+
+
+def test_explanation_with_a_missing_p_value_says_there_is_too_little_data():
+    out = assess_single(fake(np.nan, 0.01), "x", "K")
+    assert out.verdict == "no_data"
+    assert out.explanation == "Too few valid values to run both tests."
+
+
+def test_explanation_avoids_the_forbidden_words():
+    rng = np.random.default_rng(2)
+    t = np.arange(240)
+    items = []
+    for k in (-1, 0, 1):
+        y = 280 + 3 * np.sin(t * np.pi / 6) + k * 0.01 * t + rng.normal(0, 0.5, 240)
+        items.append(item(summarise(y, "K", f"s{k}"), f"s{k}"))
+    for a in assess_family(items, "layer"):
+        assert not any(w in a.explanation.lower() for w in ("prove", "caused", "because of"))
