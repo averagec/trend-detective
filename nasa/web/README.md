@@ -118,6 +118,12 @@ trend, and the dashed 120 km radius. Inland cities (more than 20 km from the sea
 level. SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 
+TEMP, RAIN and WATER are real: one value for the Maritime Southeast Asia box (95-141°E,
+10°S-10°N) from `regional_data.json` (`scripts/export_regional.py`, core statistics, BH across the
+3 boxes). Click the box for the card, chart and case. MERRA-2 for temperature and rain, GRACE /
+GRACE-FO for water stored on land. SEA (sea surface temperature), NDVI and AOD stay locked: no
+series in the pipeline. CIRCLE only appears in `npm run dev` with the Flask server running.
+
 CASES now runs only on real data from `cases_data.json`: sea level per coastal city (ECCO) and
 MERRA-2 temperature and rain over Maritime Southeast Asia. INVESTIGATE AS A CASE on a city card
 starts a case for that city. TEMP / RAIN / WATER / SEA map layers are still synthetic and

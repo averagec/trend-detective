@@ -139,9 +139,12 @@ def mann_kendall(values: np.ndarray) -> TrendResult:
 
     Assumes independent observations: run on deseasonalised anomalies, and treat
     p-values on strongly autocorrelated series as optimistic (see docs/science-rules.md).
+
+    `values` may contain NaN (ignored by the test). Sen's slope is per time step of `values`: a
+    missing month keeps its position, so the slope stays per month when there are gaps.
     """
-    y = np.asarray(values, dtype=float)
-    y = y[~np.isnan(y)]
+    y_all = np.asarray(values, dtype=float)
+    y = y_all[~np.isnan(y_all)]
     n = y.size
     if n < 3:
         raise ValueError("need at least 3 non-missing values")
@@ -156,7 +159,7 @@ def mann_kendall(values: np.ndarray) -> TrendResult:
     else:
         z = 0.0
     p = float(2 * stats.norm.sf(abs(z)))
-    slope = sens_slope(y)
+    slope = sens_slope(y_all)
     return TrendResult(slope, np.nan, np.nan, p, n, float(n), "mann-kendall")
 
 

@@ -33,77 +33,15 @@ const LAYERS = [
     pal: "s",
     real: true
   },
-  {
-    k: "t2m",
-    short: "TEMP",
-    name: "Air temperature",
-    src: "MERRA-2 · NASA POWER",
-    unit: "°C",
-    ud: "°C/dec",
-    y0: 1981,
-    y1: 2024,
-    pal: "t",
-    sd: 0.15,
-    base: 27,
-    amp: 1.2,
-    s: [0.2, 0.22, 0.17, 0.24, 0.21, 0.23, 0.19, 0.245, 0.25, 0.14, 0.22],
-    lock: "the regional panel (real 3-region values, not built yet)"
-  },
-  {
-    k: "precip",
-    short: "RAIN",
-    name: "Rainfall",
-    src: "MERRA-2 · NASA POWER",
-    unit: "mm/mo",
-    ud: "mm/mo/dec",
-    y0: 1981,
-    y1: 2024,
-    pal: "w",
-    sd: 22,
-    base: 210,
-    amp: 90,
-    s: [6, -4, 3, -2, 8, -6, 12, 5, -3, -9, 4],
-    lock: "the regional panel (real 3-region values, not built yet)"
-  },
-  {
-    k: "tws",
-    short: "WATER",
-    name: "Water storage",
-    src: "GRACE / GRACE-FO",
-    unit: "cm",
-    ud: "cm/dec",
-    y0: 2003,
-    y1: 2024,
-    pal: "w",
-    sd: 2.4,
-    base: 0,
-    amp: 8,
-    gap: [2017, 2018],
-    s: [-0.5, 1.8, -2.4, 0.6, -1.2, -1, 0.8, -0.3, 1.5, -0.4, 2.2],
-    na: { Singapore: "No data. Too small for GRACE satellites.", Brunei: "No data. Too small for GRACE satellites.", "Timor-Leste": "No data. Too small for GRACE satellites." },
-    lock: "the regional panel (real 3-region values, not built yet)"
-  },
-  {
-    k: "sst",
-    short: "SEA",
-    name: "Sea surface temp.",
-    src: "MUR SST · PO.DAAC",
-    unit: "°C",
-    ud: "°C/dec",
-    y0: 2003,
-    y1: 2024,
-    pal: "t",
-    sd: 0.12,
-    base: 29,
-    amp: 0.8,
-    s: [0.18, 0.16, 0.2, 0.15, 0.21, 0.12, 0.23, 0.19, 0.17, 0.24, 0.2],
-    na: { Laos: "No data. Laos has no coastline." },
-    lock: "SST data (no real series in the Python pipeline yet)"
-  },
-  { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "CASE 002" },
-  { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "CASE 003" }
+  { k: "t2m", short: "TEMP", name: "Air temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2m", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer", down: "Cooler" },
+  { k: "precip", short: "RAIN", name: "Rainfall", src: "MERRA-2 · NASA GES DISC", box: "merra2:precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier" },
+  { k: "tws", short: "WATER", name: "Water stored on land", src: "GRACE / GRACE-FO · NASA JPL", box: "grace:grace_lwe", unit: "cm", ud: "cm/dec", pal: "w", dp: 1, fxUp: "rain", fxDown: "drought", up: "More water stored", down: "Less water stored" },
+  { k: "sst", name: "Sea surface temperature", src: "MUR SST · PO.DAAC", y0: 2003, y1: 2024, lock: "a sea surface temperature series (not in the Python pipeline yet)" },
+  { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "a vegetation series (not in the Python pipeline yet)" },
+  { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "an aerosol series (not in the Python pipeline yet)" }
 ];
 const SSL_BINS = [30, 36, 42, 48];
+const BOX_KEY = "se_asia_maritime", BOX = [95, -10, 141, 10];
 const PAL = { s: ["#d8e6ee", "#9fd0e8", "#5aa6dd", "#2f6fc0", "#1c3d8c"], t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52], idn: [273, 78, 50, 28] };
 const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, circ: { on: false, lat: null, lon: null, r: 150, v: "merra2:t2m", cells: null, out: null, msg: "" } };
@@ -180,11 +118,12 @@ function span(li) {
 }
 function compute() {
   const li = st.v, L = LAYERS[li];
-  if (L.real) {
+  if (L.real || L.box) {
     const rows = NAMES.map((n, ci) => ({ n, ci, na: "", neutral: true }));
     st.rows = rows;
     st.mxAbs = 1;
-    st.span = st.ssl ? st.ssl.period.slice() : [L.y0, L.y1];
+    const b = L.box && boxStat();
+    st.span = L.real ? (st.ssl ? st.ssl.period.slice() : [1992, 2017]) : b ? [+b.first_period.slice(0, 4), +b.last_period.slice(0, 4)] : [0, 0];
     return rows;
   }
   const [lo, hi0] = span(li);
@@ -250,6 +189,41 @@ function el(tag, attrs, parent) {
   if (parent) parent.appendChild(e);
   return e;
 }
+const PIN = [
+  "...######...",
+  "..#RRRRRD#..",
+  ".#RR####RD#.",
+  "#RR#WWWW#RD#",
+  "#R#WWWWWW#D#",
+  "#R#WWWWWW#D#",
+  "#R#WWWWWW#D#",
+  "#RR#WWWW#RD#",
+  ".#RR####RD#.",
+  ".#RRRRRRRD#.",
+  "..#RRRRRD#..",
+  "..#RRRRDD#..",
+  "...#RRRD#...",
+  "....#RD#....",
+  ".....##....."
+];
+const PIN_D = {};
+PIN.forEach((row, y) => [...row].forEach((c, x) => {
+  if (c !== ".") PIN_D[c] = (PIN_D[c] || "") + `M${x} ${y}h1v1h-1z`;
+}));
+function pinScale() {
+  const vb = st.vb || VB.sea, mc = W.querySelector("#rm-mapc"), px = mc ? mc.clientWidth || 1000 : 1000;
+  return vb[2] / px * 1.9;
+}
+function placePins() {
+  if (!st.ssl) return;
+  const u = pinScale();
+  st.ssl.cities.forEach((c, i) => {
+    const g = W.querySelector(`.rm-city[data-i="${i}"]`);
+    if (!g) return;
+    const k = (i === st.city ? 1.3 : c.capital ? 1.05 : 0.9) * u, [x, y] = P(c.lon, c.lat);
+    g.setAttribute("transform", `translate(${(x - 6 * k).toFixed(4)} ${(y - 15 * k).toFixed(4)}) scale(${k.toFixed(5)})`);
+  });
+}
 function buildSvg() {
   const svg = $("#rm-svg");
   svg.innerHTML = "";
@@ -261,6 +235,9 @@ function buildSvg() {
   const pat2 = el("pattern", { id: "rmNA", width: 1.2, height: 1.2, patternUnits: "userSpaceOnUse", patternTransform: "rotate(-45)" }, defs);
   el("rect", { width: 1.2, height: 1.2, fill: "#c9c2b2" }, pat2);
   el("rect", { width: 0.45, height: 1.2, fill: "#8b93ad" }, pat2);
+  const pat3 = el("pattern", { id: "rmLand", width: 0.12, height: 0.12, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+  el("rect", { width: 0.12, height: 0.12, fill: "#3d4c7c" }, pat3);
+  el("rect", { width: 0.04, height: 0.12, fill: "#56628a" }, pat3);
   let g = "";
   for (let x = 0; x <= 360; x += 15) g += `M${x} -30V210`;
   for (let y = 0; y <= 180; y += 15) g += `M-20 ${y}H380`;
@@ -294,6 +271,7 @@ function buildSvg() {
     const pg = el("g", { id: "rm-prov", "pointer-events": "none" }, svg);
     for (const [n, d] of Object.entries(st.prov.provinces)) el("path", { d, class: "rm-prv", "data-n": n, "vector-effect": "non-scaling-stroke" }, pg);
   }
+  el("g", { id: "rm-boxg" }, svg);
   el("g", { id: "rm-gridg" }, svg);
   el("g", { id: "rm-circg", "pointer-events": "none" }, svg);
   const [sx, sy] = P(...LAB.Singapore);
@@ -313,10 +291,15 @@ function buildSvg() {
     const cl = el("g", { id: "rm-clabs" }, top);
     st.ssl.cities.forEach((c, i) => {
       const [x, y] = P(c.lon, c.lat);
-      const d = el("circle", { cx: x, cy: y, r: 0.3, class: "rm-city", "data-i": i, "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, cg);
+      const d = el("g", { class: "rm-city", "data-i": i, role: "button", "aria-label": c.name }, cg);
+      el("rect", { x: -3, y: -2, width: 18, height: 19, fill: "transparent", class: "pin-hit" }, d);
+      el("path", { d: PIN_D.W, class: "pin-in", "shape-rendering": "crispEdges" }, d);
+      el("path", { d: PIN_D.R, fill: "#f4f1ea", class: "pin-r", "shape-rendering": "crispEdges" }, d);
+      el("path", { d: PIN_D.D, fill: "#b9b3a6", class: "pin-d", "shape-rendering": "crispEdges" }, d);
+      el("path", { d: PIN_D["#"], fill: "#06090f", "shape-rendering": "crispEdges" }, d);
       d.onclick = (e) => {
         e.stopPropagation();
-        if (!st.dragged) pickCity(i);
+        if (!st.dragged) pickCity(i, true);
       };
       d.onmousemove = (e) => cityTip(e, i);
       d.onmouseleave = () => tip(null);
@@ -343,8 +326,10 @@ function paint(sweep) {
   clearTimeout(paint.t);
   paint.t = setTimeout(placeFx, sweep ? 650 : 0);
   cities();
+  drawBox();
   const fmt = (x) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(L.sd < 1 ? 2 : 1);
-  if (L.real) $("#rm-leg").innerHTML = `<span>&lt;${SSL_BINS[0]}</span><span class="rm-bins">${PAL.s.map((c, i) => `<span data-b="${i}" style="background:${c}" title="${sslRange(i)} mm per decade"></span>`).join("")}</span><span>&gt;${SSL_BINS[3]} mm/dec</span><i class="rm-sw" style="background:${GREY}"></i>no clear trend<i class="rm-sw rm-sw-in"></i>inland`;
+  if (L.box) $("#rm-leg").innerHTML = `<i class="rm-sw" style="background:${PAL[L.pal][4]}"></i>clear rise<i class="rm-sw" style="background:${PAL[L.pal][0]}"></i>clear fall<i class="rm-sw" style="background:${GREY}"></i>no clear trend · one value for the box 95-141°E, 10°S-10°N`;
+  else if (L.real) $("#rm-leg").innerHTML = `<span>&lt;${SSL_BINS[0]}</span><span class="rm-bins">${PAL.s.map((c, i) => `<span data-b="${i}" style="background:${c}" title="${sslRange(i)} mm per decade"></span>`).join("")}</span><span>&gt;${SSL_BINS[3]} mm/dec</span><i class="rm-sw" style="background:${GREY}"></i>no clear trend<i class="rm-sw rm-sw-in"></i>inland`;
   else $("#rm-leg").innerHTML = `<span>${fmt(-st.mxAbs)}</span><span class="rm-bins">${PAL[L.pal].map((c, i) => `<span data-b="${i}" style="background:${c}" title="${["strong fall", "fall", "flat", "rise", "strong rise"][i]}"></span>`).join("")}</span><span>${fmt(st.mxAbs)} ${L.ud}</span><i class="rm-sw" style="background:${GREY}"></i>no trend<i class="rm-sw" style="background:repeating-linear-gradient(45deg,#c9c2b2 0 3px,#8b93ad 3px 5px)"></i>no data`;
   W.querySelectorAll(".rm-bins span").forEach((b) => {
     b.onmouseenter = () => {
@@ -381,13 +366,14 @@ function cities() {
     const d = W.querySelector(`.rm-city[data-i="${i}"]`), k = cityState(c);
     let fill = "#ece6d6";
     if (real) fill = k === "sig" ? PAL.s[sslBin(c.trend_mm_per_decade)] : k === "ns" ? GREY : "#0b1534";
-    d.setAttribute("fill", fill);
-    d.setAttribute("stroke", real && k === "inland" ? "#8b93ad" : "#06090f");
+    d.querySelector(".pin-in").setAttribute("fill", fill);
+    d.classList.toggle("inl", real && k === "inland");
     d.classList.toggle("cap", c.capital);
     d.classList.toggle("on", i === st.city);
   });
   cityFades();
   cityLabels();
+  placePins();
   drawGrid();
 }
 const KM_DEG = 111.32;
@@ -397,28 +383,32 @@ function drawGrid() {
   g.innerHTML = "";
   const c = st.ssl && st.city >= 0 ? st.ssl.cities[st.city] : null;
   if (!c || !c.grid || !LAYERS[st.v].real) return;
-  const step = st.ssl.grid.cell_deg, R = st.ssl.grid.radius_km, h = step / 2;
+  const G = st.ssl.grid, step = G.cell_deg, R = G.radius_km, h = step / 2;
   c.grid.forEach((q) => {
-    const x = q.lon + 180 - h, y = 90 - q.lat - h;
-    const fill = q.ocean && q.trend_mm_per_decade != null ? PAL.s[sslBin(q.trend_mm_per_decade)] : "none";
-    const r = el("rect", { x, y, width: step, height: step, fill, "fill-opacity": q.used ? 0.92 : 0.45, "pointer-events": "all", class: "rm-cell" + (q.used ? " used" : "") + (q.ocean ? "" : " land"), "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
+    const x = q.lon + 180 - h, y = 90 - q.lat - h, sea = q.ocean && q.trend_mm_per_decade != null;
+    const cls = "rm-cell" + (q.used ? " used" : "") + (sea ? "" : " land") + (q.inside === false ? " out" : "");
+    const r = el("rect", { x, y, width: step, height: step, fill: sea ? PAL.s[sslBin(q.trend_mm_per_decade)] : "url(#rmLand)", "fill-opacity": q.used ? 0.92 : sea ? 0.3 : 0.85, "pointer-events": "all", class: cls, "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
     r.onmousemove = (e) => cellTip(e, c, q);
     r.onmouseleave = () => tip(null);
-    if (q.ocean && q.trend_mm_per_decade != null) {
-      const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : ""), "font-size": (step * 0.24).toFixed(3) }, g);
-      t.textContent = (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0);
-    }
+    const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : "") + (sea ? "" : " land"), "font-size": (step * (sea ? 0.24 : 0.16)).toFixed(3) }, g);
+    t.textContent = sea ? (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0) : "LAND";
   });
   const [cx, cy] = P(c.lon, c.lat), ry = R / KM_DEG, rx = ry / Math.cos(c.lat * Math.PI / 180);
   el("ellipse", { cx, cy, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
-  const used = c.grid.filter((q) => q.used).length;
+  const used = c.grid.filter((q) => q.used).length, land = c.grid.filter((q) => q.inside !== false && !q.ocean).length;
+  const dom = G.domain, cut = dom && (c.lon - rx < dom[0] || c.lon + rx > dom[2] || c.lat - ry < dom[1] || c.lat + ry > dom[3]);
   const cap = el("text", { x: cx, y: cy + ry + 0.22, class: "rm-gridcap", "font-size": 0.17 }, g);
-  cap.textContent = `${used} OF ${c.grid.length} CELLS USED · CENTRES WITHIN ${R} KM`;
+  cap.textContent = `${used} OCEAN CELLS USED · ${land} LAND · CENTRES WITHIN ${R} KM`;
+  if (cut) {
+    const c2 = el("text", { x: cx, y: cy + ry + 0.42, class: "rm-gridcap", "font-size": 0.14 }, g);
+    c2.textContent = "PART OF THE CIRCLE IS OUTSIDE THE DOWNLOADED ECCO AREA";
+  }
 }
 function cellTip(e, c, q) {
   const t = $("#rm-tip"), box = $("#rm-mapc").getBoundingClientRect(), ll = (v, p, n) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? p : n}`;
   const val = q.ocean && q.trend_mm_per_decade != null ? `<b style="font-weight:400">${q.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(q.trend_mm_per_decade).toFixed(1)} mm/dec</b>` : '<span class="dim">land · no sea data</span>';
-  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${q.used ? `used for ${c.name}` : "not used"}</span>`;
+  const why = q.used ? `used for ${c.name}` : q.inside === false ? "centre outside the circle" : q.ocean ? "not used" : "the 0.5° model grid counts this as land";
+  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${why}</span>`;
   t.style.display = "block";
   const z = uiScale;
   t.style.left = Math.min((e.clientX - box.left) / z + 14, box.width / z - t.offsetWidth - 6) + "px";
@@ -495,8 +485,9 @@ function cityLabels() {
     if (show) {
       t.setAttribute("font-size", (0.85 * ls).toFixed(3));
       t.setAttribute("stroke-width", (0.24 * ls).toFixed(3));
-      t.setAttribute("x", (c.lon + 180 + 0.55 * ls).toFixed(3));
-      t.setAttribute("y", (90 - c.lat - 0.45 * ls).toFixed(3));
+      const u = pinScale();
+      t.setAttribute("x", (c.lon + 180 + 7.5 * u).toFixed(3));
+      t.setAttribute("y", (90 - c.lat - 8 * u).toFixed(3));
     }
   });
 }
@@ -633,6 +624,124 @@ function cityChart(c) {
     dp: 1
   });
 }
+const coreText = (t, L) => t.replace(/^[a-z_0-9]+,/, L.name + ",").replace(/mm day-1/g, "mm/day").replace(/ K per decade/g, " °C per decade");
+function boxStat() {
+  const L = LAYERS[st.v];
+  if (!L.box || !st.reg || !st.reg.layers[L.box]) return null;
+  return st.reg.layers[L.box].regions.find((x) => x.key === BOX_KEY) || null;
+}
+const boxSig = (b) => b && b.status === "ok" && b.ols_p_adj < 0.05 && b.tests_agree;
+const fmtBox = (v, L) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(L.dp);
+function drawBox() {
+  const g = W.querySelector("#rm-boxg");
+  if (!g) return;
+  g.innerHTML = "";
+  const L = LAYERS[st.v], b = boxStat();
+  if (!L.box || !b || st.f === 2 && boxSig(b) || st.f === 1 && !boxSig(b)) return;
+  const col = boxSig(b) ? PAL[L.pal][b.slope_per_decade > 0 ? 4 : 0] : GREY;
+  const [x0, y0] = P(BOX[0], BOX[3]), [x1, y1] = P(BOX[2], BOX[1]);
+  const r = el("rect", { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: col, "fill-opacity": st.bx ? 0.32 : 0.2, stroke: col, "stroke-width": 3, "stroke-dasharray": "8 5", "vector-effect": "non-scaling-stroke", class: "rm-box" }, g);
+  r.onclick = (e) => {
+    e.stopPropagation();
+    sfx("select");
+    st.bx = true;
+    st.city = -1;
+    card();
+    drawBox();
+  };
+  r.onmousemove = (e) => {
+    const t = $("#rm-tip"), bb = $("#rm-mapc").getBoundingClientRect(), z = uiScale;
+    t.innerHTML = `MARITIME SE ASIA BOX <b style="font-weight:400">${fmtBox(b.slope_per_decade, L)} ${L.ud}</b> <span class="dim">· click for the full result</span>`;
+    t.style.display = "block";
+    t.style.left = Math.min((e.clientX - bb.left) / z + 14, bb.width / z - t.offsetWidth - 6) + "px";
+    t.style.top = (e.clientY - bb.top) / z + 16 + "px";
+  };
+  r.onmouseleave = () => tip(null);
+  const lab = el("text", { x: x0 + 0.5, y: y0 + 1.6, class: "rm-boxlab", "font-size": 1.3 }, g);
+  lab.textContent = `${L.short} ${fmtBox(b.slope_per_decade, L)} ${L.ud.toUpperCase()}${boxSig(b) ? "" : " · NO CLEAR TREND"}`;
+}
+function boxCard(box) {
+  const L = LAYERS[st.v], b = boxStat(), ds = analysis.DATASETS[L.k], f = (v) => fmtBox(v, L), p = (v) => v < 1e-4 ? "< 0.0001" : v.toFixed(4);
+  if (!b) {
+    box.innerHTML = `<div class="hd"><h3>NO DATA</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>`;
+    box.querySelector("#rm-close").onclick = closeCard;
+    return;
+  }
+  const sig = boxSig(b), ser = ds && analysis.SERIES[L.k + "|idn"], yrs = [];
+  if (ser) {
+    const clim = Array(12).fill(0), n = Array(12).fill(0), mo = (t) => Math.min(11, Math.floor(t % 1 * 12)), by = {};
+    ser.t.forEach((t, i) => {
+      clim[mo(t)] += ser.v[i];
+      n[mo(t)]++;
+    });
+    ser.t.forEach((t, i) => (by[Math.floor(t)] = by[Math.floor(t)] || []).push(ser.v[i] - clim[mo(t)] / n[mo(t)]));
+    Object.keys(by).forEach((y) => by[y].length >= 6 && yrs.push([+y + 0.5, by[y].reduce((a, c) => a + c, 0) / by[y].length]));
+  }
+  const ym = yrs.length ? yrs.reduce((a, c) => a + c[0], 0) / yrs.length : 0, vm = yrs.length ? yrs.reduce((a, c) => a + c[1], 0) / yrs.length : 0;
+  const line = (x, k) => vm + k / 10 * (x - ym);
+  let spark = "";
+  if (yrs.length > 2) {
+    const Wd = 250, Hd = 70, lo = Math.min(...yrs.map((q) => q[1])), hi = Math.max(...yrs.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
+    const X = (x) => 8 + (x - yrs[0][0]) / (yrs[yrs.length - 1][0] - yrs[0][0]) * (Wd - 16), Y = (y) => Hd - 8 - (y - lo + pad) / (hi - lo + 2 * pad) * (Hd - 16);
+    const d = yrs.map((q, i) => `${i && q[0] - yrs[i - 1][0] > 1.5 ? "M" : i ? "L" : "M"}${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("");
+    const a0 = yrs[0][0], a1 = yrs[yrs.length - 1][0];
+    spark = `<svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart"><path class="ln" d="${d}"/><path class="tr" d="M${X(a0)} ${Y(line(a0, b.slope_per_decade))}L${X(a1)} ${Y(line(a1, b.slope_per_decade))}"/></svg>
+      <div class="zoom-hint">${Math.floor(a0)} · CLICK CHART TO ENLARGE · ${Math.floor(a1)}</div>`;
+  }
+  const warn = (b.warnings || []).map((w) => w.text || w).join(" ");
+  box.innerHTML = `<div class="hd"><h3>MARITIME SE ASIA</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
+    <div class="sub">${L.name.toUpperCase()} · ${b.first_period} TO ${b.last_period} · MONTHLY</div>
+    <div class="big"><b>${f(b.slope_per_decade)}</b><span>${L.ud.replace("/dec", " / decade").replace(" per dec", " per decade")}</span></div>
+    <span class="rm-verd" style="background:${sig ? "var(--grn)" : "var(--mus)"}">${sig ? `TREND DETECTED · ${(b.slope_per_decade > 0 ? L.up : L.down).toUpperCase()}` : "NO CLEAR TREND"}</span>
+    ${spark}
+    <table class="rm-tab">
+      <tr><td>95% range</td><td>${f(b.ci_low)} to ${f(b.ci_high)}</td></tr>
+      <tr><td>OLS p (adj.)</td><td>${p(b.ols_p_adj)}</td></tr>
+    </table>
+    <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
+    ${st.more ? `<table class="rm-tab">
+      <tr><td>Sen's slope</td><td>${f(b.sen_per_decade)}</td></tr>
+      <tr><td>Mann-Kendall p (adj.)</td><td>${p(b.mk_p_adj)}</td></tr>
+      <tr><td>Tests agree</td><td>${b.tests_agree ? "yes" : "no"}</td></tr>
+      <tr><td>Month-to-month memory</td><td>r1 = ${b.noise_lag1.toFixed(2)}</td></tr>
+      <tr><td>Years to see it</td><td>${b.years_needed_90 ? `about ${Math.round(b.years_needed_90)} (have ${Math.floor(b.n_years)})` : "n/a"}</td></tr>
+      <tr><td>Grid cells</td><td>${b.cells_in_box}</td></tr></table>` : ""}
+    <div class="rm-note">${coreText(b.sentence, L)} ${warn}</div>
+    <div class="rm-note">One average over the box 95-141°E, 10°S-10°N (land and sea). It does not say which island changed most. P-values adjusted across 3 regions (Benjamini-Hochberg).</div>
+    <div class="rm-note">NASA DATA · ${L.src}</div>
+    ${ds ? `<button class="obtn" id="rm-open">INVESTIGATE AS A CASE ▸</button>` : ""}`;
+  box.querySelector("#rm-close").onclick = closeCard;
+  box.querySelector("#rm-more").onclick = () => {
+    st.more = !st.more;
+    sfx("select");
+    card();
+  };
+  const ob = box.querySelector("#rm-open");
+  if (ob) ob.onclick = () => {
+    sfx("chime");
+    desktop.startCase({ v: L.k, r: "idn", y0: ds.start, y1: ds.end });
+  };
+  const zs = box.querySelector("#rm-zoom");
+  if (zs) zs.onclick = () => {
+    sfx("select");
+    openChart({
+      title: `MARITIME SE ASIA · ${L.name.toUpperCase()}`,
+      sub: `${b.first_period} TO ${b.last_period} · DIFFERENCE FROM THE AVERAGE FOR THAT MONTH, YEARLY · ${sig ? "TREND DETECTED" : "NO CLEAR TREND"}`,
+      unit: `${L.unit} vs normal`,
+      zero: true,
+      series: yrs,
+      seriesLabel: "Yearly average, seasons removed (years with 6+ months)",
+      fit: [[yrs[0][0], line(yrs[0][0], b.slope_per_decade)], [yrs[yrs.length - 1][0], line(yrs[yrs.length - 1][0], b.slope_per_decade)]],
+      fitLabel: `Trend ${f(b.slope_per_decade)} ${L.ud} (Python core, OLS on monthly values)`,
+      band: [yrs[0][0], ym, yrs[yrs.length - 1][0]].map((x) => [x, Math.min(line(x, b.ci_low), line(x, b.ci_high)), Math.max(line(x, b.ci_low), line(x, b.ci_high))]),
+      bandLabel: "Lines inside the 95% range",
+      dp: L.dp,
+      stats: [["TREND", `${f(b.slope_per_decade)} ${L.ud}`], ["95% RANGE", `${f(b.ci_low)} to ${f(b.ci_high)}`], ["OLS P (ADJ.)", p(b.ols_p_adj)], ["MANN-KENDALL P (ADJ.)", p(b.mk_p_adj)], ["MONTHS", `${b.n_points}`], ["VERDICT", sig ? "TREND DETECTED" : "NO CLEAR TREND"]],
+      notes: [coreText(b.sentence, L), "The trend line is the core's slope drawn through the middle of the yearly averages, for reading only.", warn].filter(Boolean),
+      source: L.src
+    });
+  };
+}
 const FXTXT = { rain: () => "Heavier rain", storm: () => "Stronger storms", drought: (L) => L.k === "t2m" ? "Heat, drought" : "Drought" };
 function fxOf(r) {
   if (!r || r.na || r.neutral || !(r.det || r.sus)) return null;
@@ -686,6 +795,17 @@ function placeFx() {
     if (sp.length >= 6 || sp.some((q) => Math.hypot(q.ax - ax, q.ay - ay) < 15)) return;
     sp.push({ t: fxOf(r), ax, ay });
   });
+  const BL = LAYERS[st.v], bs = BL.box && boxStat();
+  st.boxDry = null;
+  if (bs && boxSig(bs) && st.f !== 2) {
+    const kind = bs.slope_per_decade > 0 ? BL.fxUp : BL.fxDown;
+    if (kind === "drought") st.boxDry = pixelWeather.drought(["Indonesia", "Malaysia", "Philippines"].map((n) => mask(st.map.sea[n])), GW, GH);
+    else if (kind) [[101.5, 0.5], [114, 1], [120.8, -2.6], [110.6, -7.4], [138.5, -4.6], [124.8, 7.4], [104, -4.2], [117, -8.4]].forEach((ll) => {
+      const [ax, ay] = toCell(ll);
+      if (ax < 0 || ay < 0 || ax >= GW || ay >= GH || sp.length >= 8 || sp.some((q) => Math.abs(q.ax - ax) < 18 && Math.abs(q.ay - ay) < 18)) return;
+      sp.push({ t: kind, ax, ay });
+    });
+  }
   const sel = st.city >= 0 && st.ssl ? st.ssl.cities[st.city] : null;
   const inRing = (c) => sel && sel.grid && Math.hypot((c.lon - sel.lon) * Math.cos(sel.lat * Math.PI / 180), c.lat - sel.lat) * KM_DEG < st.ssl.grid.radius_km * 1.6;
   if (LAYERS[st.v].real && st.ssl) {
@@ -693,7 +813,7 @@ function placeFx() {
       const [ax, ay] = toCell([c.lon, c.lat]);
       if (ax < 0 || ay < 0 || ax >= GW || ay >= GH) return;
       if (sp.length >= 8 || sp.some((q) => Math.abs(q.ax - ax) < 17 && Math.abs(q.ay - ay) < 20)) return;
-      sp.push({ t: "flood", ax, ay: ay - 3 });
+      sp.push({ t: "flood", ax: ax + 12, ay: ay + 2 });
     });
   }
   const g = cv.getContext("2d"), img = g.createImageData(GW, GH);
@@ -705,6 +825,7 @@ function placeFx() {
     }
     img.data.fill(0);
     if (dst) pixelWeather.paintDrought(img, dst, f);
+    if (st.boxDry) pixelWeather.paintDrought(img, st.boxDry, f);
     sp.forEach((q) => pixelWeather.paintSprite(img, GW, GH, pixelWeather[q.t](f), q.ax, q.ay));
     g.putImageData(img, 0, 0);
     f++;
@@ -726,24 +847,30 @@ function hud() {
     $("#rm-hud").innerHTML = `SEA LEVEL · <b>${sig} of ${tested.length}</b> coastal cities rising clearly · ${st.ssl.period[0]}-${st.ssl.period[1]}`;
     return;
   }
+  if (LAYERS[st.v].box) {
+    const L = LAYERS[st.v], b = boxStat();
+    $("#rm-hud").innerHTML = b ? `${L.name.toUpperCase()} · MARITIME SE ASIA BOX · <b>${fmtBox(b.slope_per_decade, L)} ${L.ud}</b> · ${boxSig(b) ? (b.slope_per_decade > 0 ? L.up.toUpperCase() : L.down.toUpperCase()) : "NO CLEAR TREND"} · ${st.span[0]}-${st.span[1]}` : `${L.name.toUpperCase()} · DATA MISSING`;
+    return;
+  }
   const rows = st.rows, L = LAYERS[st.v], det = rows.filter((r) => r.det).length, sus = rows.filter((r) => r.sus).length, nn = rows.filter((r) => !r.na).length;
   $("#rm-hud").innerHTML = `${L.name.toUpperCase()} · <b>${det} of ${nn}</b> clear${sus ? ` · <span class="c">${sus} caution</span>` : ""}`;
 }
 function toolbar() {
-  const [lo, hi] = span(st.v), locked = LAYERS.filter((L) => L.lock);
+  const fixed = LAYERS[st.v].real || LAYERS[st.v].box, [lo, hi] = fixed ? [0, 0] : span(st.v), locked = LAYERS.filter((L) => L.lock);
   $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button></div>
-    ${LAYERS[st.v].real ? `<span class="rm-fixed" title="Trends are computed once over the full ECCO record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
-    <span class="rm-yrs" id="rm-yrs">${LAYERS[st.v].real ? `${st.span[0]}-${st.span[1]}` : ""}</span>
+    ${fixed ? `<span class="rm-fixed" title="Trends are computed once over the full record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
+    <span class="rm-yrs" id="rm-yrs">${fixed ? `${st.span[0]}-${st.span[1]}` : ""}</span>
     <div class="rm-dd" id="rm-dd"><button class="rm-ddb${st.city >= 0 ? " on" : ""}" id="rm-ddb" aria-haspopup="listbox" aria-expanded="false"><i class="pin"></i><span>${st.city >= 0 && st.ssl ? st.ssl.cities[st.city].name.toUpperCase() : "CITIES"}</span><b>▾</b></button>
       <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
     <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
     <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">FX ${st.fx ? "ON" : "OFF"}</button>
-    <button class="rm-chip${st.circ.on ? " on" : ""}" data-circ title="Draw a circle of grid cells and test it">CIRCLE ${st.circ.on ? "ON" : "OFF"}</button>
+    ${st.api ? `<button class="rm-chip${st.circ.on ? " on" : ""}" data-circ title="Draw a circle of grid cells and test it (Python analysis server)">CIRCLE ${st.circ.on ? "ON" : "OFF"}</button>` : ""}
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
-    if (!LAYERS[st.v].real) talk(["Careful. This layer is sample data. It shows how the map works, not what’s real.", "Real temperature and rain are in CASES."], "sample");
+    if (LAYERS[st.v].box) talk(["This one is a single box over the whole region. Indonesia, Malaysia, the Philippines.", "One honest number for the box. Not city by city. The grid is too coarse for that."], "box");
     st.yr = null;
+    st.bx = false;
     if (!LAYERS[st.v].real) st.city = -1;
     st.c = -1;
     sfx("select");
@@ -772,8 +899,9 @@ function toolbar() {
     e.currentTarget.textContent = `SAT ${st.sat ? "ON" : "OFF"}`;
     satRefresh();
   };
-  W.querySelector("[data-circ]").onclick = () => circleToggle(!st.circ.on);
-  if (!LAYERS[st.v].real) bindRange(lo, hi);
+  const cb = W.querySelector("[data-circ]");
+  if (cb) cb.onclick = () => circleToggle(!st.circ.on);
+  if (!fixed) bindRange(lo, hi);
   bindSearch();
 }
 function bindSearch() {
@@ -943,6 +1071,11 @@ function card() {
     if (st.city >= 0) cityCard(box);
     return;
   }
+  if (L.box) {
+    box.hidden = !st.bx;
+    if (st.bx) boxCard(box);
+    return;
+  }
   box.hidden = st.c < 0;
   if (st.c < 0) return;
   const r = st.rows[st.c];
@@ -1035,6 +1168,7 @@ function card() {
 }
 function closeCard() {
   st.c = -1;
+  st.bx = false;
   st.city = -1;
   cities();
   sfx("close");
@@ -1109,8 +1243,7 @@ function setVB(vb, anim) {
     t.setAttribute("font-size", (+t.dataset.fs * ls).toFixed(3));
     t.setAttribute("stroke-width", (0.28 * ls).toFixed(3));
   });
-  const cr = Math.min(1, vb[2] / VB.sea[2]);
-  W.querySelectorAll(".rm-city").forEach((d) => d.setAttribute("r", ((d.classList.contains("cap") ? 0.42 : 0.3) * cr).toFixed(3)));
+  placePins();
   cityLabels();
   const cg = W.querySelector("#rm-cities");
   if (cg && !LAYERS[st.v].real) cg.classList.toggle("off", !zoomedIn());
@@ -1228,6 +1361,30 @@ function zoom(to) {
   };
   requestAnimationFrame(step);
 }
+async function probeApi() {
+  if (st.api != null) return;
+  if (!import.meta.env.DEV) {
+    st.api = false;
+    return;
+  }
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 1500);
+    const r = await fetch("api/variables", { signal: ctl.signal });
+    clearTimeout(t);
+    st.api = r.ok && (r.headers.get("content-type") || "").includes("json");
+  } catch (e) {
+    st.api = false;
+  }
+}
+async function loadReg() {
+  if (st.reg) return;
+  try {
+    const r = await fetch("data/regional_data.json");
+    if (r.ok) st.reg = await r.json();
+  } catch (e) {
+    st.reg = null;
+  }
+}
 async function load() {
   if (!st.map) st.map = await (await fetch("data/sea_map.json")).json();
   const opt = async (u) => {
@@ -1241,6 +1398,8 @@ async function load() {
   if (!st.prov) st.prov = await opt("data/indonesia_provinces.json");
   if (!st.ssl) st.ssl = await opt("data/indonesia_sea_level.json");
   if (!st.ssl && LAYERS[0].real) LAYERS.shift();
+  await Promise.all([loadReg(), probeApi()]);
+  if (!st.reg) LAYERS.forEach((L) => L.box && !L.lock && (L.lock = "regional_data.json (run scripts/export_regional.py)"));
 }
 async function open(win, helpers) {
   H = helpers;

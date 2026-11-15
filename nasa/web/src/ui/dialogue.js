@@ -50,7 +50,30 @@ function closeSay() {
   typing = null;
 }
 ;
+function skipAll() {
+  const d = done;
+  done = null;
+  closeSay();
+  d && d();
+}
+const sk = document.createElement("button");
+sk.className = "say-skip";
+sk.type = "button";
+sk.textContent = "SKIP ▸▸";
+sk.setAttribute("aria-label", "Skip dialogue");
+sk.addEventListener("click", (e) => {
+  e.stopPropagation();
+  skipAll();
+});
+box.querySelector(".say-main").appendChild(sk);
 document.getElementById("say-box").addEventListener("click", next);
+addEventListener("keydown", (e) => {
+  if (box.classList.contains("on") && e.key === "Escape") {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    skipAll();
+  }
+}, true);
 addEventListener("keydown", (e) => {
   if (box.classList.contains("on") && (e.key === " " || e.key === "Enter")) {
     e.preventDefault();

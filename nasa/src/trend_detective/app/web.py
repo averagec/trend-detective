@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT / "src"))  # lets the script run without `pip instal
 
 from trend_detective.app.event_api import register_event_routes  # noqa: E402
 from trend_detective.catalog.regions import REGIONS  # noqa: E402
+from trend_detective.catalog.scope import clamp  # noqa: E402
 from trend_detective.catalog.variables import VARIABLES  # noqa: E402
 from trend_detective.process.analyse_trends import (  # noqa: E402
     build,
@@ -43,6 +44,10 @@ from trend_detective.process.analyse_trends import (  # noqa: E402
 )
 from trend_detective.process.cell_cube import load as load_cube  # noqa: E402
 from trend_detective.process.cities import load_cities  # noqa: E402
+from trend_detective.process.incidents import HAZARDS  # noqa: E402
+from trend_detective.process.incidents import circle as circle_incidents  # noqa: E402
+from trend_detective.process.incidents import city as city_incidents  # noqa: E402
+from trend_detective.process.incidents import load_counts as load_incidents  # noqa: E402
 from trend_detective.process.regional_map import build_map  # noqa: E402
 from trend_detective.process.selection import (  # noqa: E402
     KM_PER_DEG,
@@ -60,7 +65,8 @@ DEFAULT_WEB = ROOT / "web" / "dist"  # the built website (npm run build in web/)
 DEFAULT_CITIES = ROOT / "data" / "catalog" / "cities_idn.csv"  # supplied by the team
 DEFAULT_CUBES = ROOT / "data" / "processed" / "cells"  # made by process/cell_cube.py
 DEFAULT_PROCESSED = ROOT / "data" / "processed"  # regional CSVs for /api/map
-CUBE_FILES = {"merra2": "merra2_idn.npz", "gpcp": "gpcp_idn.npz"}
+DEFAULT_GDIS = DEFAULT_PROCESSED / "gdis" / "gdis_counts_idn.npz"  # made by process/gdis.py
+CUBE_FILES = {"merra2": "merra2_idn.npz", "gpcp": "gpcp_idn.npz", "gldas": "gldas_idn.npz"}
 OCEAN_IMAGES = ("ocean_ssh_mean.png", "sar_browse_scenes.png")
 SUMMARY_KEYS = (
     "n_months", "n_years", "ols_per_decade", "ols_ci_per_decade", "ols_p", "ols_significant",
@@ -238,6 +244,15 @@ def parse_float(body: dict, key: str) -> float:
         return float(body[key])
     except (KeyError, TypeError, ValueError):
         abort(400, description=f"{key} must be a number")
+
+
+def _scope(first, last):
+    """Limit a requested year range to the project window (1980 to 2018)."""
+    try:
+        lo, hi = clamp(first, last)
+    except ValueError as err:
+        abort(400, description=str(err))
+    return lo, hi
 
 
 def parse_year(body: dict, key: str) -> int | None:
@@ -471,6 +486,7 @@ def create_app(
         freq = request.args.get("freq", "monthly")
         first = parse_year(request.args, "from")
         last = parse_year(request.args, "to")
+        first, last = _scope(first, last)
         regions = [r for r in request.args.get("regions", "").split(",") if r] or None
         try:
             return jsonify(build_map(Path(processed_dir), layer, freq, first, last, regions))
@@ -478,6 +494,28 @@ def create_app(
             abort(404, description=f"unknown variable {layer!r}")
         except ValueError as err:
             abort(400, description=str(err))
+
+    @app.post("/api/incidents")
+    def incidents():
+        """GDIS flood or drought incidents for a city or a circle, 1980 to 2018."""
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            abort(400, description="send a JSON object")
+        hazard = body.get("hazard")
+        if hazard not in HAZARDS:
+            abort(400, description='hazard must be "flood" or "drought"')
+        data = load_incidents(DEFAULT_GDIS)
+        if body.get("mode") == "city":
+            city_id = str(body.get("city_id", ""))
+            match = [c for c in load_cities(cities_path) if c.city_id == city_id]
+            if not match:
+                abort(404, description=f"unknown city {city_id!r}")
+            return jsonify(city_incidents(data, hazard, match[0].lat, match[0].lon))
+        if body.get("mode") == "circle":
+            lat, lon = parse_float(body, "lat"), parse_float(body, "lon")
+            radius = parse_float(body, "radius_km")
+            return jsonify(circle_incidents(data, hazard, lat, lon, radius))
+        abort(400, description='mode must be "city" or "circle"')
 
     @app.post("/api/analyse")
     def analyse():
@@ -491,6 +529,7 @@ def create_app(
         if not isinstance(refs, list) or not refs:
             abort(400, description='variables must be a list such as ["merra2:t2m"]')
         first, last = parse_year(body, "from"), parse_year(body, "to")
+        first, last = _scope(first, last)
         if first is not None and last is not None and first > last:
             abort(400, description="from must be on or before to")
 

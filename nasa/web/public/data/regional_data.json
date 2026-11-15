@@ -1,6 +1,6 @@
 {
   "note": "Made by scripts/export_regional.py from process/regional_map.build_map (core statistics). Do not edit.",
-  "generated_utc": "2026-11-15T08:21:33+00:00",
+  "generated_utc": "2026-11-15T08:48:19+00:00",
   "freq": "monthly",
   "layers": {
     "merra2:t2m": {
@@ -875,7 +875,7 @@
     "gldas:gldas_sm_0_10cm": {
       "schema_version": 1,
       "layer": "gldas:gldas_sm_0_10cm",
-      "label": "gldas_sm_0_10cm",
+      "label": "Soil moisture, top 10 cm (GLDAS)",
       "unit": "kg m-2",
       "freq": "monthly",
       "from": null,
@@ -904,7 +904,7 @@
           "sen_per_decade": 0.017610149942331284,
           "mk_p": 0.8384916717768063,
           "tests_agree": true,
-          "sentence": "gldas_sm_0_10cm, Maritime Southeast Asia (Indonesia, Malaysia, Philippines): no significant trend detected (yet). The estimated change is +0.01 kg m-2 per decade.",
+          "sentence": "Soil moisture, top 10 cm (GLDAS), Maritime Southeast Asia (Indonesia, Malaysia, Philippines): no significant trend detected (yet). The estimated change is +0.01 kg m-2 per decade.",
           "warnings": [],
           "ols_p_adj": 0.9586063003464407,
           "mk_p_adj": 0.8384916717768064,
@@ -932,7 +932,7 @@
           "sen_per_decade": 0.29776500422654045,
           "mk_p": 0.012475181349989935,
           "tests_agree": false,
-          "sentence": "gldas_sm_0_10cm, Eastern China and Korea: no significant trend detected (yet). The estimated change is +0.27 kg m-2 per decade.",
+          "sentence": "Soil moisture, top 10 cm (GLDAS), Eastern China and Korea: no significant trend detected (yet). The estimated change is +0.27 kg m-2 per decade.",
           "warnings": [
             {
               "code": "tests_disagree",
@@ -965,7 +965,7 @@
           "sen_per_decade": 0.15502824582824815,
           "mk_p": 0.09337363645067322,
           "tests_agree": true,
-          "sentence": "gldas_sm_0_10cm, Southern Siberia and Mongolia: no significant trend detected (yet). The estimated change is +0.20 kg m-2 per decade.",
+          "sentence": "Soil moisture, top 10 cm (GLDAS), Southern Siberia and Mongolia: no significant trend detected (yet). The estimated change is +0.20 kg m-2 per decade.",
           "warnings": [],
           "ols_p_adj": 0.5188897514370396,
           "mk_p_adj": 0.14006045467600983,
@@ -1471,6 +1471,136 @@
               "text": "No valid Southern Siberia and Mongolia values for this layer."
             }
           ]
+        }
+      ]
+    },
+    "index:enso": {
+      "schema_version": 1,
+      "layer": "index:enso",
+      "label": "ENSO indicator (sea-surface height)",
+      "unit": "index",
+      "freq": "monthly",
+      "from": null,
+      "to": null,
+      "adjustment": "Benjamini-Hochberg across regions, applied separately to the OLS and Mann-Kendall p-values.",
+      "regions": [
+        {
+          "key": "global",
+          "name": "Global",
+          "status": "ok",
+          "unit": "index",
+          "first_period": "1993-01",
+          "last_period": "2026-11",
+          "n_points": 407,
+          "n_years": 33.92,
+          "years_needed_90": 96.0,
+          "noise_sd": 1.052282390065747,
+          "noise_lag1": 0.95,
+          "missing_share": 0.0,
+          "cells_in_box": 1,
+          "cells_valid_median": 1.0,
+          "slope_per_decade": -0.23023247524521953,
+          "ci_low": -1.1257642218910584,
+          "ci_high": 0.6652992714006193,
+          "ols_p": 0.5661067729014698,
+          "sen_per_decade": -0.2518246713800904,
+          "mk_p": 3.3455386196878993e-07,
+          "tests_agree": false,
+          "sentence": "ENSO indicator (sea-surface height), Global: no significant trend detected (yet). The estimated change is -0.23 index per decade.",
+          "warnings": [
+            {
+              "code": "tests_disagree",
+              "text": "The two tests disagree: check for outliers or a non-linear pattern before trusting it."
+            }
+          ],
+          "ols_p_adj": 0.5661067729014698,
+          "mk_p_adj": 3.3455386196878993e-07,
+          "direction": "unclear"
+        }
+      ]
+    },
+    "index:iod": {
+      "schema_version": 1,
+      "layer": "index:iod",
+      "label": "Indian Ocean Dipole indicator (sea-surface height)",
+      "unit": "index",
+      "freq": "monthly",
+      "from": null,
+      "to": null,
+      "adjustment": "Benjamini-Hochberg across regions, applied separately to the OLS and Mann-Kendall p-values.",
+      "regions": [
+        {
+          "key": "global",
+          "name": "Global",
+          "status": "ok",
+          "unit": "index",
+          "first_period": "1993-01",
+          "last_period": "2026-11",
+          "n_points": 407,
+          "n_years": 33.92,
+          "years_needed_90": 71.0,
+          "noise_sd": 1.0832629010975725,
+          "noise_lag1": 0.9058546383474989,
+          "missing_share": 0.0,
+          "cells_in_box": 1,
+          "cells_valid_median": 1.0,
+          "slope_per_decade": 0.2593231665493105,
+          "ci_low": -0.2565279442724685,
+          "ci_high": 0.7751742773710895,
+          "ols_p": 0.3059104215044707,
+          "sen_per_decade": 0.24543988431372554,
+          "mk_p": 7.803965662310243e-07,
+          "tests_agree": false,
+          "sentence": "Indian Ocean Dipole indicator (sea-surface height), Global: no significant trend detected (yet). The estimated change is +0.26 index per decade.",
+          "warnings": [
+            {
+              "code": "tests_disagree",
+              "text": "The two tests disagree: check for outliers or a non-linear pattern before trusting it."
+            }
+          ],
+          "ols_p_adj": 0.3059104215044707,
+          "mk_p_adj": 7.803965662310243e-07,
+          "direction": "unclear"
+        }
+      ]
+    },
+    "index:pdo": {
+      "schema_version": 1,
+      "layer": "index:pdo",
+      "label": "Pacific Decadal Oscillation indicator (sea-surface height)",
+      "unit": "index",
+      "freq": "monthly",
+      "from": null,
+      "to": null,
+      "adjustment": "Benjamini-Hochberg across regions, applied separately to the OLS and Mann-Kendall p-values.",
+      "regions": [
+        {
+          "key": "global",
+          "name": "Global",
+          "status": "ok",
+          "unit": "index",
+          "first_period": "1993-01",
+          "last_period": "2026-11",
+          "n_points": 407,
+          "n_years": 33.92,
+          "years_needed_90": 51.0,
+          "noise_sd": 1.1489798025861795,
+          "noise_lag1": 0.9453045122579361,
+          "missing_share": 0.0,
+          "cells_in_box": 1,
+          "cells_valid_median": 1.0,
+          "slope_per_decade": -0.6289314902171999,
+          "ci_low": -1.2004251671039678,
+          "ci_high": -0.05743781333043183,
+          "ols_p": 0.0333288544310613,
+          "sen_per_decade": -0.6746033529411767,
+          "mk_p": 3.5179887694167545e-27,
+          "tests_agree": true,
+          "sentence": "Pacific Decadal Oscillation indicator (sea-surface height), Global fell by 0.63 index per decade (95% CI -1.20 to -0.06), statistically significant at 95%.",
+          "warnings": [],
+          "ols_p_adj": 0.0333288544310613,
+          "mk_p_adj": 3.5179887694167545e-27,
+          "direction": "fall"
         }
       ]
     }

@@ -1,6 +1,7 @@
 import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
 import { desktop } from "../os/desktop.js";
+import { skip, beginSkip, endSkip } from "../ui/skip.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -174,7 +175,9 @@ function play() {
   SFX.whoosh();
   document.body.classList.add("playing");
   state.mode = "flying";
+  beginSkip();
   flyTo(views.room, 3200, () => {
+    endSkip();
     state.mode = "room";
     enableRoomControls();
     $("#hud").classList.add("on");
@@ -227,6 +230,7 @@ function bootOS() {
   $("#hud").classList.remove("on");
   closeSay();
   SFX.whoosh();
+  beginSkip();
   flyTo(views.screen, 1700, () => desktop.open(), 52);
 }
 function leaveDesk() {
@@ -248,7 +252,7 @@ const clock = new THREE.Clock();
   requestAnimationFrame(loop);
   const t = clock.getElapsedTime();
   if (tween) {
-    const k = Math.min(1, (performance.now() - tween.start) / tween.ms), e = ease(k);
+    const k = skip.req ? 1 : Math.min(1, (performance.now() - tween.start) / tween.ms), e = ease(k);
     camera.position.lerpVectors(tween.p0, tween.p1, e);
     controls.target.lerpVectors(tween.t0, tween.t1, e);
     camera.fov = tween.f0 + (tween.f1 - tween.f0) * e;

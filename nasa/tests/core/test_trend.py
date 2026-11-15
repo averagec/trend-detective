@@ -64,6 +64,30 @@ def test_mann_kendall_sens_slope_robust_to_outlier():
     assert abs(mann_kendall(y).slope - 0.02) < 1e-9
 
 
+def test_mann_kendall_sens_slope_is_per_month_when_months_are_missing():
+    # An exact line with 14% of the months missing: the slope must stay 0.02 per month.
+    # (Dropping the NaNs before the slope made it per valid value, about 16% too large.)
+    y = 0.02 * np.arange(240.0)
+    y[5::7] = np.nan
+    assert abs(mann_kendall(y).slope - 0.02) < 1e-9
+
+
+def test_mann_kendall_gaps_keep_their_positions():
+    # Months 2 and 3 are missing, so 1 -> 4 spans three steps, not one: the slope is exactly 1.
+    y = np.array([0.0, 1.0, np.nan, np.nan, 4.0, 5.0])
+    r = mann_kendall(y)
+    assert r.slope == 1.0
+    assert r.n == 4
+
+
+def test_mann_kendall_gaps_change_the_slope_by_little_on_noisy_data():
+    rng = np.random.default_rng(7)  # local: the module RNG must not be consumed here
+    y = 0.02 * np.arange(240.0) + rng.normal(0, 0.3, 240)
+    gappy = y.copy()
+    gappy[5::7] = np.nan
+    assert abs(mann_kendall(gappy).slope - mann_kendall(y).slope) < 0.003
+
+
 def test_opposite_regional_trends_are_both_detected():
     north = ols_trend(deseasonalize(synthetic(+0.01)))
     south = ols_trend(deseasonalize(synthetic(-0.01)))

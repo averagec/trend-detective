@@ -1,0 +1,1140 @@
+year,hazard,country,adm1,latitude,longitude,cell_lat,cell_lon
+2006,flood,Philippines,Zamboanga Del Sur,6.939302319,122.092816,7.0,121.875
+2006,flood,Philippines,Zamboanga Del Sur,6.926107338,122.0862031,7.0,121.875
+2010,flood,Philippines,Maguindanao,7.245488622,124.2363847,7.0,124.375
+2011,flood,Philippines,South Cotabato,6.17860864,125.1270588,6.0,125.0
+2011,flood,Philippines,South Cotabato,6.232454633,125.1134273,6.0,125.0
+2003,flood,Timor-Leste,Bobonaro,-8.904939552,125.2347919,-9.0,125.0
+2003,flood,Timor-Leste,Bobonaro,-8.904665108,125.2612838,-9.0,125.0
+2016,flood,Indonesia,Jawa Timur,-7.025500568,112.5895231,-7.0,112.5
+2016,flood,Indonesia,Jawa Timur,-7.070204374,112.0093211,-7.0,111.875
+2016,flood,Indonesia,Jawa Timur,-7.095328076,111.9369474,-7.0,111.875
+2016,flood,Indonesia,Jawa Timur,-7.042079305,112.108631,-7.0,111.875
+2016,flood,Indonesia,Jawa Timur,-7.062057709,111.8530456,-7.0,111.875
+2016,flood,Indonesia,Jawa Timur,-7.03284894,112.1747993,-7.0,111.875
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.472500229,118.7399961,-8.5,118.75
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.412206375,118.7437529,-8.5,118.75
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.467896714,118.7210353,-8.5,118.75
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.457480402,118.8034971,-8.5,118.75
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.488588044,118.8221564,-8.5,118.75
+2016,flood,Indonesia,Jawa Barat,-6.97275442,107.6131134,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-7.003817993,107.5603801,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-7.057533619,107.5419245,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-7.012314834,107.6387966,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.980120071,107.7669379,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.999693251,107.5098188,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.983735416,107.6645906,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-7.045415197,107.6981087,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.986612501,107.8608239,-7.0,108.125
+2016,flood,Indonesia,Jawa Barat,-7.010852469,107.7489085,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-7.067244098,107.6411289,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.932819395,107.7390656,-7.0,107.5
+2016,flood,Indonesia,Sulawesi Tenggara,-3.575689157,122.2389644,-3.5,122.5
+2016,flood,Indonesia,Sulawesi Tenggara,-3.397827505,121.8376613,-3.5,121.875
+2017,flood,Indonesia,Nusa Tenggara Barat,-8.759548402,116.483711,-9.0,116.25
+2017,flood,Indonesia,Nusa Tenggara Barat,-8.680042128,116.4748147,-8.5,116.25
+2017,flood,Indonesia,Nusa Tenggara Barat,-8.845354653,116.4802252,-9.0,116.25
+2017,flood,Indonesia,Nusa Tenggara Barat,-8.722919267,116.4738778,-8.5,116.25
+2017,flood,Indonesia,Sumatera Barat,-0.294298524,100.7616014,-0.5,100.625
+2017,flood,Indonesia,Sumatera Barat,-0.119676134,100.6955827,-1.7975103014118005e-13,100.625
+2017,flood,Indonesia,Sumatera Barat,0.232408573,100.443772,-1.7975103014118005e-13,100.625
+2017,flood,Indonesia,Sulawesi Tengah,1.244173687,120.8953479,1.0,120.625
+2017,flood,Indonesia,Gorontalo,0.659100709,122.9269696,0.5,123.125
+2017,flood,Indonesia,Sulawesi Tengah,0.890137836,120.8824948,1.0,120.625
+2017,flood,Indonesia,Gorontalo,0.680161525,122.9882559,0.5,123.125
+2017,flood,Indonesia,Gorontalo,0.69364559,122.8520009,0.5,123.125
+2017,flood,Indonesia,Sulawesi Tengah,1.014647879,120.8836048,1.0,120.625
+1989,flood,Indonesia,Jawa Timur,-7.623012194,111.6459009,-7.5,111.875
+1990,flood,Indonesia,Jawa Tengah,-7.454185866,109.173259,-7.5,109.375
+1990,flood,Indonesia,Jawa Tengah,-7.018654738,109.874534,-7.0,110.0
+1990,flood,Indonesia,Jawa Tengah,-7.488561833,108.8911992,-7.5,108.75
+1990,flood,Indonesia,Jawa Tengah,-6.91546533,110.6269918,-7.0,110.625
+1990,flood,Indonesia,Jawa Tengah,-7.036422856,110.1574282,-7.0,110.0
+1990,flood,Indonesia,Jawa Tengah,-6.741661737,111.0410559,-6.5,111.25
+1990,flood,Indonesia,Jawa Tengah,-6.775794657,111.4621753,-7.0,111.25
+1990,flood,Indonesia,Jawa Tengah,-7.273090901,110.4782582,-7.5,110.625
+1990,flood,Indonesia,Jawa Tengah,-7.384903397,110.9764348,-7.5,111.25
+1990,flood,Indonesia,Jawa Tengah,-7.259237109,110.1406625,-7.5,110.0
+1993,flood,Indonesia,Banten,-6.646560606,106.2125102,-6.5,106.25
+1993,flood,Indonesia,Banten,-6.142981979,106.1578301,-6.0,106.25
+1993,flood,Indonesia,Banten,-6.191354899,106.5466357,-6.0,106.25
+1994,flood,Indonesia,Jawa Barat,-7.010682457,107.5260094,-7.0,107.5
+1994,flood,Indonesia,Jawa Timur,-7.255899347,111.8052744,-7.5,111.875
+1994,flood,Indonesia,Jawa Timur,-6.914918965,112.5599724,-7.0,112.5
+1994,flood,Indonesia,Jawa Timur,-7.133710904,112.3010432,-7.0,112.5
+1994,flood,Indonesia,Jawa Timur,-7.437651854,111.3418732,-7.5,111.25
+1994,flood,Indonesia,Jawa Timur,-6.953752531,111.8954498,-7.0,111.875
+1996,flood,Indonesia,Jawa Tengah,-7.454185866,109.173259,-7.5,109.375
+1996,flood,Indonesia,Jawa Tengah,-7.488561833,108.8911992,-7.5,108.75
+1996,flood,Indonesia,Jawa Tengah,-7.273090901,110.4782582,-7.5,110.625
+2000,flood,Indonesia,Sumatera Barat,-0.96242172,100.8151226,-1.0,100.625
+2000,flood,Indonesia,Sumatera Barat,-0.46253189,100.5892528,-0.5,100.625
+2000,flood,Indonesia,Sulawesi Utara,1.480578152,125.1456479,1.5,125.0
+2000,flood,Indonesia,Sulawesi Utara,0.658932634,123.9471067,0.5,123.75
+2000,flood,Indonesia,Sulawesi Utara,1.519414626,124.8592634,1.5,125.0
+2000,flood,Indonesia,Sulawesi Utara,1.236891648,124.8279142,1.0,125.0
+2001,flood,Indonesia,Papua,-2.996104307,139.9761388,-3.0,140.0
+2002,flood,Indonesia,Jawa Timur,-7.941667953,113.9466151,-8.0,113.75
+2002,flood,Indonesia,Jawa Timur,-8.125444574,113.1375657,-8.0,113.125
+2002,flood,Indonesia,Jawa Timur,-7.550887666,112.4828336,-7.5,112.5
+2002,flood,Indonesia,Jawa Timur,-7.448689705,112.700125,-7.5,112.5
+2002,flood,Indonesia,Jawa Timur,-7.274910377,112.7175996,-7.5,112.5
+2002,flood,Indonesia,Aceh,2.495839858,97.87256182,2.5,98.125
+2003,flood,Indonesia,Jawa Tengah,-7.454185866,109.173259,-7.5,109.375
+2003,flood,Indonesia,Jawa Tengah,-7.488561833,108.8911992,-7.5,108.75
+2003,flood,Indonesia,Jambi,-1.75589225,103.1206136,-2.0,103.125
+2003,flood,Indonesia,Riau,-0.552558299,102.3135415,-0.5,102.5
+2003,flood,Indonesia,Riau,0.197908665,102.3235501,-1.7975103014118005e-13,102.5
+2006,flood,Indonesia,Jawa Tengah,-6.91546533,110.6269918,-7.0,110.625
+2006,flood,Indonesia,Jawa Tengah,-6.775794657,111.4621753,-7.0,111.25
+2006,flood,Indonesia,Jawa Tengah,-7.273090901,110.4782582,-7.5,110.625
+2006,flood,Indonesia,Sulawesi Utara,1.519414626,124.8592634,1.5,125.0
+2006,flood,Indonesia,Sulawesi Utara,1.236891648,124.8279142,1.0,125.0
+2006,flood,Indonesia,Sulawesi Selatan,-4.693135171,120.1328021,-4.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-5.433209132,120.2360402,-5.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-5.320227944,119.723758,-5.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-5.584274238,119.7137424,-5.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-6.548087562,120.7096748,-6.5,120.625
+2006,flood,Indonesia,Sulawesi Selatan,-3.810832977,119.96725,-4.0,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-5.211852015,120.1462756,-5.0,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-4.339790343,119.8905541,-4.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-4.009576325,120.1693308,-4.0,120.0
+2006,flood,Indonesia,Kalimantan Selatan,-3.381223329,115.6682388,-3.5,115.625
+2006,flood,Indonesia,Kalimantan Selatan,-3.816477885,114.9016841,-4.0,115.0
+2006,flood,Indonesia,Sumatera Utara,0.758950335,99.38755289,1.0,99.375
+2007,flood,Indonesia,Jawa Barat,-6.211359583,107.1232329,-6.0,106.875
+2007,flood,Indonesia,Jawa Barat,-6.558990031,106.7681426,-6.5,106.875
+2007,flood,Indonesia,Jawa Barat,-6.397081864,106.8135335,-6.5,106.875
+2007,flood,Indonesia,Sulawesi Tengah,-1.042016963,122.5272443,-1.0,122.5
+2007,flood,Indonesia,Sulawesi Tengah,-2.096925193,121.5277294,-2.0,121.25
+2007,flood,Indonesia,Sulawesi Tengah,-0.001839562,120.4252295,-1.7975103014118005e-13,120.625
+2007,flood,Indonesia,Kalimantan Timur,-1.164548236,116.8783116,-1.0,116.875
+2007,flood,Indonesia,Jawa Tengah,-7.454185866,109.173259,-7.5,109.375
+2007,flood,Indonesia,Jawa Tengah,-7.018654738,109.874534,-7.0,110.0
+2007,flood,Indonesia,Jawa Tengah,-7.074790638,111.3856777,-7.0,111.25
+2007,flood,Indonesia,Jawa Timur,-7.255899347,111.8052744,-7.5,111.875
+2007,flood,Indonesia,Jawa Tengah,-7.488561833,108.8911992,-7.5,108.75
+2007,flood,Indonesia,Jawa Tengah,-6.91546533,110.6269918,-7.0,110.625
+2007,flood,Indonesia,Jawa Timur,-6.914918965,112.5599724,-7.0,112.5
+2007,flood,Indonesia,Jawa Timur,-8.240157029,113.6578258,-8.0,113.75
+2007,flood,Indonesia,Jawa Timur,-7.54560382,112.2622508,-7.5,112.5
+2007,flood,Indonesia,Jawa Tengah,-7.612998175,111.0170211,-7.5,111.25
+2007,flood,Indonesia,Jawa Tengah,-7.686558533,110.6132251,-7.5,110.625
+2007,flood,Indonesia,Jawa Tengah,-6.797349695,110.868756,-7.0,110.625
+2007,flood,Indonesia,Jawa Timur,-7.133710904,112.3010432,-7.0,112.5
+2007,flood,Indonesia,Jawa Timur,-8.125444574,113.1375657,-8.0,113.125
+2007,flood,Indonesia,Jawa Timur,-7.623012194,111.6459009,-7.5,111.875
+2007,flood,Indonesia,Jawa Timur,-7.662602867,111.3566745,-7.5,111.25
+2007,flood,Indonesia,Jawa Timur,-7.550887666,112.4828336,-7.5,112.5
+2007,flood,Indonesia,Jawa Timur,-7.437651854,111.3418732,-7.5,111.25
+2007,flood,Indonesia,Jawa Timur,-8.126174258,111.1755666,-8.0,111.25
+2007,flood,Indonesia,Sumatera Barat,-0.976679337,100.4454949,-1.0,100.625
+2007,flood,Indonesia,Jawa Tengah,-6.741661737,111.0410559,-6.5,111.25
+2007,flood,Indonesia,Jawa Tengah,-7.061103206,109.6317682,-7.0,109.375
+2007,flood,Indonesia,Jawa Tengah,-7.032043021,109.3979983,-7.0,109.375
+2007,flood,Indonesia,Jawa Tengah,-7.384903397,110.9764348,-7.5,111.25
+2007,flood,Indonesia,Jawa Tengah,-7.686811261,110.8332927,-7.5,110.625
+2007,flood,Indonesia,Jawa Timur,-7.274910377,112.7175996,-7.5,112.5
+2007,flood,Indonesia,Jawa Tengah,-7.55501255,110.8197951,-7.5,110.625
+2007,flood,Indonesia,Jawa Tengah,-7.029068672,109.1601862,-7.0,109.375
+2007,flood,Indonesia,Jawa Timur,-8.166074814,111.6241345,-8.0,111.875
+2007,flood,Indonesia,Jawa Timur,-6.953752531,111.8954498,-7.0,111.875
+2007,flood,Indonesia,Jawa Timur,-8.116092588,111.8877844,-8.0,111.875
+2007,flood,Indonesia,Jawa Tengah,-7.922087768,110.9979533,-8.0,111.25
+2008,flood,Indonesia,Jawa Barat,-6.558990031,106.7681426,-6.5,106.875
+2008,flood,Indonesia,Jawa Barat,-6.397081864,106.8135335,-6.5,106.875
+2008,flood,Indonesia,Jawa Timur,-7.255899347,111.8052744,-7.5,111.875
+2008,flood,Indonesia,Jawa Timur,-7.133710904,112.3010432,-7.0,112.5
+2008,flood,Indonesia,Jawa Timur,-7.437651854,111.3418732,-7.5,111.25
+2008,flood,Indonesia,Jawa Tengah,-7.55501255,110.8197951,-7.5,110.625
+2008,flood,Indonesia,Riau,0.296688556,101.0806853,0.5,101.25
+2008,flood,Indonesia,Riau,-0.491803087,101.5029569,-0.5,101.25
+2008,flood,Indonesia,Riau,0.540729991,101.4599145,0.5,101.25
+2008,flood,Indonesia,Jawa Barat,-7.125962615,107.1552561,-7.0,106.875
+2008,flood,Indonesia,Jawa Barat,-6.587498781,107.4435658,-6.5,107.5
+2010,flood,Indonesia,Papua Barat,-2.627180086,134.3211108,-2.5,134.375
+2011,flood,Indonesia,Jawa Barat,-6.481101274,107.7332147,-6.5,107.5
+2011,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2011,flood,Indonesia,Jawa Tengah,-6.797349695,110.868756,-7.0,110.625
+2011,flood,Indonesia,Jawa Tengah,-7.273090901,110.4782582,-7.5,110.625
+2011,flood,Indonesia,Jawa Tengah,-7.259237109,110.1406625,-7.5,110.0
+2012,flood,Indonesia,Sulawesi Tengah,-0.87042364,119.9010773,-1.0,120.0
+2012,flood,Indonesia,Sulawesi Tengah,-0.001839562,120.4252295,-1.7975103014118005e-13,120.625
+2013,flood,Indonesia,Jawa Timur,-7.255899347,111.8052744,-7.5,111.875
+2013,flood,Indonesia,Jawa Timur,-6.914918965,112.5599724,-7.0,112.5
+2013,flood,Indonesia,Jawa Timur,-7.550887666,112.4828336,-7.5,112.5
+2013,flood,Indonesia,Jawa Timur,-6.953752531,111.8954498,-7.0,111.875
+2014,flood,Indonesia,Sulawesi Utara,3.30300576,125.5070233,3.5,125.625
+2014,flood,Indonesia,Sulawesi Utara,1.519414626,124.8592634,1.5,125.0
+2014,flood,Indonesia,Sulawesi Utara,1.236891648,124.8279142,1.0,125.0
+2014,flood,Indonesia,Sulawesi Utara,1.319952697,124.8140034,1.5,125.0
+2014,flood,Indonesia,Jawa Tengah,-6.91546533,110.6269918,-7.0,110.625
+2014,flood,Indonesia,Jawa Barat,-6.447138945,108.1693851,-6.5,108.125
+2014,flood,Indonesia,Jawa Tengah,-6.797349695,110.868756,-7.0,110.625
+2014,flood,Indonesia,Jawa Barat,-6.481101274,107.7332147,-6.5,107.5
+2014,flood,Indonesia,Papua,-2.996104307,139.9761388,-3.0,140.0
+2014,flood,Indonesia,Papua,-2.658685493,140.786615,-2.5,140.625
+2000,flood,Malaysia,Kedah,6.114839571,100.3606956,6.0,100.625
+2000,flood,Malaysia,Kedah,6.354982668,100.4025813,6.5,100.625
+2000,flood,Malaysia,Kedah,6.264464097,100.6965275,6.5,100.625
+2000,flood,Malaysia,Kelantan,5.996529071,102.0853872,6.0,101.875
+2000,flood,Malaysia,Kelantan,6.166957563,102.1679265,6.0,101.875
+2003,flood,Malaysia,Trengganu,4.672711605,103.1418353,4.5,103.125
+2003,flood,Malaysia,Trengganu,4.275945375,103.2250618,4.5,103.125
+2003,flood,Malaysia,Trengganu,5.065819841,103.2137015,5.0,103.125
+2003,flood,Malaysia,Sabah,6.058270504,117.3326234,6.0,117.5
+2003,flood,Malaysia,Sabah,5.406510632,118.1857857,5.5,118.125
+2003,flood,Malaysia,Sabah,6.432440273,116.8009764,6.5,116.875
+2004,flood,Malaysia,Sarawak,1.382842936,110.1171525,1.5,110.0
+2004,flood,Malaysia,Sarawak,1.427208609,110.327508,1.5,110.625
+2004,flood,Malaysia,Pahang,3.169018251,102.5572404,3.0,102.5
+2004,flood,Malaysia,Trengganu,5.590946295,102.5160296,5.5,102.5
+2004,flood,Malaysia,Trengganu,4.672711605,103.1418353,4.5,103.125
+2004,flood,Malaysia,Kelantan,4.945316023,101.9621462,5.0,101.875
+2004,flood,Malaysia,Trengganu,4.275945375,103.2250618,4.5,103.125
+2004,flood,Malaysia,Kelantan,5.996529071,102.0853872,6.0,101.875
+2004,flood,Malaysia,Pahang,3.334842115,103.1854814,3.5,103.125
+2004,flood,Malaysia,Trengganu,5.454532716,102.7919342,5.5,102.5
+2004,flood,Malaysia,Kelantan,5.751608777,102.0379889,6.0,101.875
+2004,flood,Malaysia,Kelantan,6.166957563,102.1679265,6.0,101.875
+2006,flood,Malaysia,Johor,1.924175199,103.037162,2.0,103.125
+2006,flood,Malaysia,Johor,2.066494504,103.3914852,2.0,103.125
+2006,flood,Malaysia,Johor,1.763113818,103.9489867,2.0,103.75
+2006,flood,Malaysia,Johor,2.342958585,103.7439035,2.5,103.75
+2006,flood,Malaysia,Johor,2.120885076,102.7841602,2.0,102.5
+2006,flood,Malaysia,Johor,1.542903065,103.404632,1.5,103.125
+2006,flood,Malaysia,Johor,2.480543327,102.9654241,2.5,103.125
+2007,flood,Malaysia,Johor,1.924175199,103.037162,2.0,103.125
+2007,flood,Malaysia,Johor,1.763113818,103.9489867,2.0,103.75
+2008,flood,Malaysia,Trengganu,4.672711605,103.1418353,4.5,103.125
+2008,flood,Malaysia,Trengganu,4.275945375,103.2250618,4.5,103.125
+2008,flood,Malaysia,Trengganu,5.065819841,103.2137015,5.0,103.125
+2009,flood,Malaysia,Trengganu,5.590946295,102.5160296,5.5,102.5
+2009,flood,Malaysia,Trengganu,4.672711605,103.1418353,4.5,103.125
+2009,flood,Malaysia,Trengganu,4.275945375,103.2250618,4.5,103.125
+2009,flood,Malaysia,Trengganu,5.065819841,103.2137015,5.0,103.125
+2009,flood,Malaysia,Trengganu,5.454532716,102.7919342,5.5,102.5
+2009,flood,Malaysia,Kedah,5.711477866,100.869513,5.5,100.625
+2009,flood,Malaysia,Kedah,6.114839571,100.3606956,6.0,100.625
+2008,flood,Philippines,Maguindanao,7.000548601,124.3502826,7.0,124.375
+2008,flood,Philippines,Maguindanao,7.088209064,124.2483817,7.0,124.375
+2008,flood,Philippines,Maguindanao,7.021607248,124.4632981,7.0,124.375
+2008,flood,Philippines,Maguindanao,6.964302847,124.4597604,7.0,124.375
+2008,flood,Philippines,Maguindanao,7.109880726,124.3681825,7.0,124.375
+2008,flood,Philippines,Maguindanao,6.938567188,124.5112781,7.0,124.375
+2008,flood,Philippines,North Cotabato,7.139641243,124.5155247,7.0,124.375
+2008,flood,Philippines,Maguindanao,7.172850747,124.4308519,7.0,124.375
+2008,flood,Philippines,North Cotabato,7.056295149,124.6399987,7.0,124.375
+2009,flood,Philippines,Sarangani,6.154483047,125.3646054,6.0,125.625
+2009,flood,Philippines,North Cotabato,7.17893305,124.620129,7.0,124.375
+2009,flood,Philippines,Maguindanao,6.788759732,124.377302,7.0,124.375
+2009,flood,Philippines,Maguindanao,7.088209064,124.2483817,7.0,124.375
+2009,flood,Philippines,South Cotabato,6.144971204,125.1526974,6.0,125.0
+2009,flood,Philippines,Sarangani,5.787758889,125.3415177,6.0,125.625
+2009,flood,Philippines,Sultan Kudarat,6.606831576,124.4364745,6.5,124.375
+2009,flood,Philippines,Davao Del Sur,5.842455015,125.5231113,6.0,125.625
+2009,flood,Philippines,Sarangani,6.000243999,124.7069771,6.0,125.0
+2009,flood,Philippines,Sultan Kudarat,6.79819767,124.6252837,7.0,124.375
+2009,flood,Philippines,Sarangani,5.933337222,124.9659087,6.0,125.0
+2009,flood,Philippines,Sarangani,6.116836249,124.4738891,6.0,124.375
+2009,flood,Philippines,Sarangani,5.996818353,125.3900606,6.0,125.625
+2009,flood,Philippines,Maguindanao,6.938567188,124.5112781,7.0,124.375
+2009,flood,Philippines,North Cotabato,7.139641243,124.5155247,7.0,124.375
+2009,flood,Philippines,South Cotabato,6.52326182,124.6765858,6.5,124.375
+2009,flood,Philippines,Maguindanao,6.759298371,124.7867903,7.0,125.0
+2009,flood,Philippines,North Cotabato,7.056295149,124.6399987,7.0,124.375
+2009,flood,Philippines,South Cotabato,6.240515692,125.0707533,6.0,125.0
+2009,flood,Philippines,Sultan Kudarat,6.410923111,124.354994,6.5,124.375
+2009,flood,Philippines,Maguindanao,6.884402116,124.4507392,7.0,124.375
+2009,flood,Philippines,Maguindanao,6.84047451,124.1770922,7.0,124.375
+2009,flood,Philippines,South Cotabato,6.337097409,124.9818625,6.5,125.0
+2010,flood,Philippines,South Cotabato,6.472749496,124.8932324,6.5,125.0
+2010,flood,Philippines,Sultan Kudarat,6.79819767,124.6252837,7.0,124.375
+2010,flood,Philippines,Sultan Kudarat,6.686959589,124.6801739,6.5,124.375
+2010,flood,Philippines,South Cotabato,6.337097409,124.9818625,6.5,125.0
+2014,flood,Philippines,Maguindanao,6.788759732,124.377302,7.0,124.375
+2014,flood,Philippines,Maguindanao,7.088209064,124.2483817,7.0,124.375
+2014,flood,Philippines,Maguindanao,7.109880726,124.3681825,7.0,124.375
+2014,flood,Philippines,Maguindanao,6.938567188,124.5112781,7.0,124.375
+2014,flood,Philippines,Maguindanao,6.947589975,124.7455709,7.0,125.0
+2014,flood,Philippines,Maguindanao,6.899333563,124.6389278,7.0,124.375
+2014,flood,Philippines,Maguindanao,7.027022955,124.3739845,7.0,124.375
+2014,flood,Philippines,North Cotabato,7.056295149,124.6399987,7.0,124.375
+2014,flood,Philippines,North Cotabato,6.813577354,124.9667895,7.0,125.0
+2001,flood,Timor-Leste,Lautem,-8.678569724,126.8365056,-8.5,126.875
+2001,flood,Timor-Leste,Lautem,-8.534418341,127.0090964,-8.5,126.875
+2001,flood,Timor-Leste,Lautem,-8.539289377,126.8040609,-8.5,126.875
+2001,flood,Timor-Leste,Lautem,-8.431903846,127.1602403,-8.5,126.875
+2001,flood,Indonesia,Papua,-4.662877994,138.6911071,-4.5,138.75
+2014,flood,Indonesia,Papua,-4.662877994,138.6911071,-4.5,138.75
+1990,flood,Indonesia,Jawa Tengah,-7.116879584,110.927101,-7.0,110.625
+1995,flood,Indonesia,Sumatera Utara,2.278724946,100.0564038,2.5,100.0
+1995,flood,Indonesia,Sumatera Utara,1.738363982,98.78590503,1.5,98.75
+2000,flood,Indonesia,Sumatera Barat,-1.73828936,100.8806743,-1.5,100.625
+2002,flood,Indonesia,Jawa Timur,-7.052256638,113.2560855,-7.0,113.125
+2002,flood,Indonesia,Aceh,3.162858379,97.43537262,3.0,97.5
+2002,flood,Indonesia,Aceh,4.15541066,96.50678271,4.0,96.25
+2003,flood,Indonesia,Jambi,-1.219844433,103.9673777,-1.0,103.75
+2006,flood,Indonesia,Sulawesi Selatan,-5.488189371,119.9869112,-5.5,120.0
+2006,flood,Indonesia,Sulawesi Selatan,-2.395263672,120.1609014,-2.5,120.0
+2006,flood,Indonesia,Kalimantan Selatan,-2.987325641,116.065794,-3.0,116.25
+2007,flood,Indonesia,Sulawesi Tengah,0.926045319,120.7189344,1.0,120.625
+2007,flood,Indonesia,Jawa Tengah,-7.116879584,110.927101,-7.0,110.625
+2007,flood,Indonesia,Sumatera Barat,-1.73828936,100.8806743,-1.5,100.625
+2011,flood,Indonesia,Jawa Barat,-6.919135085,107.636602,-7.0,107.5
+2014,flood,Indonesia,Sulawesi Utara,1.084224079,124.5210665,1.0,124.375
+2014,flood,Indonesia,Sulawesi Utara,1.551116764,125.0067034,1.5,125.0
+2000,flood,Malaysia,Kelantan,5.415342712,102.1663039,5.5,101.875
+2004,flood,Malaysia,Sarawak,1.449935689,110.499104,1.5,110.625
+2004,flood,Malaysia,Trengganu,5.048009807,102.7782293,5.0,102.5
+2004,flood,Malaysia,Kelantan,5.415342712,102.1663039,5.5,101.875
+2008,flood,Malaysia,Trengganu,5.048009807,102.7782293,5.0,102.5
+2009,flood,Malaysia,Trengganu,5.048009807,102.7782293,5.0,102.5
+2009,flood,Philippines,Maguindanao,6.721994816,124.7943535,6.5,125.0
+2010,flood,Philippines,Zamboanga Del Sur,7.147666364,122.1426801,7.0,121.875
+2011,flood,Philippines,Zamboanga Del Sur,7.147666364,122.1426801,7.0,121.875
+1996,flood,Indonesia,Jawa Tengah,-7.655266531,109.6174096,-7.5,109.375
+2003,flood,Indonesia,Jawa Tengah,-7.655266531,109.6174096,-7.5,109.375
+2006,flood,Indonesia,Sumatera Utara,3.710928254,98.22140857,3.5,98.125
+2007,flood,Indonesia,Sulawesi Tengah,-1.680809256,120.5210926,-1.5,120.625
+2007,flood,Indonesia,Sulawesi Tengah,-1.111602895,121.5743501,-1.0,121.875
+2011,flood,Indonesia,Jawa Tengah,-7.655266531,109.6174096,-7.5,109.375
+2001,flood,Thailand,Satun,6.787932749,99.9218976,7.0,100.0
+2001,flood,Thailand,Satun,6.768296051,100.1226881,7.0,100.0
+2001,flood,Thailand,Satun,6.910093588,99.79194711,7.0,100.0
+2003,flood,Timor-Leste,Bobonaro,-8.985140922,125.2066367,-9.0,125.0
+2007,flood,Timor-Leste,Manufahi,-9.035867622,125.6849948,-9.0,125.625
+2007,flood,Timor-Leste,Covalima,-9.254321762,125.2855683,-9.5,125.0
+1992,flood,Indonesia,Jawa Timur,-8.161840998,111.6262128,-8.0,111.875
+2002,flood,Indonesia,Sulawesi Tenggara,-3.92798121,121.5766341,-4.0,121.875
+2001,flood,Malaysia,Sabah,6.07707112,116.3342344,6.0,116.25
+2001,flood,Malaysia,Sabah,5.326499759,115.7065881,5.5,115.625
+2001,flood,Malaysia,Sabah,5.627887463,116.0158865,5.5,116.25
+2001,flood,Malaysia,Sabah,5.843563228,116.1983194,6.0,116.25
+2001,flood,Malaysia,Sabah,6.008151469,116.1612475,6.0,116.25
+2016,flood,Indonesia,Jawa Barat,-7.099968677,107.6108411,-7.0,107.5
+2016,flood,Indonesia,Jawa Barat,-6.252003326,107.353927,-6.5,107.5
+2016,flood,Indonesia,Jambi,-2.196200998,102.0644188,-2.0,101.875
+2016,flood,Indonesia,Jawa Timur,-7.255432792,111.8098379,-7.5,111.875
+2016,flood,Indonesia,Jawa Timur,-8.536116272,114.2411745,-8.5,114.375
+2016,flood,Indonesia,Jawa Tengah,-7.69958989,109.9660376,-7.5,110.0
+2016,flood,Indonesia,Banten,-6.64210077,106.2128343,-6.5,106.25
+2016,flood,Indonesia,Nusa Tenggara Barat,-8.474763715,118.6186193,-8.5,118.75
+2016,flood,Indonesia,Kalimantan Barat,0.516558311,109.7711803,0.5,110.0
+2016,flood,Indonesia,Jawa Barat,-7.359586322,107.7888626,-7.5,107.5
+2016,flood,Indonesia,Jawa Timur,-7.743180435,112.8315587,-7.5,113.125
+2016,flood,Indonesia,Kalimantan Barat,1.01045642,109.5627704,1.0,109.375
+2016,flood,Indonesia,Kalimantan Barat,0.267423483,110.4322438,0.5,110.625
+2016,flood,Indonesia,Kalimantan Barat,1.429306872,109.3461416,1.5,109.375
+2016,flood,Indonesia,Sumatera Barat,0.387260844,100.0826368,0.5,100.0
+2016,flood,Indonesia,Sumatera Barat,-1.131838198,101.553989,-1.0,101.25
+2016,flood,Indonesia,Sumatera Barat,-0.782351304,100.6303639,-1.0,100.625
+2016,flood,Indonesia,Riau,0.939431115,100.4748242,1.0,100.625
+2016,flood,Indonesia,Aceh,5.380544962,95.51498867,5.5,95.625
+2016,flood,Indonesia,Sumatera Barat,-0.962395663,100.8186767,-1.0,100.625
+2016,flood,Indonesia,Bangka Belitung,-2.433005481,106.2386612,-2.5,106.25
+2016,flood,Indonesia,Sumatera Barat,-0.684362342,101.0896914,-0.5,101.25
+2016,flood,Indonesia,Sumatera Barat,0.023750535,100.5670975,-1.7975103014118005e-13,100.625
+2016,flood,Indonesia,Sumatera Barat,-1.406356645,101.2525788,-1.5,101.25
+2016,flood,Indonesia,Riau,0.325693519,101.069186,0.5,101.25
+2016,flood,Indonesia,Sumatera Barat,-0.653771471,100.7570312,-0.5,100.625
+2016,flood,Indonesia,Bangka Belitung,-1.888972258,105.4842741,-2.0,105.625
+2016,flood,Indonesia,Aceh,5.068088118,96.0071797,5.0,96.25
+2016,flood,Indonesia,Bangka Belitung,-2.778158463,106.3476746,-3.0,106.25
+2016,flood,Indonesia,Aceh,5.014912749,97.18188448,5.0,96.875
+2016,flood,Indonesia,Jambi,-2.308952751,102.6645106,-2.5,102.5
+2016,flood,Indonesia,Kalimantan Selatan,-3.442424634,115.6484727,-3.5,115.625
+2016,flood,Indonesia,Jawa Barat,-7.133712506,107.1577718,-7.0,106.875
+2016,flood,Indonesia,Sulawesi Tenggara,-3.597999787,122.035152,-3.5,121.875
+2016,flood,Indonesia,Jawa Barat,-6.825065809,107.9808499,-7.0,108.125
+2016,flood,Indonesia,Jawa Barat,-7.359586322,107.7888626,-7.5,107.5
+2017,flood,Indonesia,Sumatera Utara,2.802368774,99.5625626,3.0,99.375
+2017,flood,Indonesia,Sumatera Utara,3.627659164,98.66798513,3.5,98.75
+2017,flood,Indonesia,Banten,-6.301812378,106.707423,-6.5,106.875
+2017,flood,Indonesia,Kalimantan Timur,3.9933124,116.6686078,4.0,116.875
+2017,flood,Indonesia,Banten,-6.174269741,106.5186263,-6.0,106.25
+2017,flood,Indonesia,Sulawesi Utara,0.709260131,124.0384046,0.5,123.75
+2017,flood,Indonesia,Kalimantan Barat,-1.633120443,110.6138743,-1.5,110.625
+2017,flood,Indonesia,Sulawesi Utara,0.73194854,124.3136747,0.5,124.375
+2018,flood,Indonesia,Sumatera Utara,0.774439182,99.36941186,1.0,99.375
+2016,flood,Malaysia,Kelantan,5.996857581,102.0875012,6.0,101.875
+2016,flood,Malaysia,Kelantan,6.167934867,102.1668515,6.0,101.875
+2016,flood,Malaysia,Trengganu,5.592495872,102.5165552,5.5,102.5
+2016,flood,Malaysia,Perak,4.83052648,101.094408,5.0,101.25
+2016,flood,Malaysia,Kelantan,5.415342712,102.1663039,5.5,101.875
+2016,flood,Malaysia,Trengganu,4.275728659,103.2260711,4.5,103.125
+2016,flood,Malaysia,Kelantan,5.746503054,102.2480475,5.5,102.5
+2016,flood,Malaysia,Kelantan,5.578038297,101.8245201,5.5,101.875
+2016,flood,Malaysia,Kelantan,5.836103143,102.3883449,6.0,102.5
+2016,flood,Malaysia,Kelantan,6.043180379,102.2654011,6.0,102.5
+2016,flood,Malaysia,Trengganu,5.067091909,103.2130525,5.0,103.125
+2016,flood,Malaysia,Kelantan,4.945482985,101.9618434,5.0,101.875
+2016,flood,Malaysia,Trengganu,5.45435567,102.792205,5.5,102.5
+2016,flood,Malaysia,Kelantan,5.752417439,102.0361911,6.0,101.875
+2016,flood,Malaysia,Trengganu,5.048009807,102.7782293,5.0,102.5
+2016,flood,Malaysia,Trengganu,4.671746016,103.1417841,4.5,103.125
+2016,flood,Malaysia,Kelantan,5.998191022,102.3789268,6.0,102.5
+2016,flood,Malaysia,Kedah,5.860918163,100.4016716,6.0,100.625
+2016,flood,Malaysia,Pulau Pinang,5.40868752,100.2840243,5.5,100.0
+2016,flood,Malaysia,Kedah,5.711271782,100.8700807,5.5,100.625
+2017,flood,Malaysia,Kelantan,5.752417439,102.0361911,6.0,101.875
+2017,flood,Malaysia,Kelantan,5.746503054,102.2480475,5.5,102.5
+2017,flood,Malaysia,Kelantan,6.043180379,102.2654011,6.0,102.5
+2017,flood,Malaysia,Trengganu,5.340495465,103.0319918,5.5,103.125
+2017,flood,Malaysia,Kelantan,5.578038297,101.8245201,5.5,101.875
+2017,flood,Malaysia,Trengganu,5.45435567,102.792205,5.5,102.5
+2017,flood,Malaysia,Trengganu,4.671746016,103.1417841,4.5,103.125
+2017,flood,Malaysia,Kelantan,5.415342712,102.1663039,5.5,101.875
+2017,flood,Malaysia,Trengganu,5.067091909,103.2130525,5.0,103.125
+2017,flood,Malaysia,Kelantan,6.167934867,102.1668515,6.0,101.875
+2017,flood,Malaysia,Kelantan,5.836103143,102.3883449,6.0,102.5
+2017,flood,Malaysia,Trengganu,5.592495872,102.5165552,5.5,102.5
+2017,flood,Malaysia,Kelantan,5.996857581,102.0875012,6.0,101.875
+2017,flood,Malaysia,Kelantan,5.998191022,102.3789268,6.0,102.5
+2018,flood,Malaysia,Pahang,3.167070051,102.5573754,3.0,102.5
+2018,flood,Malaysia,Pahang,3.333374995,103.1836917,3.5,103.125
+2018,flood,Malaysia,Pahang,4.344816819,101.91593,4.5,101.875
+2018,flood,Malaysia,Pahang,4.257282824,102.5558307,4.5,102.5
+2018,flood,Malaysia,Pahang,2.867754386,103.1129564,3.0,103.125
+2018,flood,Malaysia,Pahang,3.855544288,103.0912133,4.0,103.125
+2018,flood,Malaysia,Sarawak,1.078804159,110.585756,1.0,110.625
+2018,flood,Malaysia,Sarawak,4.29770834,115.1258186,4.5,115.0
+2018,flood,Malaysia,Sarawak,1.449935689,110.499104,1.5,110.625
+2018,flood,Malaysia,Sarawak,2.827111851,112.3685303,3.0,112.5
+2018,flood,Malaysia,Sarawak,2.052908984,111.4572233,2.0,111.25
+2018,flood,Malaysia,Sarawak,3.161373989,113.4643825,3.0,113.75
+2003,drought,Indonesia,Nusa Tenggara Timur,-9.918201413,123.8599663,-10.0,123.75
+2003,drought,Indonesia,Nusa Tenggara Timur,-9.827948352,124.3967616,-10.0,124.375
+2003,drought,Indonesia,Nusa Tenggara Timur,-9.377495935,124.5697618,-9.5,124.375
+2003,drought,Indonesia,Nusa Tenggara Timur,-9.337910847,124.928492,-9.5,125.0
+2015,drought,Indonesia,Papua,-3.460215404,137.8437571,-3.5,138.125
+2015,drought,Indonesia,Papua,-4.088255797,138.869338,-4.0,138.75
+2015,flood,Indonesia,Sumatera Barat,-1.73828936,100.8806743,-1.5,100.625
+2015,flood,Indonesia,Jawa Barat,-6.448637902,108.168729,-6.5,108.125
+2015,flood,Indonesia,Aceh,4.833062321,95.6785114,5.0,95.625
+2015,flood,Philippines,Maguindanao,7.109059507,124.3695654,7.0,124.375
+2015,flood,Philippines,Maguindanao,7.021635849,124.4622618,7.0,124.375
+2015,flood,Philippines,Maguindanao,6.947097591,124.7461207,7.0,125.0
+2015,flood,Philippines,Maguindanao,6.789206283,124.3771826,7.0,124.375
+2018,flood,Indonesia,Jawa Barat,-6.559979443,106.7675307,-6.5,106.875
+1980,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+1980,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1980,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1981,flood,Indonesia,Jawa Timur,-8.125444574,113.1375657,-8.0,113.125
+1981,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1982,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+1982,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+1984,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1984,flood,Indonesia,Jawa Barat,-7.010682457,107.5260094,-7.0,107.5
+1985,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+1985,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1986,flood,Indonesia,Nusa Tenggara Timur,-9.259755266,122.1785055,-9.5,121.875
+1986,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+1986,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+1987,flood,Indonesia,Sulawesi Selatan,-3.621782444,119.6013248,-3.5,119.375
+1988,flood,Indonesia,Nusa Tenggara Timur,-9.259755266,122.1785055,-9.5,121.875
+1988,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+1988,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1988,flood,Indonesia,Kalimantan Selatan,-3.000145182,115.4340217,-3.0,115.625
+1988,flood,Indonesia,Kalimantan Tengah,-1.601657756,113.4158098,-1.5,113.125
+1988,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+1989,flood,Indonesia,Maluku,-3.678838277,128.1883422,-3.5,128.125
+1990,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+1990,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1990,flood,Indonesia,Jawa Barat,-6.558990031,106.7681426,-6.5,106.875
+1990,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1991,flood,Indonesia,Kalimantan Tengah,-1.601657756,113.4158098,-1.5,113.125
+1994,flood,Indonesia,Sumatera Utara,2.979822588,99.03902349,3.0,98.75
+1995,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+1995,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+1995,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1995,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1995,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+1995,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+1996,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1996,flood,Indonesia,Sumatera Selatan,-3.832593027,103.2525892,-4.0,103.125
+1996,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+1996,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1996,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1996,flood,Indonesia,Aceh,5.071957066,96.07097932,5.0,96.25
+1999,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+1999,flood,Indonesia,Gorontalo,0.68741032,122.3751424,0.5,122.5
+1999,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1999,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+1999,flood,Indonesia,Sulawesi Barat,-2.460613094,119.339167,-2.5,119.375
+1999,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2000,flood,Indonesia,Nusa Tenggara Timur,-9.336312311,124.9308963,-9.5,125.0
+2000,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2000,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2000,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2001,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2001,flood,Indonesia,Jawa Timur,-8.240157029,113.6578258,-8.0,113.75
+2001,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2001,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+2001,flood,Indonesia,Gorontalo,0.68741032,122.3751424,0.5,122.5
+2001,flood,Indonesia,Sulawesi Barat,-2.460613094,119.339167,-2.5,119.375
+2001,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2001,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+2002,flood,Indonesia,Sumatera Utara,3.646441624,98.66852883,3.5,98.75
+2002,flood,Indonesia,Nusa Tenggara Timur,-9.259755266,122.1785055,-9.5,121.875
+2002,flood,Indonesia,Nusa Tenggara Timur,-9.259755266,122.1785055,-9.5,121.875
+2003,flood,Indonesia,Sumatera Barat,-0.764927306,100.6237406,-1.0,100.625
+2003,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2003,flood,Indonesia,Jawa Tengah,-7.488561833,108.8911992,-7.5,108.75
+2003,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2003,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2003,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2003,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2003,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2003,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+2004,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2005,flood,Indonesia,Aceh,3.363086552,97.7056392,3.5,97.5
+2005,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2005,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2005,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2005,flood,Indonesia,Jawa Timur,-8.240157029,113.6578258,-8.0,113.75
+2006,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2006,flood,Indonesia,Jawa Barat,-6.447138945,108.1693851,-6.5,108.125
+2006,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2006,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2006,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2006,flood,Indonesia,Jawa Timur,-8.166074814,111.6241345,-8.0,111.875
+2006,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2006,flood,Indonesia,Kalimantan Selatan,-3.000145182,115.4340217,-3.0,115.625
+2007,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2007,flood,Indonesia,Banten,-6.191354899,106.5466357,-6.0,106.25
+2007,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2007,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2008,flood,Indonesia,Banten,-6.191354899,106.5466357,-6.0,106.25
+2008,flood,Indonesia,Jawa Timur,-7.740549514,112.8300656,-7.5,113.125
+2008,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2008,flood,Indonesia,Jawa Timur,-7.801802818,114.0579953,-8.0,113.75
+2008,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2008,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2008,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2008,flood,Indonesia,Nusa Tenggara Timur,-9.259755266,122.1785055,-9.5,121.875
+2008,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2008,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2008,flood,Indonesia,Gorontalo,0.68741032,122.3751424,0.5,122.5
+2008,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2008,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+2008,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2008,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2008,flood,Indonesia,Sulawesi Barat,-2.460613094,119.339167,-2.5,119.375
+2009,flood,Indonesia,Gorontalo,0.68741032,122.3751424,0.5,122.5
+2009,flood,Indonesia,Sulawesi Barat,-2.460613094,119.339167,-2.5,119.375
+2009,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2009,flood,Indonesia,Banten,-6.191354899,106.5466357,-6.0,106.25
+2009,flood,Indonesia,Sumatera Utara,0.758950335,99.38755289,1.0,99.375
+2009,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2010,flood,Indonesia,Jawa Barat,-7.010682457,107.5260094,-7.0,107.5
+2010,flood,Indonesia,Kalimantan Tengah,-1.601657756,113.4158098,-1.5,113.125
+2011,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2011,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2011,flood,Indonesia,Aceh,5.071957066,96.07097932,5.0,96.25
+2011,flood,Indonesia,Jawa Tengah,-7.416705962,109.9089214,-7.5,110.0
+2012,flood,Indonesia,Maluku,-3.678838277,128.1883422,-3.5,128.125
+2012,flood,Indonesia,Maluku,-3.678838277,128.1883422,-3.5,128.125
+2012,flood,Indonesia,Sumatera Barat,-0.976679337,100.4454949,-1.0,100.625
+2012,flood,Indonesia,Gorontalo,0.68741032,122.3751424,0.5,122.5
+2012,flood,Indonesia,Sulawesi Barat,-2.460613094,119.339167,-2.5,119.375
+2012,flood,Indonesia,Sulawesi Utara,1.259219728,124.5202328,1.5,124.375
+2012,flood,Indonesia,Nusa Tenggara Barat,-8.491228121,118.2388756,-8.5,118.125
+2012,flood,Indonesia,Sumatera Barat,-1.402078997,101.2515426,-1.5,101.25
+2013,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2013,flood,Indonesia,Sulawesi Utara,1.519414626,124.8592634,1.5,125.0
+2013,flood,Indonesia,Riau,0.912717319,100.4723476,1.0,100.625
+2013,flood,Indonesia,Nusa Tenggara Timur,-9.336312311,124.9308963,-9.5,125.0
+2013,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2013,flood,Indonesia,Maluku,-3.678838277,128.1883422,-3.5,128.125
+2013,flood,Indonesia,Gorontalo,0.539552759,123.2994421,0.5,123.125
+2013,flood,Indonesia,Kalimantan Barat,0.003722037,110.9727178,-1.7975103014118005e-13,111.25
+2013,flood,Indonesia,Sumatera Utara,3.32496687,99.14087014,3.5,99.375
+2014,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2014,flood,Indonesia,Banten,-6.191354899,106.5466357,-6.0,106.25
+2014,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2014,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2014,flood,Indonesia,Jawa Tengah,-7.258421798,110.1984235,-7.5,110.0
+2014,flood,Indonesia,Banten,-6.456983177,106.1084611,-6.5,106.25
+2014,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+2014,flood,Indonesia,Jawa Timur,-7.54560382,112.2622508,-7.5,112.5
+2014,flood,Indonesia,Bengkulu,-3.56038621,102.3464653,-3.5,102.5
+2014,flood,Indonesia,Sumatera Selatan,-3.21734014,104.1691231,-3.0,104.375
+2015,flood,Indonesia,Jakarta Raya,-6.202112106,106.8357425,-6.0,106.875
+1986,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+1986,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+1988,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+1993,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+1993,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+1993,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+1998,flood,Malaysia,Pulau Pinang,5.371587925,100.398613,5.5,100.625
+1999,flood,Malaysia,Pahang,3.334842115,103.1854814,3.5,103.125
+1999,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2000,flood,Malaysia,Trengganu,5.590946295,102.5160296,5.5,102.5
+2001,flood,Malaysia,Pulau Pinang,5.371587925,100.398613,5.5,100.625
+2001,flood,Malaysia,Kuala Lumpur,3.131075186,101.6852721,3.0,101.875
+2001,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2001,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2001,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2003,flood,Malaysia,Pulau Pinang,5.371587925,100.398613,5.5,100.625
+2003,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2003,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2004,flood,Malaysia,Johor,1.542903065,103.404632,1.5,103.125
+2005,flood,Malaysia,Sabah,6.005806917,116.1610241,6.0,116.25
+2005,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2005,flood,Malaysia,Perlis,6.50672697,100.2416891,6.5,100.0
+2005,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2006,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2006,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2006,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2006,flood,Malaysia,Melaka,2.322453043,102.3070425,2.5,102.5
+2006,flood,Malaysia,Negeri Sembilan,2.774906124,102.206627,3.0,102.5
+2006,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2007,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2007,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2007,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2007,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2008,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2008,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2008,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2008,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2008,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2009,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2009,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2013,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2013,flood,Malaysia,Kuala Lumpur,3.131075186,101.6852721,3.0,101.875
+2013,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2013,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2014,flood,Malaysia,Kelantan,5.279034147,102.0283369,5.5,101.875
+2014,flood,Malaysia,Kuala Lumpur,3.131075186,101.6852721,3.0,101.875
+2014,flood,Malaysia,Melaka,2.322453043,102.3070425,2.5,102.5
+2014,flood,Malaysia,Negeri Sembilan,2.774906124,102.206627,3.0,102.5
+2014,flood,Malaysia,Pahang,3.73178726,102.5420636,3.5,102.5
+2014,flood,Malaysia,Perlis,6.50672697,100.2416891,6.5,100.0
+2014,flood,Malaysia,Pulau Pinang,5.371587925,100.398613,5.5,100.625
+2014,flood,Malaysia,Putrajaya,2.905585519,101.6840663,3.0,101.875
+2014,flood,Malaysia,Selangor,3.273354241,101.4983235,3.5,101.25
+2014,flood,Malaysia,Trengganu,4.927125512,102.9522109,5.0,103.125
+2008,flood,Papua New Guinea,Sandaun,-3.913848369,141.7142848,-4.0,141.875
+1982,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2001,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2001,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2001,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2002,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2002,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2005,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2005,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2007,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2007,flood,Philippines,South Cotabato,6.240515692,125.0707533,6.0,125.0
+2008,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2008,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2008,flood,Philippines,Davao Oriental,7.208219244,126.4331891,7.0,126.25
+2008,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2009,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2009,flood,Philippines,Maguindanao,7.245488622,124.2363847,7.0,124.375
+2009,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2010,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2010,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2010,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2010,flood,Philippines,Sultan Kudarat,6.79819767,124.6252837,7.0,124.375
+2010,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2010,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2010,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2011,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2011,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2011,flood,Philippines,Sarangani,6.0213895,125.1472076,6.0,125.0
+2011,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2011,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2011,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2011,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2011,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2011,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2011,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2011,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2011,flood,Philippines,Sarangani,6.0213895,125.1472076,6.0,125.0
+2011,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2011,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2011,flood,Philippines,Davao Del Sur,6.697225045,125.4180903,6.5,125.625
+2012,flood,Philippines,Sultan Kudarat,6.79819767,124.6252837,7.0,124.375
+2012,flood,Philippines,Sarangani,5.787758889,125.3415177,6.0,125.625
+2012,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2012,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2012,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2012,flood,Philippines,Sultan Kudarat,6.51090556,124.1595143,6.5,124.375
+2012,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2012,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2012,flood,Philippines,Sarangani,6.0213895,125.1472076,6.0,125.0
+2012,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2012,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2013,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2013,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2013,flood,Philippines,Sarangani,6.0213895,125.1472076,6.0,125.0
+2013,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2013,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2013,flood,Philippines,North Cotabato,7.214843075,124.8524845,7.0,125.0
+2013,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+2013,flood,Philippines,Sarangani,6.0213895,125.1472076,6.0,125.0
+2013,flood,Philippines,South Cotabato,6.281512661,124.8448765,6.5,125.0
+2013,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2014,flood,Philippines,Sultan Kudarat,6.545945343,124.4723873,6.5,124.375
+2014,flood,Philippines,Maguindanao,7.023865425,124.3772658,7.0,124.375
+1987,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+1987,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1987,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+1987,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+1988,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+1988,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1988,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+1988,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+1993,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+1993,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1993,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+1993,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+1993,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1994,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+1994,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1994,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+1994,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+1999,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+1999,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+1999,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+1999,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2000,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2000,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2000,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+2000,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2003,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+2003,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2004,flood,Thailand,Yala,6.081851716,101.2547886,6.0,101.25
+2005,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2005,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2005,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+2005,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2006,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2007,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2007,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2008,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2008,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2008,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2008,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2008,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2009,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2009,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2009,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2010,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2010,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2010,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+2010,flood,Thailand,Yala,6.081851716,101.2547886,6.0,101.25
+2013,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2014,flood,Thailand,Narathiwat,6.180136454,101.7188966,6.0,101.875
+2014,flood,Thailand,Pattani,6.730020873,101.3500709,6.5,101.25
+2014,flood,Thailand,Satun,6.826141111,99.93125096,7.0,100.0
+2014,flood,Thailand,Yala,6.195915054,101.2298571,6.0,101.25
+2003,flood,Timor-Leste,Ainaro,-9.002916715,125.5720847,-9.0,125.625
+2003,flood,Timor-Leste,Baucau,-8.564468985,126.4688784,-8.5,126.25
+2003,flood,Timor-Leste,Covalima,-9.244511982,125.2434988,-9.0,125.0
+2003,flood,Timor-Leste,Manatuto,-8.712770154,125.9763516,-8.5,126.25
+2003,flood,Timor-Leste,Manufahi,-8.993173753,125.8000304,-9.0,125.625
+2003,flood,Timor-Leste,Viqueque,-8.801346971,126.3608215,-9.0,126.25
+2010,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2011,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2011,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2012,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2013,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2013,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+1980,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1980,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1980,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1982,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+1982,flood,Indonesia,Bangka Belitung,-2.448458644,106.552742,-2.5,106.25
+1982,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+1982,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+1982,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1982,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+1982,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1984,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1984,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1984,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1984,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1984,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1985,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1985,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+1986,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1986,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1986,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+1987,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1987,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+1988,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+1988,flood,Indonesia,Bangka Belitung,-2.448458644,106.552742,-2.5,106.25
+1988,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+1988,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1988,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+1988,flood,Indonesia,Kalimantan Timur,1.329790678,116.3794564,1.5,116.25
+1988,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+1988,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1988,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+1988,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1989,flood,Indonesia,Maluku Utara,0.210393283,127.53991,-1.7975103014118005e-13,127.5
+1990,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1990,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1990,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1991,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+1991,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+1991,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1993,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1993,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1993,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1994,flood,Indonesia,Nusa Tenggara Barat,-8.606664515,117.5074521,-8.5,117.5
+1994,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1995,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1995,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+1995,flood,Indonesia,Bangka Belitung,-2.448458644,106.552742,-2.5,106.25
+1995,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+1995,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1995,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1995,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+1995,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+1995,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+1995,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1995,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1995,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1996,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1996,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1996,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1996,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1998,flood,Indonesia,Kalimantan Timur,1.329790678,116.3794564,1.5,116.25
+1999,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1999,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+1999,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+1999,flood,Indonesia,Sulawesi Tenggara,-4.126100457,122.0719146,-4.0,121.875
+1999,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2000,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+2000,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+2000,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2000,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2000,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2001,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2001,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2001,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+2001,flood,Indonesia,Bangka Belitung,-2.448458644,106.552742,-2.5,106.25
+2001,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+2001,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+2001,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2001,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2001,flood,Indonesia,Sulawesi Tenggara,-4.126100457,122.0719146,-4.0,121.875
+2001,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+2001,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2002,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2003,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2003,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2003,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2003,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2003,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2003,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2003,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+2003,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2003,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2003,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2005,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+2005,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2005,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2006,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2006,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2006,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2006,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2006,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+2006,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2007,flood,Indonesia,Kalimantan Timur,1.329790678,116.3794564,1.5,116.25
+2007,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2007,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2008,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2008,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2008,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2008,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2008,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2008,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2008,flood,Indonesia,Maluku,-4.729786971,129.8374071,-4.5,130.0
+2008,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2008,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2008,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2008,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2008,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2008,flood,Indonesia,Kalimantan Timur,1.329790678,116.3794564,1.5,116.25
+2008,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2008,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2008,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2009,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2009,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2009,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2009,flood,Indonesia,Sulawesi Tenggara,-4.126100457,122.0719146,-4.0,121.875
+2009,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2010,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2010,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2010,flood,Indonesia,Maluku,-4.729786971,129.8374071,-4.5,130.0
+2011,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2011,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2011,flood,Indonesia,Papua,-4.662877994,138.6911071,-4.5,138.75
+2011,flood,Indonesia,Papua,-4.662877994,138.6911071,-4.5,138.75
+2012,flood,Indonesia,Maluku Utara,0.210393283,127.53991,-1.7975103014118005e-13,127.5
+2012,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2012,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2012,flood,Indonesia,Sulawesi Tenggara,-4.126100457,122.0719146,-4.0,121.875
+2012,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2013,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2013,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2013,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+2014,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2014,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2014,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2014,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+2014,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+2014,flood,Indonesia,Bangka Belitung,-2.448458644,106.552742,-2.5,106.25
+2014,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+2014,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+2014,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2014,flood,Indonesia,Sumatera Barat,-0.851751986,100.4667212,-1.0,100.625
+2014,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1993,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+1993,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+1993,flood,Malaysia,Sabah,5.352781137,117.1287939,5.5,116.875
+1996,flood,Malaysia,Sarawak,2.594069468,113.3107322,2.5,113.125
+1999,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2003,flood,Malaysia,Kedah,5.945619735,100.6168839,6.0,100.625
+2003,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2003,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2004,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2005,flood,Malaysia,Kedah,5.945619735,100.6168839,6.0,100.625
+2005,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2006,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2006,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2007,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2008,flood,Malaysia,Sarawak,2.594069468,113.3107322,2.5,113.125
+2009,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2011,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2013,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2014,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2014,flood,Malaysia,Kedah,5.945619735,100.6168839,6.0,100.625
+2014,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2014,flood,Malaysia,Sabah,5.352781137,117.1287939,5.5,116.875
+2015,flood,Malaysia,Sarawak,2.594069468,113.3107322,2.5,113.125
+2000,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2007,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2007,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+2010,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2011,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2011,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2011,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2012,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2013,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2013,flood,Philippines,Sulu,5.955700443,121.0504938,6.0,121.25
+2015,flood,Philippines,Basilan,6.579418737,122.0214288,6.5,121.875
+2015,flood,Philippines,Tawi-Tawi,5.262053884,119.8610001,5.5,120.0
+1987,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1988,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1993,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1993,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1994,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1999,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2000,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2003,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2005,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2007,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2008,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2009,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2011,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2013,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2014,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+1987,flood,Indonesia,Kalimantan Timur,0.090647198,116.5095779,-1.7975103014118005e-13,116.25
+1994,flood,Indonesia,Sumatera Barat,-1.73828936,100.8806743,-1.5,100.625
+1995,flood,Indonesia,Aceh,5.014912749,97.18188448,5.0,96.875
+2002,flood,Indonesia,Sumatera Selatan,-4.109121551,103.262675,-4.0,103.125
+2002,flood,Indonesia,Jakarta Raya,-6.181229972,106.8350758,-6.0,106.875
+2002,flood,Indonesia,Sumatera Utara,0.32076758,98.10352196,0.5,98.125
+2002,flood,Indonesia,Sumatera Utara,1.98840269,99.07302013,2.0,99.375
+2003,flood,Indonesia,Nusa Tenggara Barat,-8.664408935,116.0942345,-8.5,116.25
+2006,flood,Indonesia,Jakarta Raya,-6.255372766,106.9002684,-6.5,106.875
+2007,flood,Indonesia,Nusa Tenggara Timur,-8.569355667,120.4015249,-8.5,120.625
+2007,flood,Indonesia,Sulawesi Selatan,-3.198550669,120.1825513,-3.0,120.0
+2007,flood,Indonesia,Maluku,-3.160895135,129.2571557,-3.0,129.375
+2008,flood,Indonesia,Jakarta Raya,-6.27254877,106.8099972,-6.5,106.875
+2008,flood,Indonesia,Aceh,4.456668439,96.18529458,4.5,96.25
+2008,flood,Indonesia,Nusa Tenggara Barat,-8.664408935,116.0942345,-8.5,116.25
+2009,flood,Indonesia,Jakarta Raya,-6.27254877,106.8099972,-6.5,106.875
+2010,flood,Indonesia,Sulawesi Tenggara,-3.247718501,121.1562663,-3.0,121.25
+2010,flood,Indonesia,Nusa Tenggara Timur,-9.827948352,124.3967616,-10.0,124.375
+2011,flood,Indonesia,Jakarta Raya,-6.27254877,106.8099972,-6.5,106.875
+2011,flood,Indonesia,Jawa Barat,-6.745512899,108.5513361,-6.5,108.75
+2012,flood,Indonesia,Jakarta Raya,-6.181229972,106.8350758,-6.0,106.875
+2013,flood,Indonesia,Aceh,4.15541066,96.50678271,4.0,96.25
+2013,flood,Indonesia,Kalimantan Timur,-1.157425322,116.597761,-1.0,116.875
+1990,flood,Philippines,Zamboanga Del Sur,7.147666364,122.1426801,7.0,121.875
+2001,flood,Philippines,Zamboanga Del Sur,7.147666364,122.1426801,7.0,121.875
+2004,flood,Thailand,Narathiwat,5.915097003,101.7379368,6.0,101.875
+2000,flood,Indonesia,Yogyakarta,-7.81981488,110.1671217,-8.0,110.0
+2000,flood,Indonesia,Nusa Tenggara Barat,-8.70322119,117.4849384,-8.5,117.5
+2003,flood,Indonesia,Sumatera Utara,3.710928254,98.22140857,3.5,98.125
+2013,flood,Indonesia,Sumatera Utara,3.710928254,98.22140857,3.5,98.125
+1982,flood,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1992,flood,Papua New Guinea,Sandaun,-3.42912966,141.3467572,-3.5,141.25
+2013,flood,Papua New Guinea,Sandaun,-3.914086772,141.7157819,-4.0,141.875
+1982,flood,Philippines,Maguindanao,7.024148476,124.3761571,7.0,124.375
+1982,flood,Philippines,Sultan Kudarat,6.545996996,124.4742448,6.5,124.375
+1992,flood,Philippines,South Cotabato,6.28254583,124.8460061,6.5,125.0
+1995,flood,Philippines,Sultan Kudarat,6.545996996,124.4742448,6.5,124.375
+1995,flood,Philippines,South Cotabato,6.28254583,124.8460061,6.5,125.0
+2006,flood,Philippines,Maguindanao,7.024148476,124.3761571,7.0,124.375
+1999,flood,Thailand,Songkhla,7.110115693,100.6111511,7.0,100.625
+2002,flood,Thailand,Narathiwat,6.193942144,101.5130436,6.0,101.25
+2014,flood,Thailand,Narathiwat,6.179233625,101.7195263,6.0,101.875
+2003,flood,Timor-Leste,Ermera,-8.845439977,125.3956426,-9.0,125.625
+2003,flood,Timor-Leste,Ainaro,-9.001841368,125.5733269,-9.0,125.625
+2007,flood,Timor-Leste,Ermera,-8.812590372,125.3877343,-9.0,125.625
+2007,flood,Timor-Leste,Manatuto,-8.713112473,125.9765313,-8.5,126.25
+2007,flood,Timor-Leste,Baucau,-8.564568029,126.4698111,-8.5,126.25
+2007,flood,Timor-Leste,Viqueque,-8.800659128,126.3592679,-9.0,126.25
+2007,flood,Timor-Leste,Ainaro,-9.001841368,125.5733269,-9.0,125.625
+2007,flood,Timor-Leste,Baucau,-8.564568029,126.4698111,-8.5,126.25
+2007,flood,Timor-Leste,Aileu,-8.701431953,125.6359604,-8.5,125.625
+2007,flood,Timor-Leste,Covalima,-9.243997002,125.2440426,-9.0,125.0
+2007,flood,Timor-Leste,Ermera,-8.812590372,125.3877343,-9.0,125.625
+2007,flood,Timor-Leste,Bobonaro,-8.967969384,125.1865318,-9.0,125.0
+2007,flood,Timor-Leste,Liquica,-8.652460743,125.2960477,-8.5,125.0
+2007,flood,Timor-Leste,Lautem,-8.514546646,126.9683867,-8.5,126.875
+1981,flood,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1982,flood,Indonesia,Kalimantan Selatan,-2.993286617,115.4395595,-3.0,115.625
+1983,flood,Indonesia,Sulawesi Tengah,-1.021213866,122.5796774,-1.0,122.5
+1983,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+1983,flood,Indonesia,Yogyakarta,-7.895028204,110.4453795,-8.0,110.625
+1983,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1987,flood,Indonesia,Sumatera Selatan,-3.217433279,104.1703769,-3.0,104.375
+1987,flood,Indonesia,Bengkulu,-3.533071222,102.3371476,-3.5,102.5
+1987,flood,Indonesia,Aceh,4.22448016,96.91088682,4.0,96.875
+1987,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+1996,flood,Indonesia,Jakarta Raya,-6.200328558,106.8344836,-6.0,106.875
+2003,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2007,flood,Indonesia,Sulawesi Barat,-2.461705235,119.3440075,-2.5,119.375
+2008,flood,Indonesia,Jawa Tengah,-7.259387694,110.2007399,-7.5,110.0
+2008,flood,Indonesia,Banten,-6.45645524,106.1092757,-6.5,106.25
+2008,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+2008,flood,Indonesia,Bengkulu,-3.533071222,102.3371476,-3.5,102.5
+2008,flood,Indonesia,Gorontalo,0.686847116,122.3761512,0.5,122.5
+2008,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2008,flood,Indonesia,Sulawesi Tengah,-1.003911742,121.2022833,-1.0,121.25
+2008,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2008,flood,Indonesia,Bali,-8.369676937,115.1321099,-8.5,115.0
+2016,flood,Indonesia,Gorontalo,0.686847116,122.3761512,0.5,122.5
+2016,flood,Indonesia,Sulawesi Utara,1.262052819,124.523091,1.5,124.375
+2016,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+2016,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2016,flood,Indonesia,Jambi,-1.69942379,102.7237519,-1.5,102.5
+2016,flood,Indonesia,Jakarta Raya,-6.200328558,106.8344836,-6.0,106.875
+2016,flood,Indonesia,Lampung,-4.917955237,105.0228326,-5.0,105.0
+2016,flood,Indonesia,Sumatera Selatan,-3.217433279,104.1703769,-3.0,104.375
+2016,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2016,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+2017,flood,Indonesia,Riau,0.219424567,102.2676234,-1.7975103014118005e-13,102.5
+2017,flood,Indonesia,Kalimantan Selatan,-2.313261417,115.6406121,-2.5,115.625
+2017,flood,Indonesia,Sumatera Selatan,-4.100629692,104.093925,-4.0,104.375
+2017,flood,Indonesia,Jawa Barat,-7.099968677,107.6108411,-7.0,107.5
+2017,flood,Indonesia,Jawa Tengah,-7.031092262,109.158397,-7.0,109.375
+2017,flood,Indonesia,Aceh,2.35062313,97.84576781,2.5,98.125
+2017,flood,Indonesia,Jakarta Raya,-6.200328558,106.8344836,-6.0,106.875
+2017,flood,Indonesia,Jawa Barat,-6.215148823,107.1206687,-6.0,106.875
+2017,flood,Indonesia,Jawa Barat,-6.463376554,107.2280823,-6.5,107.5
+2017,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2017,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2017,flood,Indonesia,Jawa Tengah,-7.501579527,110.2467333,-7.5,110.0
+2017,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2017,flood,Indonesia,Jawa Tengah,-7.330426419,110.2340881,-7.5,110.0
+2017,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2017,flood,Indonesia,Jakarta Raya,-6.200328558,106.8344836,-6.0,106.875
+2017,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+2017,flood,Indonesia,Sumatera Selatan,-3.217433279,104.1703769,-3.0,104.375
+2017,flood,Indonesia,Sulawesi Tenggara,-4.126100457,122.0719146,-4.0,121.875
+2017,flood,Indonesia,Sulawesi Selatan,-3.732296629,120.1611373,-3.5,120.0
+2017,flood,Indonesia,Sulawesi Barat,-2.461705235,119.3440075,-2.5,119.375
+2016,flood,Malaysia,Trengganu,4.926710777,102.9525912,5.0,103.125
+2016,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2016,flood,Malaysia,Pahang,3.7320126,102.5419125,3.5,102.5
+2016,flood,Malaysia,Selangor,3.270793287,101.498876,3.5,101.25
+2016,flood,Malaysia,Sabah,5.352781137,117.1287939,5.5,116.875
+2016,flood,Malaysia,Negeri Sembilan,2.774105262,102.2067,3.0,102.5
+2016,flood,Malaysia,Sarawak,2.594069468,113.3107322,2.5,113.125
+2016,flood,Malaysia,Melaka,2.322313799,102.3071737,2.5,102.5
+2016,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2017,flood,Malaysia,Kelantan,5.279132828,102.028602,5.5,101.875
+2017,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2017,flood,Malaysia,Selangor,3.270793287,101.498876,3.5,101.25
+2017,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2017,flood,Malaysia,Sabah,5.352781137,117.1287939,5.5,116.875
+2017,flood,Malaysia,Pahang,3.7320126,102.5419125,3.5,102.5
+2017,flood,Malaysia,Trengganu,4.926710777,102.9525912,5.0,103.125
+2017,flood,Malaysia,Melaka,2.322313799,102.3071737,2.5,102.5
+2017,flood,Malaysia,Pulau Pinang,5.369509761,100.399239,5.5,100.625
+2017,flood,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2017,flood,Malaysia,Kedah,5.945619735,100.6168839,6.0,100.625
+2018,flood,Malaysia,Johor,2.050502415,103.3899178,2.0,103.125
+2018,flood,Malaysia,Trengganu,4.926710777,102.9525912,5.0,103.125
+2017,flood,Philippines,Maguindanao,7.024148476,124.3761571,7.0,124.375
+2017,flood,Philippines,Sarangani,6.021534401,125.1469906,6.0,125.0
+2016,flood,Thailand,Yala,6.194059626,101.2300903,6.0,101.25
+2016,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2016,flood,Thailand,Pattani,6.730497038,101.3515,6.5,101.25
+2016,flood,Thailand,Narathiwat,6.179233625,101.7195263,6.0,101.875
+2017,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2017,flood,Thailand,Yala,6.194059626,101.2300903,6.0,101.25
+2017,flood,Thailand,Pattani,6.730497038,101.3515,6.5,101.25
+2017,flood,Thailand,Narathiwat,6.179233625,101.7195263,6.0,101.875
+2017,flood,Thailand,Narathiwat,6.179233625,101.7195263,6.0,101.875
+2017,flood,Thailand,Pattani,6.730497038,101.3515,6.5,101.25
+2017,flood,Thailand,Yala,6.194059626,101.2300903,6.0,101.25
+2017,flood,Thailand,Songkhla,6.934941446,100.5446989,7.0,100.625
+2017,flood,Thailand,Satun,6.826004346,99.92951041,7.0,100.0
+1982,drought,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1982,drought,Indonesia,Nusa Tenggara Timur,-9.260112464,122.180683,-9.5,121.875
+1984,drought,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1986,drought,Indonesia,Papua,-4.230463445,139.0350435,-4.0,138.75
+1986,drought,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1987,drought,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+1987,drought,Indonesia,Sumatera Selatan,-3.217433279,104.1703769,-3.0,104.375
+1987,drought,Indonesia,Nusa Tenggara Timur,-9.260112464,122.180683,-9.5,121.875
+1987,drought,Indonesia,Kalimantan Timur,1.329790678,116.3794564,1.5,116.25
+1987,drought,Indonesia,Bali,-8.369676937,115.1321099,-8.5,115.0
+1997,drought,Indonesia,Papua Barat,-2.037778379,132.96826,-2.0,133.125
+1998,drought,Malaysia,Sabah,5.352781137,117.1287939,5.5,116.875
+2014,drought,Malaysia,Selangor,3.270793287,101.498876,3.5,101.25
+2014,drought,Malaysia,Pulau Pinang,5.369509761,100.399239,5.5,100.625
+2014,drought,Malaysia,Kedah,5.945619735,100.6168839,6.0,100.625
+2014,drought,Malaysia,Perlis,6.505029809,100.242073,6.5,100.0
+2014,drought,Malaysia,Perak,4.770564354,101.1076057,5.0,101.25
+2015,drought,Philippines,Maguindanao,7.024148476,124.3761571,7.0,124.375
+2002,drought,Thailand,Satun,6.826004346,99.92951041,7.0,100.0
+2007,drought,Timor-Leste,Manufahi,-8.991790595,125.7999823,-9.0,125.625
+2007,drought,Timor-Leste,Manatuto,-8.713112473,125.9765313,-8.5,126.25
+2007,drought,Timor-Leste,Aileu,-8.701431953,125.6359604,-8.5,125.625
+2007,drought,Timor-Leste,Ainaro,-9.001841368,125.5733269,-9.0,125.625
+2007,drought,Timor-Leste,Ermera,-8.812590372,125.3877343,-9.0,125.625
+2007,drought,Timor-Leste,Baucau,-8.564568029,126.4698111,-8.5,126.25
+2007,drought,Timor-Leste,Liquica,-8.652460743,125.2960477,-8.5,125.0
+2016,drought,Timor-Leste,Baucau,-8.564568029,126.4698111,-8.5,126.25
+2016,drought,Timor-Leste,Lautem,-8.514546646,126.9683867,-8.5,126.875
+2016,drought,Timor-Leste,Viqueque,-8.800659128,126.3592679,-9.0,126.25
+2015,flood,Indonesia,Bali,-8.369676937,115.1321099,-8.5,115.0
+2015,flood,Indonesia,Jawa Timur,-7.720070376,112.7334454,-7.5,112.5
+2015,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2015,flood,Indonesia,Nusa Tenggara Barat,-8.606664515,117.5074521,-8.5,117.5
+2015,flood,Indonesia,Jawa Tengah,-7.259387694,110.2007399,-7.5,110.0
+2015,flood,Indonesia,Jakarta Raya,-6.200328558,106.8344836,-6.0,106.875
+2015,flood,Indonesia,Gorontalo,0.686847116,122.3761512,0.5,122.5
+2015,flood,Philippines,Sultan Kudarat,6.545996996,124.4742448,6.5,124.375
+2018,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2018,flood,Indonesia,Jawa Tengah,-7.059324819,108.9275167,-7.0,108.75
+2018,flood,Indonesia,Nusa Tenggara Barat,-8.606664515,117.5074521,-8.5,117.5
+2018,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2018,flood,Indonesia,Kalimantan Barat,-0.086653385,111.1209645,-1.7975103014118005e-13,111.25
+2018,flood,Indonesia,Sulawesi Utara,1.262052819,124.523091,1.5,124.375
+2018,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75
+2018,flood,Indonesia,Jawa Barat,-6.920194937,107.6030311,-7.0,107.5
+2018,flood,Indonesia,Riau,0.509879523,101.8081732,0.5,101.875
+2018,flood,Indonesia,Bali,-8.369676937,115.1321099,-8.5,115.0
+2018,flood,Indonesia,Sumatera Utara,2.190811217,99.0533116,2.0,98.75

@@ -217,12 +217,13 @@ of the 18 trends significant at 5%; for 1990-2019 it turns one (East China air t
   islands such as Ternate). A city further than 20 km from the coast is inland and gets no
   sea-level series (8 of 31: Medan 23 km, Samarinda, Padangsidimpuan, Tasikmalaya, Jambi,
   Prabumulih, Pekanbaru, Palangka Raya).
-- Series: cos(latitude)-weighted mean of up to 4 nearest ocean cells within 120 km, in mm.
+- Series: cos(latitude)-weighted mean of every ocean cell whose centre is within 120 km (the
+  centre-inside rule of ADR 0005), in mm. Usually 3 to 12 cells.
   The export also lists every 0.5° cell whose centre is within 120 km, which cells were used,
   and each ocean cell's own OLS trend (not adjusted for multiple tests) for the map's grid view.
 - Statistics: `core.summary.summarise` per city, then Benjamini-Hochberg across all tested
   cities. Result (2026-11-15 build): 23 coastal cities tested, 14 with a clear rise, trends
-  +32.7 to +50.4 mm per decade. The eastern cities (Ambon, Sorong, Ternate, Kendari,
+  +32.6 to +50.4 mm per decade. The eastern cities (Ambon, Sorong, Ternate, Kendari,
   Manado) rise fastest but are not yet significant: ENSO makes their records noisy. Cross-check:
   the whole Southeast Asia box rises +38.8 mm per decade (95% CI +7.6 to +69.9) with the same
   code, inside the city range.
@@ -332,6 +333,11 @@ decides what counts as significant. It never computes a trend itself: every slop
 - Change log: `ols_trend` previously reported p = 0 when the residual spread was exactly zero,
   even for a flat series. A flat series now gives p = 1. Found on the 2000 test data, where
   a one-year series produced a false "significant" result.
+- Change log: `mann_kendall` previously dropped the missing months before computing Sen's slope,
+  so with gaps the slope was per valid value, not per month, and too large by roughly the share
+  of months missing (+25% in a test with 14% missing; OLS was not affected). It now computes the
+  slope with the gaps kept in place, so it is per month. S, Var(S) and the p-value are unchanged.
+  Three golden tests were added to `tests/core/test_trend.py`; none was changed.
 
 ## 8. Not yet decided
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).

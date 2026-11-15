@@ -21,6 +21,7 @@ Outputs:
 
 from __future__ import annotations
 
+import csv
 import json
 import sys
 from datetime import datetime, timezone
@@ -53,6 +54,49 @@ def core_stats(s) -> dict:
         "p": r(s.ols_p, 6),
         "significant": bool(s.ols_significant),
         "sentence": s.sentence,
+    }
+
+
+WITNESS = ROOT / "data" / "processed" / "witness" / "witness_regional.csv"
+REGIONAL = ROOT / "web" / "public" / "data" / "regional_data.json"
+
+
+def grace_dataset() -> dict:
+    """GRACE / GRACE-FO water storage for the Maritime Southeast Asia box (gaps as null).
+
+    The core numbers are the ones in regional_data.json (scripts/export_regional.py), so the map
+    card and the case show the same result.
+    """
+    vals = {}
+    with WITNESS.open(newline="") as f:
+        for row in csv.DictReader(f):
+            if row["dataset"] == "grace" and row["region"] == "se_asia_maritime":
+                vals[row["period"]] = float(row["value"])
+    y0, y1 = int(min(vals)[:4]), int(max(vals)[:4])
+    monthly = [vals.get(f"{y}-{m:02d}") for y in range(y0, y1 + 1) for m in range(1, 13)]
+    reg = json.loads(REGIONAL.read_text())["layers"]["grace:grace_lwe"]["regions"]
+    st = next(x for x in reg if x["key"] == "se_asia_maritime")
+    return {
+        "label": "Water stored on land",
+        "unit": "cm",
+        "source": "NASA GRACE / GRACE-FO (JPL mascons)",
+        "start": y0,
+        "end": y1 - 1,
+        "regions": {
+            "idn": {
+                "name": "Maritime Southeast Asia",
+                "long": st["name"],
+                "y0": y0,
+                "monthly": [None if v is None else r(v, 3) for v in monthly],
+                "core": {
+                    "per_decade": r(st["slope_per_decade"], 3),
+                    "ci_per_decade": [r(st["ci_low"], 3), r(st["ci_high"], 3)],
+                    "p": r(st["ols_p_adj"], 6),
+                    "significant": bool(st["ols_p_adj"] < 0.05),
+                    "sentence": st["sentence"].replace("grace_lwe", "Water stored on land"),
+                },
+            }
+        },
     }
 
 
@@ -136,10 +180,11 @@ def main() -> None:
                     "lon": r(lons[j], 2),
                     "km": r(d, 1),
                     "ocean": sea,
+                    "inside": inside,
                     "used": (i, j) in used,
                     "trend_mm_per_decade": trend_of(i, j) if sea else None,
                 }
-                for i, j, d, sea in oc.grid_around(city, lats, lons, ocean)
+                for i, j, d, sea, inside in oc.grid_around(city, lats, lons, ocean)
             ]
             row.update(
                 {
@@ -211,9 +256,16 @@ def main() -> None:
                 "grid": {
                     "cell_deg": step,
                     "radius_km": oc.MAX_KM,
+                    "domain": [
+                        r(float(lons.min()) - step / 2, 2),
+                        r(float(lats.min()) - step / 2, 2),
+                        r(float(lons.max()) + step / 2, 2),
+                        r(float(lats.max()) + step / 2, 2),
+                    ],
                     "note": (
                         "Cell trends are each cell on its own (OLS, not adjusted for "
-                        "multiple tests); the city trend uses only the highlighted cells."
+                        "multiple tests). The city trend averages every ocean cell whose "
+                        "centre is inside the circle (outlined in yellow)."
                     ),
                 },
                 "tests": len(tested),
@@ -240,6 +292,7 @@ def main() -> None:
                         "t2m", "Air temperature (2 m)", "°C", lambda k: k - KELVIN
                     ),
                     "precip": merra_dataset("precip", "Rainfall", "mm/day", lambda v: v),
+                    "tws": grace_dataset(),
                 },
             },
             separators=(",", ":"),
