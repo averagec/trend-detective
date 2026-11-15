@@ -4,6 +4,7 @@ import { analysis } from "../stats/trend-analysis.js";
 import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
 import { uiScale } from "../ui/scale.js";
+import { startWater } from "./pixel-water.js";
 const NAMES = ["Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam"];
 const LAB = {
   Brunei: [114.6, 5.9],
@@ -259,7 +260,7 @@ function buildSvg() {
   let g = "";
   for (let x = 0; x <= 360; x += 15) g += `M${x} -30V210`;
   for (let y = 0; y <= 180; y += 15) g += `M-20 ${y}H380`;
-  el("path", { d: g, stroke: "#14255a", "stroke-width": 1, "vector-effect": "non-scaling-stroke", fill: "none" }, svg);
+  el("path", { d: g, stroke: "#dff2fb", "stroke-opacity": 0.18, "stroke-width": 1, "vector-effect": "non-scaling-stroke", fill: "none" }, svg);
   const rest = el("path", { d: st.map.rest, class: "rm-rest", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, svg);
   rest.onclick = (e) => {
     if (!st.dragged) denied(e);
@@ -1019,15 +1020,6 @@ async function load() {
   if (!st.prov) st.prov = await opt("data/indonesia_provinces.json");
   if (!st.ssl) st.ssl = await opt("data/indonesia_sea_level.json");
   if (!st.ssl && LAYERS[0].real) LAYERS.shift();
-  if (st.data === null) {
-    try {
-      const r = await fetch("data/sea_data.json");
-      st.data = r.ok ? await r.json() : false;
-    } catch (e) {
-      st.data = false;
-    }
-  }
-  if (st.data === false) st.data = null, st.noData = true;
 }
 async function open(win, helpers) {
   H = helpers;
@@ -1035,7 +1027,7 @@ async function open(win, helpers) {
     "w-rmap",
     "MAP.EXE · INDONESIA",
     `<div class="rm"><div class="rm-bar" id="rm-bar"></div>
-    <div class="rm-map" id="rm-mapc"><svg id="rm-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend map of Southeast Asia"></svg>
+    <div class="rm-map" id="rm-mapc"><canvas class="rm-water" id="rm-water" aria-hidden="true"></canvas><svg id="rm-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend map of Southeast Asia"></svg>
       <canvas class="rm-fxc" id="rm-fxc" aria-hidden="true"></canvas><svg id="rm-top" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="pointer-events:none"></svg>
       <div class="rm-float rm-hud" id="rm-hud">LOADING MAP...</div>
       <div class="rm-float rm-leg" id="rm-leg"></div>
@@ -1061,6 +1053,8 @@ async function open(win, helpers) {
     open.ro = new ResizeObserver(() => placeFx());
   }
   open.ro.observe($("#rm-mapc"));
+  if (open.stopWater) open.stopWater();
+  open.stopWater = startWater($("#rm-water"), () => ({ cell: 3, ox: 0, oy: 0 }));
   buildSvg();
   bindNav();
   W.querySelectorAll(".rm-tog button").forEach((b) => {

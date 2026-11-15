@@ -93,7 +93,7 @@ def write_rows(rows: list[dict], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     ordered = sorted(rows, key=lambda r: (r["region"], r["variable"], r["period"]))
     with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=COLUMNS)
+        writer = csv.DictWriter(f, fieldnames=COLUMNS, lineterminator="\n")
         writer.writeheader()
         for r in ordered:
             value = "" if not math.isfinite(r["value"]) else f"{r['value']:.6g}"

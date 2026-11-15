@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 from raw_to_json import REGION  # noqa: E402  (the Southeast Asia box used by the ocean files)
+
 from trend_detective.core.trend import area_weighted_mean  # noqa: E402
 from trend_detective.process.merra2_clean import (  # noqa: E402
     SPECS,
@@ -105,7 +106,9 @@ def main() -> None:
         if valid == 0:
             excluded.append({"file": path.name, "reason": "no valid cells in region"})
             continue
-        cell_valid = np.isfinite(sub).astype(int) if cell_valid is None else cell_valid + np.isfinite(sub)
+        cell_valid = (
+            np.isfinite(sub).astype(int) if cell_valid is None else cell_valid + np.isfinite(sub)
+        )
         mean = area_weighted_mean(sub, lats[rows])
         daily.append(
             {
@@ -126,7 +129,10 @@ def main() -> None:
         expected = calendar.monthrange(year, month)[1]
         if len(values) != expected:
             excluded.append(
-                {"file": f"month {ym}", "reason": f"incomplete month: {len(values)} of {expected} days"}
+                {
+                    "file": f"month {ym}",
+                    "reason": f"incomplete month: {len(values)} of {expected} days",
+                }
             )
             continue
         monthly.append(
@@ -170,7 +176,11 @@ def main() -> None:
         print(f"Wrote {len(recs)} {key} features to {OUT / (name + '.geojson')}")
     print(json.dumps(coverage, indent=2))
     if excluded:
-        print(f"{len(excluded)} excluded:", *[f"{e['file']}: {e['reason']}" for e in excluded], sep="\n  ")
+        print(
+            f"{len(excluded)} excluded:",
+            *[f"{e['file']}: {e['reason']}" for e in excluded],
+            sep="\n  ",
+        )
 
 
 if __name__ == "__main__":
