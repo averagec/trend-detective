@@ -3,9 +3,10 @@
 Owns: picking the ocean cells beside a city and averaging them, month by month. No trend
 statistics here (those are in core/).
 
-A city's series is the cos(latitude)-weighted mean of its nearest valid ocean cells: up to
-`MAX_CELLS` cells whose centres lie within `MAX_KM` of the city. Cities further than
-`COAST_KM` from the coast are inland, and get no series: sea level does not apply to them.
+A city's series is the cos(latitude)-weighted mean of every valid ocean cell whose centre lies
+within `MAX_KM` of the city (the same centre-inside rule as the circle mode, ADR 0005).
+Cities further than `COAST_KM` from the coast are inland, and get no series: sea level does
+not apply to them.
 ECCO's land cells are NaN in the processed .npz files, so only ocean cells can be picked.
 
 Inputs : data/processed/ocean_se_asia/ECCO_L4_SSH_05DEG_MONTHLY_V4R4_YYYY-MM.npz
@@ -31,7 +32,6 @@ PRODUCT = "ECCO_L4_SSH_05DEG_MONTHLY_V4R4"
 NAME_RE = re.compile(PRODUCT + r"_(\d{4})-(\d{2})\.npz$")
 COAST_KM = 20.0  # a city further than this from the sea is treated as inland
 MAX_KM = 120.0  # ocean cell centres considered "next to" a city
-MAX_CELLS = 4
 
 
 @dataclass(frozen=True)
@@ -95,7 +95,7 @@ def km(lat1, lon1, lat2, lon2):
 
 
 def nearest_cells(city: City, lats, lons, ocean: np.ndarray) -> list[tuple[int, int, float]]:
-    """Up to MAX_CELLS ocean cells (row, col, distance km) within MAX_KM of the city."""
+    """Every ocean cell (row, col, distance km) whose centre is within MAX_KM, nearest first."""
     cand = []
     for i in np.where(np.abs(lats - city.lat) <= 1.5)[0]:
         for j in np.where(np.abs(lons - city.lon) <= 1.5)[0]:
@@ -103,17 +103,26 @@ def nearest_cells(city: City, lats, lons, ocean: np.ndarray) -> list[tuple[int, 
                 d = km(city.lat, city.lon, lats[i], lons[j])
                 if d <= MAX_KM:
                     cand.append((int(i), int(j), d))
-    return sorted(cand, key=lambda c: c[2])[:MAX_CELLS]
+    return sorted(cand, key=lambda c: c[2])
 
 
 def grid_around(city: City, lats, lons, ocean: np.ndarray, radius_km: float = MAX_KM):
-    """Every grid cell (row, col, distance km, is_ocean) whose centre is within radius_km."""
+    """Every grid cell that touches the circle: (row, col, centre distance km, is_ocean, inside).
+
+    `inside` means the cell centre is within radius_km, so the cell can be used. Cells that only
+    overlap the edge are listed so the map can draw the whole circle.
+    """
+    half_lat = float(abs(lats[1] - lats[0])) / 2
+    half_lon = float(abs(lons[1] - lons[0])) / 2
     out = []
-    for i in np.where(np.abs(lats - city.lat) <= 1.5)[0]:
-        for j in np.where(np.abs(lons - city.lon) <= 1.5)[0]:
+    for i in np.where(np.abs(lats - city.lat) <= 2.0)[0]:
+        for j in np.where(np.abs(lons - city.lon) <= 2.0)[0]:
+            near_lat = min(max(city.lat, lats[i] - half_lat), lats[i] + half_lat)
+            near_lon = min(max(city.lon, lons[j] - half_lon), lons[j] + half_lon)
+            if km(city.lat, city.lon, near_lat, near_lon) > radius_km:
+                continue
             d = km(city.lat, city.lon, lats[i], lons[j])
-            if d <= radius_km:
-                out.append((int(i), int(j), d, bool(ocean[i, j])))
+            out.append((int(i), int(j), d, bool(ocean[i, j]), d <= radius_km))
     return sorted(out, key=lambda c: c[2])
 
 

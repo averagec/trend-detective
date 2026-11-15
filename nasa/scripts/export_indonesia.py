@@ -180,10 +180,11 @@ def main() -> None:
                     "lon": r(lons[j], 2),
                     "km": r(d, 1),
                     "ocean": sea,
+                    "inside": inside,
                     "used": (i, j) in used,
                     "trend_mm_per_decade": trend_of(i, j) if sea else None,
                 }
-                for i, j, d, sea in oc.grid_around(city, lats, lons, ocean)
+                for i, j, d, sea, inside in oc.grid_around(city, lats, lons, ocean)
             ]
             row.update(
                 {
@@ -255,9 +256,16 @@ def main() -> None:
                 "grid": {
                     "cell_deg": step,
                     "radius_km": oc.MAX_KM,
+                    "domain": [
+                        r(float(lons.min()) - step / 2, 2),
+                        r(float(lats.min()) - step / 2, 2),
+                        r(float(lons.max()) + step / 2, 2),
+                        r(float(lats.max()) + step / 2, 2),
+                    ],
                     "note": (
                         "Cell trends are each cell on its own (OLS, not adjusted for "
-                        "multiple tests); the city trend uses only the highlighted cells."
+                        "multiple tests). The city trend averages every ocean cell whose "
+                        "centre is inside the circle (outlined in yellow)."
                     ),
                 },
                 "tests": len(tested),

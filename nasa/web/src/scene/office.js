@@ -222,21 +222,8 @@ canvas.addEventListener("pointerup", (e) => {
   if (state.mode !== "room" || !roomRoot) return;
   if (pcUnderPointer(e)) bootOS();
 });
-const beacon = $("#beacon"), bpos = new THREE.Vector3();
-beacon.addEventListener("click", () => {
-  if (state.mode === "room") bootOS();
-});
-function placeBeacon() {
-  const show = state.mode === "room" && !state.loggedIn && !document.getElementById("say").classList.contains("on");
-  beacon.classList.toggle("on", show);
-  if (!show) return;
-  bpos.copy(SCREEN).project(camera);
-  beacon.style.left = (bpos.x * 0.5 + 0.5) * innerWidth + "px";
-  beacon.style.top = (-bpos.y * 0.5 + 0.5) * innerHeight + "px";
-}
 function bootOS() {
   if (state.mode === "os") return;
-  state.loggedIn = true;
   state.mode = "os";
   state.hoverPC = false;
   $("#tip").classList.remove("on");
@@ -282,7 +269,6 @@ const clock = new THREE.Clock();
     camera.lookAt(v.target);
   }
   if (controls.enabled) controls.update();
-  placeBeacon();
   if (t > nextSweep && sweepT < 0) {
     sweepT = 0;
     nextSweep = t + 18 + Math.random() * 10;

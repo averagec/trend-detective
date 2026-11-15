@@ -189,12 +189,13 @@ OLS test is significant **and** its adjusted p < 0.05.
   islands such as Ternate). A city further than 20 km from the coast is inland and gets no
   sea-level series (8 of 31: Medan 23 km, Samarinda, Padangsidimpuan, Tasikmalaya, Jambi,
   Prabumulih, Pekanbaru, Palangka Raya).
-- Series: cos(latitude)-weighted mean of up to 4 nearest ocean cells within 120 km, in mm.
+- Series: cos(latitude)-weighted mean of every ocean cell whose centre is within 120 km (the
+  centre-inside rule of ADR 0005), in mm. Usually 3 to 12 cells.
   The export also lists every 0.5° cell whose centre is within 120 km, which cells were used,
   and each ocean cell's own OLS trend (not adjusted for multiple tests) for the map's grid view.
 - Statistics: `core.summary.summarise` per city, then Benjamini-Hochberg across all tested
   cities. Result (2026-11-15 build): 23 coastal cities tested, 14 with a clear rise, trends
-  +32.7 to +50.4 mm per decade. The eastern cities (Ambon, Sorong, Ternate, Kendari,
+  +32.6 to +50.4 mm per decade. The eastern cities (Ambon, Sorong, Ternate, Kendari,
   Manado) rise fastest but are not yet significant: ENSO makes their records noisy. Cross-check:
   the whole Southeast Asia box rises +38.8 mm per decade (95% CI +7.6 to +69.9) with the same
   code, inside the city range.

@@ -235,6 +235,9 @@ function buildSvg() {
   const pat2 = el("pattern", { id: "rmNA", width: 1.2, height: 1.2, patternUnits: "userSpaceOnUse", patternTransform: "rotate(-45)" }, defs);
   el("rect", { width: 1.2, height: 1.2, fill: "#c9c2b2" }, pat2);
   el("rect", { width: 0.45, height: 1.2, fill: "#8b93ad" }, pat2);
+  const pat3 = el("pattern", { id: "rmLand", width: 0.12, height: 0.12, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+  el("rect", { width: 0.12, height: 0.12, fill: "#3d4c7c" }, pat3);
+  el("rect", { width: 0.04, height: 0.12, fill: "#56628a" }, pat3);
   let g = "";
   for (let x = 0; x <= 360; x += 15) g += `M${x} -30V210`;
   for (let y = 0; y <= 180; y += 15) g += `M-20 ${y}H380`;
@@ -291,12 +294,12 @@ function buildSvg() {
       const d = el("g", { class: "rm-city", "data-i": i, role: "button", "aria-label": c.name }, cg);
       el("rect", { x: -3, y: -2, width: 18, height: 19, fill: "transparent", class: "pin-hit" }, d);
       el("path", { d: PIN_D.W, class: "pin-in", "shape-rendering": "crispEdges" }, d);
-      el("path", { d: PIN_D.R, fill: "#e8251f", class: "pin-r", "shape-rendering": "crispEdges" }, d);
-      el("path", { d: PIN_D.D, fill: "#b00d0d", class: "pin-d", "shape-rendering": "crispEdges" }, d);
+      el("path", { d: PIN_D.R, fill: "#f4f1ea", class: "pin-r", "shape-rendering": "crispEdges" }, d);
+      el("path", { d: PIN_D.D, fill: "#b9b3a6", class: "pin-d", "shape-rendering": "crispEdges" }, d);
       el("path", { d: PIN_D["#"], fill: "#06090f", "shape-rendering": "crispEdges" }, d);
       d.onclick = (e) => {
         e.stopPropagation();
-        if (!st.dragged) pickCity(i);
+        if (!st.dragged) pickCity(i, true);
       };
       d.onmousemove = (e) => cityTip(e, i);
       d.onmouseleave = () => tip(null);
@@ -380,28 +383,32 @@ function drawGrid() {
   g.innerHTML = "";
   const c = st.ssl && st.city >= 0 ? st.ssl.cities[st.city] : null;
   if (!c || !c.grid || !LAYERS[st.v].real) return;
-  const step = st.ssl.grid.cell_deg, R = st.ssl.grid.radius_km, h = step / 2;
+  const G = st.ssl.grid, step = G.cell_deg, R = G.radius_km, h = step / 2;
   c.grid.forEach((q) => {
-    const x = q.lon + 180 - h, y = 90 - q.lat - h;
-    const fill = q.ocean && q.trend_mm_per_decade != null ? PAL.s[sslBin(q.trend_mm_per_decade)] : "none";
-    const r = el("rect", { x, y, width: step, height: step, fill, "fill-opacity": q.used ? 0.92 : 0.45, "pointer-events": "all", class: "rm-cell" + (q.used ? " used" : "") + (q.ocean ? "" : " land"), "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
+    const x = q.lon + 180 - h, y = 90 - q.lat - h, sea = q.ocean && q.trend_mm_per_decade != null;
+    const cls = "rm-cell" + (q.used ? " used" : "") + (sea ? "" : " land") + (q.inside === false ? " out" : "");
+    const r = el("rect", { x, y, width: step, height: step, fill: sea ? PAL.s[sslBin(q.trend_mm_per_decade)] : "url(#rmLand)", "fill-opacity": q.used ? 0.92 : sea ? 0.3 : 0.85, "pointer-events": "all", class: cls, "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
     r.onmousemove = (e) => cellTip(e, c, q);
     r.onmouseleave = () => tip(null);
-    if (q.ocean && q.trend_mm_per_decade != null) {
-      const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : ""), "font-size": (step * 0.24).toFixed(3) }, g);
-      t.textContent = (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0);
-    }
+    const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : "") + (sea ? "" : " land"), "font-size": (step * (sea ? 0.24 : 0.16)).toFixed(3) }, g);
+    t.textContent = sea ? (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0) : "LAND";
   });
   const [cx, cy] = P(c.lon, c.lat), ry = R / KM_DEG, rx = ry / Math.cos(c.lat * Math.PI / 180);
   el("ellipse", { cx, cy, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
-  const used = c.grid.filter((q) => q.used).length;
+  const used = c.grid.filter((q) => q.used).length, land = c.grid.filter((q) => q.inside !== false && !q.ocean).length;
+  const dom = G.domain, cut = dom && (c.lon - rx < dom[0] || c.lon + rx > dom[2] || c.lat - ry < dom[1] || c.lat + ry > dom[3]);
   const cap = el("text", { x: cx, y: cy + ry + 0.22, class: "rm-gridcap", "font-size": 0.17 }, g);
-  cap.textContent = `${used} OF ${c.grid.length} CELLS USED · CENTRES WITHIN ${R} KM`;
+  cap.textContent = `${used} OCEAN CELLS USED · ${land} LAND · CENTRES WITHIN ${R} KM`;
+  if (cut) {
+    const c2 = el("text", { x: cx, y: cy + ry + 0.42, class: "rm-gridcap", "font-size": 0.14 }, g);
+    c2.textContent = "PART OF THE CIRCLE IS OUTSIDE THE DOWNLOADED ECCO AREA";
+  }
 }
 function cellTip(e, c, q) {
   const t = $("#rm-tip"), box = $("#rm-mapc").getBoundingClientRect(), ll = (v, p, n) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? p : n}`;
   const val = q.ocean && q.trend_mm_per_decade != null ? `<b style="font-weight:400">${q.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(q.trend_mm_per_decade).toFixed(1)} mm/dec</b>` : '<span class="dim">land · no sea data</span>';
-  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${q.used ? `used for ${c.name}` : "not used"}</span>`;
+  const why = q.used ? `used for ${c.name}` : q.inside === false ? "centre outside the circle" : q.ocean ? "not used" : "the 0.5° model grid counts this as land";
+  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${why}</span>`;
   t.style.display = "block";
   const z = uiScale;
   t.style.left = Math.min((e.clientX - box.left) / z + 14, box.width / z - t.offsetWidth - 6) + "px";

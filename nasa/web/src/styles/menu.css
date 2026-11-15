@@ -268,35 +268,3 @@ body.playing #menu {
   letter-spacing: 2px;
   color: #e8c98a;
 }
-#beacon {
-  position: fixed;
-  z-index: 40;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -150%);
-  padding: 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font: 600 calc(16px * var(--ui-say, 1)) "Pixelify Sans", monospace;
-  letter-spacing: 2px;
-  color: #0b1534;
-}
-#beacon.on {
-  display: flex;
-}
-#beacon span {
-  padding: 4px 10px;
-  background: #f7d678;
-  border: 2px solid #06090f;
-  box-shadow: 3px 3px 0 #06090f, 0 0 18px rgba(247, 214, 120, .7);
-  white-space: nowrap;
-}
-#beacon i {
-  font-style: normal;
-  font-size: 22px;
-  color: #f7d678;
-  text-shadow: 0 0 8px #f7d678;
-  animation: bob .7s steps(2) infinite;
-}

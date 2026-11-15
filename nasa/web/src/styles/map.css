@@ -514,10 +514,10 @@
   filter: drop-shadow(0 0 1px #f7d678) drop-shadow(0 0 1px #f7d678);
 }
 .rm-city.inl .pin-r {
-  fill: #8b93ad;
+  fill: #6f7896;
 }
 .rm-city.inl .pin-d {
-  fill: #56628a;
+  fill: #4a5478;
 }
 .rm-city.fade {
   opacity: .2;
@@ -766,4 +766,16 @@
   stroke-width: .3;
   paint-order: stroke;
   pointer-events: none;
+}
+.rm-cell.out {
+  stroke-dasharray: 3 3;
+  stroke-opacity: .45;
+}
+.rm-cell.land {
+  stroke: #56628a;
+}
+.rm-cellv.land {
+  fill: #b9c1dc;
+  opacity: .8;
+  letter-spacing: .01px;
 }
