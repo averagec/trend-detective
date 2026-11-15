@@ -99,17 +99,23 @@ python scripts/build_indonesia_geo.py --ne-dir /path/to/natural-earth   # only i
 python scripts/export_indonesia.py                                     # writes indonesia_sea_level.json and cases_data.json
 ```
 
-Pick a city from the CITIES dropdown (grouped by region, with search). Clicking a coastal city
-zooms to its ECCO grid: every 0.5° cell within 120 km, the cells used (yellow), each cell's own
-trend, and the dashed 120 km radius. Inland cities (more than 20 km from the sea) show no sea
-level. SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
+Pick a city from the CITIES dropdown (grouped by region, with search) or click a city dot to
+zoom to it. Inland cities (more than 20 km from the sea) show no sea level.
+
+**CIRCLE** works like Earthdata Search: press CIRCLE, then press on the map and drag to draw. The
+card shows the ECCO ocean cells whose centres are inside (`indonesia_cells.json`, made by
+`python scripts/export_cells.py`: one core trend per cell, Benjamini-Hochberg across all 2,478
+cells), how many rise clearly, the spread of cell trends, the cities inside, and the cells'
+yearly average. A circle under 75 km or over 250 km, or with fewer than 4 ocean cells, gets a
+pop-up instead (limits from ADR 0005). Esc cancels. Works offline.
+SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 
 TEMP, RAIN and WATER are real: one value for the Maritime Southeast Asia box (95-141°E,
 10°S-10°N) from `regional_data.json` (`scripts/export_regional.py`, core statistics, BH across the
 3 boxes). Click the box for the card, chart and case. MERRA-2 for temperature and rain, GRACE /
 GRACE-FO for water stored on land. SEA (sea surface temperature), NDVI and AOD stay locked: no
-series in the pipeline. CIRCLE only appears in `npm run dev` with the Flask server running.
+series in the pipeline.
 
 CASES now runs only on real data from `cases_data.json`: sea level per coastal city (ECCO) and
 MERRA-2 temperature and rain over Maritime Southeast Asia. INVESTIGATE AS A CASE on a city card
