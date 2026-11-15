@@ -1546,7 +1546,9 @@ async function circleResult() {
   }
   if (!D) {
     sfx("err");
-    toast(`<b>NO GRID DATA FOR ${L.short} YET</b> ${L.noun[0].toUpperCase() + L.noun.slice(1)} is only in the app as one value for the whole region box, so a circle cannot pick out part of it. Switch to a layer with grid data, or click the box.`, true);
+    // Name the layers that do have grid cells, so the message says what to switch to.
+    const withGrid = LAYERS.filter((x) => !x.lock && st.cells && st.cells.layers && st.cells.layers[x.k]).map((x) => x.short);
+    toast(`<b>NO GRID CELLS FOR ${L.short} YET</b> A circle needs grid cells for ${L.noun}, and this build does not have them for ${L.short.toLowerCase()}. Layers with grid cells: ${withGrid.join(", ") || "none"}. Or click the box.`, true);
     circleDraw();
     card();
     return;
