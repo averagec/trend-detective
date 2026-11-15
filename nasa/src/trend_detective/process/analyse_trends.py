@@ -32,11 +32,12 @@ sys.path.insert(0, str(ROOT / "src"))  # lets the script run without `pip instal
 from trend_detective.catalog.regions import REGIONS  # noqa: E402
 from trend_detective.catalog.variables import VARIABLES  # noqa: E402
 from trend_detective.core.summary import summarise  # noqa: E402
-from trend_detective.core.trend import deseasonalize  # noqa: E402
+from trend_detective.core.trend import benjamini_hochberg, deseasonalize  # noqa: E402
 
 INPUT = ROOT / "data" / "processed" / "merra2" / "monthly_regional.csv"
 OUT = ROOT / "data" / "processed" / "json"
 LABELS = {key: v.label for key, v in VARIABLES.items()}
+SCAN_ALPHA = 0.05  # a scan result is significant when its adjusted p-value (q) is below this
 
 
 def load(path: Path) -> dict[tuple[str, str], dict]:
@@ -105,26 +106,26 @@ def band_rows(axis: list[str], summary) -> list[dict]:
     ]
 
 
-def build(
-    region: str,
-    variable: str,
-    entry: dict,
-    first_year: int | None = None,
-    last_year: int | None = None,
-) -> dict:
+def window_values(
+    entry: dict, first_year: int | None, last_year: int | None
+) -> tuple[list[str], np.ndarray]:
+    """The months of one series inside a year window, and their values (NaN where missing)."""
     axis = monthly_axis(list(entry["values"]), first_year, last_year)
-    if not axis:
-        raise ValueError(f"no months for {region} {variable} in {first_year}-{last_year}")
     values = np.array([entry["values"].get(p, math.nan) for p in axis], dtype=float)
-    label = LABELS.get(variable, variable)
-    summary = summarise(values, entry["unit"], f"{label} in {REGIONS[region].name}")
+    return axis, values
+
+
+def analyse_series(
+    values: np.ndarray, axis: list[str], unit: str, summary_label: str, leading_pad: int = 0
+) -> dict:
+    """The part of the response that does not depend on where the series came from.
+
+    `values` has one entry per month of `axis` and starts in January (NaN for missing months).
+    `leading_pad` counts the NaN months at the front that only align the series to January.
+    """
+    summary = summarise(values, unit, summary_label, leading_pad)
     anomalies = deseasonalize(values)
     return {
-        "region": region,
-        "region_name": REGIONS[region].name,
-        "variable": variable,
-        "label": label,
-        "unit": entry["unit"],
         "first_month": axis[0],
         "last_month": axis[-1],
         "series": [
@@ -144,6 +145,116 @@ def build(
         },
         "sentence": summary.sentence,
         "warnings": list(summary.warnings),
+    }
+
+
+def build(
+    region: str,
+    variable: str,
+    entry: dict,
+    first_year: int | None = None,
+    last_year: int | None = None,
+) -> dict:
+    axis, values = window_values(entry, first_year, last_year)
+    if not axis:
+        raise ValueError(f"no months for {region} {variable} in {first_year}-{last_year}")
+    label = LABELS.get(variable, variable)
+    return {
+        "region": region,
+        "region_name": REGIONS[region].name,
+        "variable": variable,
+        "label": label,
+        "unit": entry["unit"],
+        **analyse_series(values, axis, entry["unit"], f"{label} in {REGIONS[region].name}"),
+    }
+
+
+def build_custom(
+    label: str, unit: str, start_year: int, start_month: int, values: list[float | None]
+) -> dict:
+    """The same response as `build`, for a series the user supplies.
+
+    `values` are consecutive months starting at `start_year`-`start_month`; None is a missing
+    month. deseasonalize() assumes January first, so the front is padded with NaN until the first
+    value sits on its real calendar month. The padded months appear in `series` with null values.
+    """
+    pad = start_month - 1
+    padded = np.array(
+        [math.nan] * pad + [math.nan if v is None else v for v in values], dtype=float
+    )
+    last = pad + len(values) - 1
+    axis = monthly_axis([f"{start_year + last // 12:04d}-{last % 12 + 1:02d}"], start_year)
+    return {
+        "region": "custom",
+        "region_name": "Your data",
+        "variable": "custom",
+        "label": label,
+        "unit": unit,
+        **analyse_series(padded, axis, unit, label, leading_pad=pad),
+    }
+
+
+def scan(series: dict, first_year: int, last_year: int) -> dict:
+    """Every (region, variable) in `series` over one year window, corrected for many tests.
+
+    Each series gets the same analysis as `build`. The OLS p-values of all of them are then
+    adjusted together (Benjamini-Hochberg, core/trend.py), because testing many series at 5%
+    flags some by chance alone. A result counts as significant when its adjusted p-value (q) is
+    below SCAN_ALPHA. Series with too little data have no p-value and are not counted as tests.
+    """
+    rows = []
+    for (region, variable), entry in sorted(series.items()):
+        axis, values = window_values(entry, first_year, last_year)
+        if not axis:
+            continue
+        region_name = REGIONS[region].name if region in REGIONS else region
+        label = LABELS.get(variable, variable)
+        s = summarise(values, entry["unit"], f"{label} in {region_name}")
+        rows.append(
+            {
+                "region": region,
+                "region_name": region_name,
+                "variable": variable,
+                "label": label,
+                "unit": entry["unit"],
+                "first_month": axis[0],
+                "last_month": axis[-1],
+                "n_months": s.n_months,
+                "n_years": s.n_years,
+                "ols_per_decade": jsonable(s.ols_per_decade),
+                "ols_ci_per_decade": [jsonable(x) for x in s.ols_ci_per_decade],
+                "ols_p": jsonable(s.ols_p),
+                "sen_per_decade": jsonable(s.sen_per_decade),
+                "mk_p": jsonable(s.mk_p),
+                "mk_p_ar1": jsonable(s.mk_p_ar1),
+                "n_eff": jsonable(s.n_eff),
+                "ols_significant": s.ols_significant,  # before the correction, p < 0.05
+                "tests_agree": s.tests_agree,
+                "warnings": list(s.warnings),
+            }
+        )
+    if not rows:
+        raise ValueError(f"no months in {first_year}-{last_year}")
+    p_values = [math.nan if r["ols_p"] is None else r["ols_p"] for r in rows]
+    q = benjamini_hochberg(np.array(p_values))
+    for row, q_i in zip(rows, q, strict=True):
+        row["ols_q"] = jsonable(float(q_i))
+        row["significant_q"] = bool(np.isfinite(q_i) and q_i < SCAN_ALPHA)
+    n_tests = int(np.isfinite(q).sum())
+    return {
+        "from": first_year,
+        "to": last_year,
+        "method": "benjamini-hochberg",
+        "alpha": SCAN_ALPHA,
+        "n_tests": n_tests,
+        "n_significant_p": sum(r["ols_significant"] for r in rows),
+        "n_significant_q": sum(r["significant_q"] for r in rows),
+        "note": (
+            f"{n_tests} trends were tested at once. The q-value is the p-value adjusted for that "
+            f"(Benjamini-Hochberg, false discovery rate). A trend counts as significant here "
+            f"only if q is below {SCAN_ALPHA}."
+        ),
+        "results": rows,
     }
 
 

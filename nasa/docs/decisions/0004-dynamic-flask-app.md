@@ -2,6 +2,7 @@
 
 - Status: accepted (2026-11-14, on the team's request)
 - Supersedes: the front-end part of 0003
+- Amended by 0005: adds `POST /api/analyse` and `GET /api/scan`; routes and fields are in `docs/api.md`
 
 ## Context
 The static React app read JSON copied from the pipeline. Changing the years or the region

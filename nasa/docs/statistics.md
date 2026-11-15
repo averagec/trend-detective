@@ -13,7 +13,9 @@ process/merra2_clean.py     QC, units, VPD,   ->  data/processed/merra2/monthly_
 core/summary.py + core/trend.py                   (pure statistics, no files)
                             (includes the 95% band around the OLS line, 4.2a)
 app/web.py (Flask)          per request: build() for the chosen region, variable and years
-                            -> JSON to the page
+                            -> JSON to the page. Also: POST /api/analyse (a series the user
+                            sends) and GET /api/scan (all series, corrected for many tests).
+                            Response fields: docs/api.md
 (optional) process/analyse_trends.py  ->  data/processed/json/  (static export)
 ```
 
@@ -96,6 +98,8 @@ cycle (about 10 K in mid-latitudes) dominates the trend.
 - Standard error from the residual variance with `n_eff − 2` degrees of freedom. The 95%
   confidence interval uses the t distribution with the same degrees of freedom.
 - `p` is the two-sided t-test on `b / se`.
+- `r1` (floored at 0, so a negative value never shrinks the uncertainty) and `n_eff` are returned
+  with the result and sent to the page, which shows them as "effective sample size".
 
 ### 4.2a Confidence band around the OLS line (`ols_band`)
 The chart shades a 95% band around the OLS line, one point per year (at month 6 of the year, the
@@ -129,6 +133,20 @@ trends that are not there. The `n_eff` adjustment widens the interval to match.
 The test is rank-based, so it does not assume a normal distribution and is not pulled
 by one extreme month.
 
+### 4.3a Mann-Kendall adjusted for autocorrelation (`mann_kendall_ar1`)
+Added because the plain p-value of §4.3 is too optimistic on autocorrelated anomalies: on
+trend-free AR(1) noise with φ = 0.6 it calls 29% of series significant at 5%, not 5%. Method
+and the measured error rates are in `docs/decisions/0005-scan-family-and-autocorrelation-aware-mann-kendall.md`;
+in short, with the same S as §4.3:
+- `r1` = lag-1 autocorrelation of the series with Sen's trend removed, floored at 0;
+- `n_eff = n (1 − r1) / (1 + r1)`, at least 3, as in §4.2;
+- `Var*(S) = Var(S) · n / n_eff`; `z` and `p` as in §4.3 with `Var*`.
+
+The result equals §4.3 when `r1 ≤ 0` and is never smaller otherwise. Both p-values are reported
+(`mk_p` unadjusted, `mk_p_ar1` adjusted); `mk_p` and `tests_agree` are unchanged. The price is
+power: with φ = 0.5 and a modest trend, 60% of series are detected instead of 85%.
+It corrects lag-1 memory only.
+
 ### 4.4 Reporting (`core/summary.py`)
 - Trends are reported **per decade**: the per-month slope × 120, in the data's unit
   (science rule 6). Example: "+0.21 K per decade".
@@ -138,7 +156,9 @@ by one extreme month.
   - "*{region}: {variable}: no significant trend detected (yet). The estimated change is X per
     decade.*"
 - **Record length:** under 10 years gives a warning; under 2 years gives no trend at all.
-- **Gaps:** more than 10% of the months missing gives a warning.
+- **Gaps:** more than 10% of the months missing gives a warning. NaN months that only pad the
+  front of a series to January (data that starts mid-year, see §4.7) are not gaps and are left out
+  of that share (`summarise(..., leading_pad=)`).
 - **Agreement:** if the OLS and Mann-Kendall tests disagree on sign or significance, the summary
   says so and asks the reader to check for outliers or non-linearity (science rule 3).
 
@@ -148,6 +168,15 @@ look significant by chance alone. `core.trend.benjamini_hochberg` turns the OLS 
 adjusted p-values that control the false discovery rate: among the cities shown as a clear trend,
 the expected share of false alarms is at most 5%. A city is shown as a clear trend only when its
 OLS test is significant **and** its adjusted p < 0.05.
+
+`GET /api/scan` applies the same correction to the region × variable results: one family of all
+series with at least 24 months in the chosen window (24 for the current data), OLS p-values
+only. Each row has `ols_p`, `ols_q` and `significant_q` (q < 0.05); the page shows the q-value
+next to the p-value. Choices to review (ADR 0005): the family is whatever the data holds for
+that window, so q-values from different scans are not comparable; Benjamini-Hochberg is valid for
+independent or positively dependent tests, and variables of one region are positively related.
+On the MERRA-2 record as of 2026-11-15 (1980-2026, 24 series) the correction removes none of the
+18 trends significant at 5%.
 
 ### 4.6 Sea level next to Indonesian cities (`process/ocean_cities.py`, `scripts/export_indonesia.py`)
 - Data: ECCO V4r4 dynamic sea surface height (`SSH`, inverse-barometer corrected), 0.5° monthly,
@@ -174,6 +203,13 @@ OLS test is significant **and** its adjusted p < 0.05.
 - Limitation: ocean-model sea level next to the coast. It does not include land subsidence,
   which dominates relative sea-level rise in Jakarta and Semarang.
 
+### 4.7 A series the user supplies (`POST /api/analyse`)
+The same `summarise` runs on a monthly series sent in the request body. Deseasonalising works by
+position (every 12th value), so the series is padded with NaN at the front until its first value
+sits on its calendar month; this makes the yearly bars and the band fall on calendar years and
+adds no information. The request is checked before any statistics run: 24 to 2000 values, at
+least 24 of them numbers, finite and at most 1e12 in size, a valid start month. Nothing is stored.
+
 ## 5. Interpretation rules
 - Say "statistically significant at 95%", never "proves". Never say "caused by" unless a
   cited source does.
@@ -190,12 +226,22 @@ OLS test is significant **and** its adjusted p < 0.05.
    surroundings.
 3. **VPD is approximate** (§3.3).
 4. **Multiple tests.** Showing three regions and eight variables means about 24 tests. At
-   5% some will look significant by chance. Say this on the page, or correct for it later
-   (e.g. Benjamini-Hochberg). Done for the Indonesia city map (§4.5); not yet for regions.
+   5% some will look significant by chance. Corrected with Benjamini-Hochberg for the Indonesia
+   city map and, across all region × variable series, in `GET /api/scan` (§4.5). The page shows
+   the q-value next to each p-value. Limits: the family is "all series in this window", so q-values
+   differ between scans, and the method assumes independent or positively dependent tests.
 5. **Seasonal structure.** Deseasonalising removes the mean seasonal cycle but not a change in
    the cycle itself (for example, a longer summer). A seasonal Mann-Kendall test would be
    needed for that. Not done yet.
 6. **Record length.** MERRA-2 starts in 1980, so the longest trends run about 46 years.
+7. **Autocorrelation is corrected at lag 1 only** (OLS and `mann_kendall_ar1`). Longer memory, for
+   example ENSO, is not, and `r1` is noisy on short records (at 120 months, 6 to 7% of trend-free
+   series are still called significant, not 5%).
+8. **Known defect: Sen's slope with missing months.** `mann_kendall` drops the missing months
+   before computing Sen's slope, so with gaps the slope is per valid value, not per month, and is
+   too large by roughly the share of months missing (+25% in a test with 14% missing; OLS is not
+   affected). Not fixed: it changes behaviour that the golden tests describe, so it needs a
+   decision. `test_sen_slope_survives_gaps` in `tests/app/test_web.py` is marked `xfail` until then.
 
 ## 7. Tests that protect this
 - `tests/core/test_trend.py` (golden tests, never loosen): known trends are recovered, the
@@ -203,6 +249,17 @@ OLS test is significant **and** its adjusted p < 0.05.
   Mann-Kendall agrees with Kendall's tau, Sen's slope resists an outlier, opposite trends are
   both detected, and polar cells are down-weighted. Benjamini-Hochberg matches scipy's
   `false_discovery_control` on a textbook example and keeps false alarms near 5% on pure noise.
+- `tests/core/test_trend_additions.py` (added beside the golden file, which is unchanged): `r1` and
+  `n_eff` on hand-worked series (r1 = 1/6, n_eff = 30/7); the 15 p-values of the 1995
+  Benjamini-Hochberg paper with hand-derived adjusted values; `mann_kendall_ar1` follows its
+  formula with an independently computed `r1`, equals `mann_kendall` when `r1 ≤ 0`, matches a
+  hand-computed value on a perfect line, is never below the plain p-value, finds white noise
+  significant rarely, is far less often "significant" than the plain test on trend-free AR(1)
+  noise, and still finds a real trend; `leading_pad` is not counted as missing months.
+- `tests/app/test_web.py`: the `/api/trend` key sets are frozen; JSON errors for every failure;
+  `/api/analyse` validation (malformed bodies, too short or long, NaN and overflow tokens,
+  oversize body), a known slope per decade recovered, gaps; `/api/scan` q-values equal
+  scipy's `false_discovery_control`, and a borderline series is significant by p but not by q.
 - `tests/process/test_ocean_cities.py`: land and far cells are never picked, cells are nearest
   first, the series is in millimetres and keeps missing months, inland cities get no series.
 - Band (`ols_band`, same file): a hand-worked 5-point series gives the exact half-widths
@@ -218,7 +275,10 @@ OLS test is significant **and** its adjusted p < 0.05.
 
 ## 8. Not yet decided
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).
-- Whether to add a multiple-testing correction and a seasonal test (§6).
+- Whether to add a seasonal test (§6, item 5). The multiple-testing correction is done (§4.5).
+- Whether `tests_agree` should compare OLS with `mk_p_ar1` instead of `mk_p` (ADR 0005). Left as
+  it was, because changing it alters existing output.
+- Whether to fix Sen's slope with missing months (§6, item 8).
 - Whether annual means are shown alongside the monthly trend as a plain-language check.
 - Band level term: `s² / n_eff` with `s² = SSR / (n − 2)` (§4.2a). The slope part is the existing
   CI, so only the level term is new. A different convention (for example `SSR / (n_eff − 2)` as

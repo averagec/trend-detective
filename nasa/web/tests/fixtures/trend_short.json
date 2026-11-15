@@ -1,0 +1,104 @@
+{
+ "annual": [
+  {
+   "mean_anomaly": 0.0,
+   "months": 12,
+   "year": 2000
+  }
+ ],
+ "band": [],
+ "first_month": "2000-01",
+ "label": "Mean 2 m air temperature",
+ "last_month": "2000-12",
+ "region": "east_asia_land",
+ "region_name": "Eastern China and Korea",
+ "sentence": "Mean 2 m air temperature in Eastern China and Korea: not enough data for a trend (need at least two years).",
+ "series": [
+  {
+   "anomaly": 0.0,
+   "period": "2000-01",
+   "value": 280.1
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-02",
+   "value": 281.75
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-03",
+   "value": 282.7
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-04",
+   "value": 282.62
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-05",
+   "value": 282.88
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-06",
+   "value": 281.65
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-07",
+   "value": 279.86
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-08",
+   "value": 278.7
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-09",
+   "value": 277.54
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-10",
+   "value": 277.12
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-11",
+   "value": 277.44
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2000-12",
+   "value": 278.7
+  }
+ ],
+ "statistics": {
+  "mk_ar1_significant": false,
+  "mk_p": null,
+  "mk_p_ar1": null,
+  "mk_significant": false,
+  "n_eff": null,
+  "n_months": 12,
+  "n_years": 1.0,
+  "ols_ci_per_decade": [
+   null,
+   null
+  ],
+  "ols_intercept": null,
+  "ols_p": null,
+  "ols_per_decade": null,
+  "ols_significant": false,
+  "ols_slope_per_month": null,
+  "r1": null,
+  "sen_per_decade": null,
+  "tests_agree": false
+ },
+ "unit": "K",
+ "variable": "t2m",
+ "warnings": [
+  "Only 1.0 years of data; trends under 10 years are not reliable."
+ ]
+}

@@ -23,6 +23,7 @@ app/web.py (Flask)         -> per request: process.analyse_trends.build() -> cor
 | core | `src/trend_detective/core/` | Pure stats: `trend.py` (deseasonalise, OLS, Mann-Kendall, Sen, area weighting), `summary.py` (tests + plain-language sentence) | numpy/scipy |
 | catalog | `src/trend_detective/catalog/` | Variables (`variables.py`), regions (`regions.py`), study sites (`sites.py`): plain-language text | — |
 | app | `src/trend_detective/app/` | `web.py`: the dynamic app for students and the public (Flask). `nasa_view.py`: internal checks of raw files. | core, catalog, process |
+| website | `web/` | TD-OS (Vite + three.js), built to `web/dist` and served by Flask. Draws what `/api/*` returns: `data/api.js` is its only backend access, `data/to-chart.js` reshapes responses, `os/trend-app.js` is TREND.EXE (ADR 0006). Contract: `docs/api.md` | the API only |
 | demo data | `data/demo/` | Cached CSVs for demo cases (committed, small). Demo cases must run offline. | — |
 
 ## Invariants (enforced in `scripts/check.sh`)

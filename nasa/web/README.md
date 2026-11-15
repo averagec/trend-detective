@@ -11,6 +11,19 @@ npm run dev
 
 Build for production with `npm run build`. The output goes to `dist/`.
 
+### With the analysis engine (TREND.EXE)
+
+TREND.EXE reads every number from the Python backend. From the project root (`nasa/`):
+
+```bash
+cd web && npm ci && npm run build && cd ..      # once, and after changing web/
+python src/trend_detective/app/web.py           # serves the site and /api at http://127.0.0.1:5000
+```
+
+For live reload while editing the site, run the backend as above and `npm run dev` in `web/`
+(Vite proxies `/api` to port 5000). `npm test` checks the response mapper against real API
+responses in `tests/fixtures/`. Contract: `docs/api.md`; decision: `docs/decisions/0006-*.md`.
+
 ## How it works
 
 1. **The office**: a 3D room built with three.js. Click the monitor to log in.
