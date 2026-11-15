@@ -115,6 +115,7 @@ function analyse(setup, onProgress) {
   const D = DATASETS[setup.v], full = makeSeries(setup.v, setup.r);
   const raw = slice(full, setup.y0, setup.y1), an = deseason(raw);
   const years = setup.y1 - setup.y0 + 1;
+  const short = years < 10;
   const fit = ols(an.t, an.v), r1 = lag1(fit.res);
   const slope = sen(an.t, an.v);
   const m = mk(an.v, r1);
@@ -148,6 +149,7 @@ function analyse(setup, onProgress) {
   const gapIn = !!(D.gap && setup.y0 < D.gap[0] && setup.y1 + 1 > D.gap[1]);
   const sig = m.p < 0.05 && beat / 1e3 < 0.05;
   const checks = [
+    { k: "At least 10 years of record (" + years + " chosen)", ok: !short },
     { k: "Seasonal cycle removed", ok: true },
     { k: "Two tests agree (Mann-Kendall + noise lineup)", ok: m.p < 0.05 === beat / 1e3 < 0.05 },
     { k: "Autocorrelation accounted for (lag-1 r = " + r1.toFixed(2) + ")", ok: true },
@@ -161,6 +163,11 @@ function analyse(setup, onProgress) {
   else {
     verdict = "NOT YET DETECTABLE";
     needed = Math.min(150, Math.ceil(years * Math.pow(Math.max(1, 1.96 * seEff / Math.max(Math.abs(slope), 1e-9)), 2 / 3)));
+  }
+  // A span under 10 years cannot support a trend claim (docs/science-rules.md, rule 2).
+  if (short) {
+    verdict = "NOT YET DETECTABLE";
+    needed = 10;
   }
   return { D, raw, an, fit, slope, ci, mk: m, r1, sims, beat, obs: fit.b, checks, verdict, needed, years, shifts, worst };
 }
