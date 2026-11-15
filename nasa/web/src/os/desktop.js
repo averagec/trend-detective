@@ -186,7 +186,7 @@ function openBrief() {
   if (!c.open) {
     SFX.err();
     log(`CASE_${c.id}: LOCKED. ${c.lock}.`, "hi");
-    say(["Not that one. Sea level from the ocean can’t see the ground sinking under the city.", "That needs satellite radar of the land. Not in my files yet."]);
+    say(["Can’t pick that. It’s not done yet."]);
     return;
   }
   const p = c.preset, ds = D()[p.v];
@@ -311,10 +311,10 @@ function openHyp() {
     openHyp();
     log(`GUESS LOCKED: ${opts[S.guess]}`, "hi");
     unlock("evidence");
-    setTimeout(() => say(["Written down. No changing my mind once I’ve seen the data.", "Now let’s look at the actual record."], () => {
+    setTimeout(() => {
       closeId("w-hyp");
       openPlot();
-    }), 400);
+    }, 700);
   });
 }
 // The series with each calendar month's average taken out, from the server (the page subtracts nothing).
@@ -337,7 +337,6 @@ async function seasonsRemoved(s, cw, ds) {
 async function openPlot() {
   if (!S.setup || S.guess === null) {
     SFX.err();
-    say(["Not yet. Which city, which years? And I write my guess down first."]);
     return;
   }
   closeId("w-hyp");
@@ -383,7 +382,7 @@ async function openPlot() {
     S.deseason = e.target.checked;
     SFX.select();
     openPlot();
-    if (S.deseason) say(["There. With the seasons taken out, it’s easier to see what’s left."]);
+    if (S.deseason) say(["Hm. Seasons out of the way. That’s a lot easier to read."]);
   };
   w.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     S.look = +b.dataset.l;
@@ -391,7 +390,7 @@ async function openPlot() {
     openPlot();
     unlock("lineup");
     log(`EYEBALL CALL: ${["UP", "DOWN", "CAN’T TELL"][S.look]}`);
-    say(["That’s my gut talking. It’s been wrong before.", "Time to check it properly. LINEUP."]);
+    say(["Looks like it’s heading somewhere... but my eyes have fooled me before.", "Let’s see if it survives the lineup."]);
   });
   const gl = w.querySelector("#go-lineup");
   if (gl) gl.onclick = () => {
@@ -402,7 +401,7 @@ async function openPlot() {
 function openTest() {
   if (!S.setup || S.look === null) {
     SFX.err();
-    say(["Not yet. I haven’t even looked at the record."]);
+    say(["I haven’t even looked at the record yet."]);
     return;
   }
   const s = S.setup, ds = D()[s.v];
@@ -493,7 +492,7 @@ function openTest() {
     void crt.offsetWidth;
     crt.classList.add("jolt");
     log(`VERDICT: ${word}${S.exploratory ? " (EXPLORATORY)" : ""}`, "hi");
-    const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "Every way I push on it, the same answer. That goes in the report."], not_detected: ["Can’t call it yet. Too few years, too much wobble.", s.v === "ssl" ? "El Niño years shove the sea up and down out east. That noise hides the climb." : "That doesn’t mean nothing’s happening. It means I can’t prove it yet."], suspect: ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[verdict] || ["The engine gave an answer I don’t have words for."];
+    const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "No matter how I poke at it, same answer. Into the report it goes."], not_detected: ["Hm. Too much wobble to call it.", s.v === "ssl" ? "All those El Niño years jerking the sea around. The climb’s buried in there somewhere." : "Something might be happening. I just can’t prove it yet."], suspect: ["Strong... maybe too strong. Something’s off.", "One of the checks failed. I’m not putting my name on this."] }[verdict] || ["Huh. That answer doesn’t make sense to me."];
     setTimeout(() => say(lines), 600);
   };
 }
@@ -557,28 +556,61 @@ const trash = () => {
   SFX.err();
   log("TRASH IS EMPTY. NO DATA WAS HARMED.", "dim");
 };
+// TUTORIAL: walks through the desk in the order a case is played. Each step lights up the
+// icon it is about and gives one line from the detective. The player moves on with NEXT.
+const TUT = [
+  { icon: "map", title: "MAP.EXE", line: "Start with the map.", body: "Each dot is a coastal city. Click a dot to zoom in and see that city’s sea level trend." },
+  { icon: "map", title: "LAYERS", line: "The map can show other data too.", body: "The buttons at the top switch the layer: SEA LVL, TEMP, RAIN and more. Each one is real NASA data for the same places." },
+  { icon: "map", title: "CIRCLE", line: "To look at an area, draw a circle.", body: "Press CIRCLE, then press on the map and drag outwards. The app reads the grid cells inside the circle and gives one trend for the whole area." },
+  { icon: "trend", title: "TREND.EXE", line: "TREND shows the full record for one place.", body: "Pick a dataset and a place. You see the trend, its range and the tests behind it. This window needs the local server to be running." },
+  { icon: "cases", title: "CASES", line: "A case is one question.", body: "Open a case from the list, or press INVESTIGATE AS A CASE on a city or circle on the map." },
+  { icon: "cases", title: "SET UP", line: "Choose what, where and which years.", body: "Pick the measurement, the place and the years. Then lock your guess before you look at anything." },
+  { icon: "evidence", title: "GUESS AND EVIDENCE", line: "Lock your guess first, then look.", body: "Choose going up, going down or can’t tell. Your guess can’t be changed. EVIDENCE then shows the record, and LINEUP unlocks." },
+  { icon: "lineup", title: "LINEUP", line: "Now test it against noise.", body: "LINEUP builds 1,000 fake records with the same wobble and no trend. Run it to see how many of them look as strong as your record." },
+  { icon: "lineup", title: "VERDICT", line: "Here is what the result means.", body: "DETECTED: the trend is strong, the tests agree, and fewer than 5% of the fakes are as strong. SUSPECT: the trend is significant but a check fails. NOT YET DETECTABLE: there isn’t enough evidence yet." }
+];
+let tutAt = 0;
+function tutorial(i = 0) {
+  tutAt = Math.max(0, Math.min(TUT.length - 1, i));
+  const t = TUT[tutAt];
+  const last = tutAt === TUT.length - 1;
+  hl = t.icon;
+  glow();
+  say([t.line]);
+  const w = win("w-tut", "TUTORIAL.EXE", `<div class="tut"><div class="dim">STEP ${tutAt + 1} OF ${TUT.length} · ${t.title}</div><h3>${t.line}</h3><p>${t.body}</p><div class="tutnav"><button class="chip" id="tut-back"${tutAt === 0 ? " disabled" : ""}>◂ BACK</button><button class="obtn" id="tut-go">${last ? "DONE ▸" : "NEXT ▸"}</button></div></div>`, { left: "300px", top: "40px", width: "460px" });
+  w.querySelector(".bx").onclick = () => {
+    closeWin(w);
+    hl = null;
+    setTimeout(glow, 170);
+  };
+  w.querySelector("#tut-back").onclick = () => tutorial(tutAt - 1);
+  w.querySelector("#tut-go").onclick = () => (last ? w.querySelector(".bx").onclick() : tutorial(tutAt + 1));
+  return w;
+}
 const ICONS = [
   ["cases", "folder", "CASES", openCases],
   ["readme", "doc", "ABOUT.TXT", readme],
+  ["tutorial", "question", "TUTORIAL", () => tutorial(0)],
   ["data", "dish", "DATA.LNK", data],
   ["earth", "picture", "EARTH.PCX", earth],
   ["map", "globe", "MAP.EXE", map],
   ["trend", "chart", "TREND.EXE", () => trend()],
   ["log", "disk", "LOG.TXT", logw],
   ["id", "id", "ID.CARD", idcard],
-  ["evidence", "mag", "EVIDENCE", () => isLocked("evidence") ? (SFX.err(), say(["Guess first. Then the evidence."])) : openPlot(), true],
-  ["lineup", "chart", "LINEUP", () => isLocked("lineup") ? (SFX.err(), say(["Not yet. I haven’t even looked at the record."])) : openTest(), true],
+  ["evidence", "mag", "EVIDENCE", () => isLocked("evidence") ? (SFX.err(), say(["I should probably decide what I think first."])) : openPlot(), true],
+  ["lineup", "chart", "LINEUP", () => isLocked("lineup") ? (SFX.err(), say(["I haven’t even looked at the record yet."])) : openTest(), true],
   ["trash", "trash", "TRASH", trash]
 ];
 let guide = 0;
+let hl = null; // the icon the TUTORIAL is pointing at, while its window is open
 const GUIDE = [["map", "START HERE · DOUBLE-CLICK"], ["cases", "NEXT · DOUBLE-CLICK"]];
 function glow() {
   document.querySelectorAll(".icon").forEach((b) => {
-    const g = GUIDE[guide] && GUIDE[guide][0] === b.dataset.id;
+    const g = hl ? b.dataset.id === hl : GUIDE[guide] && GUIDE[guide][0] === b.dataset.id;
     b.classList.toggle("glow", !!g);
     const old = b.querySelector(".hint");
     if (old) old.remove();
-    if (g) b.insertAdjacentHTML("beforeend", `<em class="hint">${GUIDE[guide][1]}</em>`);
+    if (g && !hl) b.insertAdjacentHTML("beforeend", `<em class="hint">${GUIDE[guide][1]}</em>`);
   });
 }
 function guideDone(id) {
@@ -698,7 +730,6 @@ async function open() {
   }
   booting = false;
   endSkip();
-  setTimeout(() => say(["Okay. I’m in.", "Thirty-one cities across Indonesia. The tide keeps coming further in.", "Is the sea really rising, or does it just feel that way? MAP.EXE first, then the case files."]), 400);
 }
 async function shutdown() {
   closeSay();

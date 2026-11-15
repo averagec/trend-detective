@@ -184,9 +184,9 @@ function play() {
     if (state.firstRoom) {
       state.firstRoom = false;
       say([
-        "Jakarta again. High tide came over the sea wall last night.",
-        "Everyone says the sea is rising. Could be true. Could also be a scary line drawn through noise.",
-        "Only one way to settle it. NASA’s records. Computer first."
+        "Jakarta again...",
+        "Everyone says the sea is rising, but I wouldn’t know.",
+        "Only one way to settle it. Let’s get on the computer."
       ]);
     }
   }, 58);
