@@ -37,8 +37,19 @@ const LAYERS = [
     downV: "falling"
   },
   { k: "t2m", short: "TEMP", name: "Air temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2m", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer", down: "Cooler", noun: "temperature", upV: "warming", downV: "cooling" },
+  { k: "t2mmax", short: "HOT DAYS", name: "Hottest daily temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2mmax", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Hotter days", down: "Cooler days", noun: "daily maximum temperature", upV: "getting hotter", downV: "getting cooler" },
+  { k: "tsurf", short: "LAND T", name: "Land surface temperature", src: "MERRA-2 · NASA GES DISC", box: "merra2:tsurf", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer ground", down: "Cooler ground", noun: "land surface temperature", upV: "warming", downV: "cooling" },
   { k: "precip", short: "RAIN", name: "Rainfall", src: "MERRA-2 · NASA GES DISC", box: "merra2:precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
+  { k: "gpcp_precip", short: "GPCP", name: "Rainfall (GPCP satellite + gauge)", src: "GPCP v3.3 · NASA GES DISC", box: "gpcp:gpcp_precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
+  { k: "gldas_rain", short: "GLDAS RAIN", name: "Rainfall (GLDAS model)", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_rain", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
   { k: "tws", short: "WATER", name: "Water stored on land", src: "GRACE / GRACE-FO · NASA JPL", box: "grace:grace_lwe", unit: "cm", ud: "cm/dec", pal: "w", dp: 1, fxUp: "rain", fxDown: "drought", up: "More water stored", down: "Less water stored", noun: "water storage", upV: "gaining water", downV: "losing water" },
+  { k: "sm_0_10", short: "SOIL 0-10", name: "Soil moisture, top 10 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_0_10cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
+  { k: "sm_10_40", short: "SOIL 10-40", name: "Soil moisture, 10 to 40 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_10_40cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
+  { k: "sm_40_100", short: "SOIL 40-100", name: "Soil moisture, 40 to 100 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_40_100cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
+  { k: "sm_100_200", short: "SOIL 100-200", name: "Soil moisture, 100 to 200 cm", src: "GLDAS Noah 2.1 · NASA GES DISC", box: "gldas:gldas_sm_100_200cm", unit: "kg/m²", ud: "kg/m² per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter soil", down: "Drier soil", noun: "soil moisture", upV: "getting wetter", downV: "getting drier" },
+  { k: "qv2m", short: "HUMID", name: "Air humidity (2 m specific humidity)", src: "MERRA-2 · NASA GES DISC", box: "merra2:qv2m", unit: "g/kg", ud: "g/kg per dec", pal: "w", dp: 2, fxUp: null, fxDown: null, up: "More humid", down: "Less humid", noun: "humidity", upV: "getting more humid", downV: "getting less humid" },
+  { k: "vpd", short: "VPD", name: "Dryness of the air (vapour pressure deficit)", src: "MERRA-2 · NASA GES DISC", box: "merra2:vpd", unit: "kPa", ud: "kPa per dec", pal: "t", dp: 3, fxUp: "drought", fxDown: null, up: "Drier air", down: "Moister air", noun: "vapour pressure deficit", upV: "getting drier", downV: "getting moister" },
+  { k: "evap", short: "EVAP", name: "Surface evaporation", src: "MERRA-2 · NASA GES DISC", box: "merra2:evap", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: null, fxDown: null, up: "More evaporation", down: "Less evaporation", noun: "evaporation", upV: "evaporating more", downV: "evaporating less" },
   { k: "sst", name: "Sea surface temperature", src: "MUR SST · PO.DAAC", y0: 2003, y1: 2024, lock: "a sea surface temperature series (not in the Python pipeline yet)" },
   { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "a vegetation series (not in the Python pipeline yet)" },
   { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "an aerosol series (not in the Python pipeline yet)" }
@@ -610,6 +621,12 @@ function drawBox() {
   const lab = el("text", { x: x0 + 0.5, y: y0 + 1.6, class: "rm-boxlab", "font-size": 1.3 }, g);
   lab.textContent = `${L.short} ${fmtBox(b.slope_per_decade, L)} ${L.ud.toUpperCase()}${boxSig(b) ? "" : " · NO CLEAR TREND"}`;
 }
+// Monthly box series from the Python core, as decimal years (mid-month) for the same yearly-average code the cases use.
+function boxSeries(b) {
+  if (!b || !b.series) return null;
+  const pts = b.series.filter((p) => p.value != null);
+  return { t: pts.map((p) => +p.period.slice(0, 4) + (+p.period.slice(5, 7) - 1) / 12 + 1 / 24), v: pts.map((p) => p.value) };
+}
 function boxCard(box) {
   const L = LAYERS[st.v], b = boxStat(), ds = analysis.DATASETS[L.k], f = (v) => fmtBox(v, L), p = (v) => v < 1e-4 ? "< 0.0001" : v.toFixed(4);
   if (!b) {
@@ -617,7 +634,7 @@ function boxCard(box) {
     box.querySelector("#rm-close").onclick = closeCard;
     return;
   }
-  const sig = boxSig(b), ser = ds && analysis.SERIES[L.k + "|idn"], yrs = [];
+  const sig = boxSig(b), ser = ds ? analysis.SERIES[L.k + "|idn"] : boxSeries(b), yrs = [];
   if (ser) {
     const clim = Array(12).fill(0), n = Array(12).fill(0), mo = (t) => Math.min(11, Math.floor(t % 1 * 12)), by = {};
     ser.t.forEach((t, i) => {
