@@ -144,6 +144,11 @@ uncorrected sentence. The page shows `significance.sentence`.
 - `years_needed` simulates the OLS test only. Under the two-test rule more years are needed; the
   adjusted Mann-Kendall is too slow inside that simulation. Label it "OLS only" for now.
 - `core/events.py` tests its own trend with OLS at p < 0.05; it does not follow the ladder yet.
+- `scripts/export_cells.py` (MAP.EXE's CIRCLE data, added on main 2026-11-15) runs its own Benjamini-Hochberg across
+  all 2,478 ECCO cells of the Indonesia box on the OLS p-value only ("clear rise" = OLS p_adj < 0.05). It is a
+  fourth family and the old one-test rule, so it does not follow ADR 0009. Needs a decision: which family a
+  circle's cells are corrected in (the whole box, as built, or only the cells inside the circle), then route it
+  through `assess_family` and regenerate `indonesia_cells.json`.
 - City, circle and event on real data need the cell cubes (`data/processed/cells/*.npz`, not in the
   repo); until then those paths are tested on synthetic data only.
 - JS statistics still in `web/src/stats/` and the MAP synthetic layers.
@@ -157,6 +162,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — Phase 4 done: TREND.EXE and the classic page read the `significance` block (verdict, both q-values, family label, server sentence); TREND.EXE no longer calls /api/scan; web tests 12. Next: Phase 5 (docs, science rules, real-data check).
 - 2026-11-15 — Phase 5 done: docs/api.md, statistics.md 4.8, science-rules 3 and 7, ADR 0007/0008/0009 cross-references, ARCHITECTURE (stale duplicate app row removed). Real data: East China temperature 1990-2019 `unclear` (OLS q 0.061, MK q 0.007); full record 18 rises unchanged. Everything is local; nothing pushed.
 - 2026-11-15 — Merged origin/main (762ba82: Sen fix PR #4, project window 1980-2018, GDIS counts, MAP layers) into the branch (5b7027d). User chose option A: the project window now limits /api/trend, /api/scan and /api/meta too. xfail removed (Sen fixed on main). Regional export regenerated (it was stale: made before main's own window change). Found: main's window change pads series that begin later (GRACE 2002, GLDAS 2000, ENSO 1993) from 1980 and reported the padding as '65% of months are missing'; fixed with leading_pad in regional_map (their test that the timeline starts in 1980 still holds). Not pushed since e11fe41.
+- 2026-11-15 — Merged origin/main again (9aa55e3: Earthdata-style CIRCLE tool, city dots; 9 files, no conflicts) and pushed the branch.
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after
