@@ -213,6 +213,7 @@ Full citations and access dates for each collection are in [`nasa/docs/reference
 
 ## Credits
 
+
 - 3D room: ["Detective's Office - True Detective Fan Art"](https://sketchfab.com/3d-models/detectives-office-true-detective-fan-art-a5d7f399d7694053affb63f069740c4a) by nickheitzman, licensed [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/). Modified: retextured screen, mousepad, corkboard and poster; walls and ceiling added.
 - Country outlines: Natural Earth, via world-atlas.
 - Data: NASA GES DISC (MERRA-2, GPCP, GLDAS) and PO.DAAC (ECCO, GRACE / GRACE-FO). NASA POWER is used only by the optional quick-pull script.
