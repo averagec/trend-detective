@@ -89,6 +89,4 @@ variables. TSURF has 63% of cells masked because they are ocean cells, which is 
 - `sar/`: Sentinel-1 scene list and browse images for coastal sites. Script: `ingest/sar.py`.
 
 ## Not downloaded
-- Atmospheric composition (ozone, NO2, CO, CO2, aerosol optical depth): no files yet.
-  See `ingest/atmos_download.py --group composition`.
 - GPM IMERG half-hourly rainfall: not downloaded. Candidate for event-scale flood analysis.

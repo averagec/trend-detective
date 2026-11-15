@@ -70,7 +70,8 @@ Run the app on it with `python src/trend_detective/app/web.py --input data/demo/
 - Variable(s), units: `SoilMoi0_10cm_inst`, `SoilMoi10_40cm_inst`, `SoilMoi40_100cm_inst`, `SoilMoi100_200cm_inst` (soil moisture, kg m-2), `Rainf_tavg` (rainfall rate, kg m-2 s-1).
 - Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`; Harmony subset to the Asia-Pacific box (lon 60–179, lat −50–60).
 - Resolution (time, space), time range: monthly, 0.25° (440 × 476 cells in the box), 2000-01 to 2026-07 (open-ended in CMR). 319 files on disk.
-- Known quirks: fill value is −9999 (not 1e15 as in MERRA-2). Not cleaned yet. Per-dataset size not recorded; all of `data/raw/` is about 7.3 GB (`docs/datasets.md`).
+- Known quirks: fill value is −9999 (not 1e15 as in MERRA-2). Cleaned (2026-11-15): `process/witness_clean.py`. Per-dataset size not recorded; all of `data/raw/` is about 7.3 GB (`docs/datasets.md`).
+- Cleaned output (committed): `process/witness_clean.py` → `data/processed/witness/witness_regional.csv` (7,110 rows for all three witness datasets, columns `dataset,region,variable,period,value,unit,n_cells,n_valid`) and `qc_report.json`. GLDAS is a land-only mean (about 62% of cells masked in `se_asia_maritime`).
 - Fetched by: `src/trend_detective/ingest/witness_download.py` (group `gldas`) → cached at `data/raw/witness/`
 
 ### GPCP monthly precipitation v3.3 (witness for MERRA-2 rain)
@@ -78,7 +79,7 @@ Run the app on it with `python src/trend_detective/app/web.py --input data/demo/
 - Variable(s), units: `sat_gauge_precip` (combined satellite and gauge rainfall, mm day-1).
 - Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`; Harmony subset to the same box.
 - Resolution (time, space), time range: monthly, 0.5° (220 × 238 cells in the box), 1983-01 to 2025-12. 516 files on disk.
-- Known quirks: fill value is −99999. Do not use `gauge_precip`: it holds values below the fill value. The first plan assumed a 2.5° grid; the real grid is 0.5°. Not cleaned yet. Per-dataset size not recorded.
+- Known quirks: fill value is −99999. Do not use `gauge_precip`: it holds values below the fill value. The first plan assumed a 2.5° grid; the real grid is 0.5°. Cleaned (2026-11-15): `process/witness_clean.py`. Per-dataset size not recorded.
 - Fetched by: `src/trend_detective/ingest/witness_download.py` (group `gpcp`) → cached at `data/raw/witness/`
 
 ### GRACE / GRACE-FO mascon, JPL RL06.3 V04 (witness for water storage)
@@ -86,5 +87,14 @@ Run the app on it with `python src/trend_detective/app/web.py --input data/demo/
 - Variable(s), units: `lwe_thickness` (liquid water equivalent thickness anomaly, cm), `uncertainty` (cm).
 - Access: `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` in `.env`.
 - Resolution (time, space), time range: monthly, 0.5° grid (360 × 720, global), 2002-04 to 2026-09. One file, 39 MB.
-- Known quirks: Harmony returned the whole global file, so the box is cut later in cleaning. Fill value −99999. The true resolution is about 3°, so use large regions only. Not cleaned yet.
+- Known quirks: Harmony returned the whole global file, so the box is cut later in cleaning. Fill value −99999. The true resolution is about 3°, so use large regions only. Cleaned (2026-11-15): `process/witness_clean.py`; 2 duplicate months resolved.
 - Fetched by: `src/trend_detective/ingest/witness_download.py` (group `grace`) → cached at `data/raw/witness/`
+
+### Atmospheric temperature (checked 2026-11-15)
+- Status: no separate atmospheric-temperature download is on this machine. `data/raw/` is not present here (git-ignored), and no `data/raw/temperature/` folder exists anywhere under the repo or home folder. `ingest/atmos_download.py --group temperature` (CMR keywords "atmospheric temperature", "air temperature") has no recorded run in the docs, manifests or progress log.
+- What does exist is temperature from MERRA-2 (see its entry above), cleaned in `data/processed/merra2/monthly_regional.csv`: `t2m` (monthly mean 2 m air temperature), `t2mmax` (daily maximum, averaged per month) and `tsurf` (land surface temperature), 1980-01 to 2026-09 (`t2mmax` to 2026-10), K, 3 regions. `data/processed/geojson/M2SDNXSLV_T2MMAX_SEA_{DAILY,MONTHLY}.geojson` hold the Southeast Asia T2MMAX series but only to 1994 (a partial extract).
+- Pressure-level temperature (MERRA-2 `M2IMNPASM` at 850 and 5 hPa, AIRS `AIRS3STM`) is listed in `scripts/pull_nasa.py`'s catalog as `verified=False`, with no data on disk.
+- To confirm: ask the teammates which folder, product and machine they mean. If it is MERRA-2 T2M, it is already covered.
+
+### Atmospheric composition
+- Dropped (2026-11-15): the composition group (ozone, NO2, CO, CO2, aerosol optical depth) was removed from `ingest/atmos_download.py`, and `omi_no2` from `scripts/pull_nasa.py`. Nothing was downloaded. Not planned.

@@ -1,17 +1,15 @@
 """Download NASA atmosphere and land data by topic group, from NASA Earthdata.
 
 Owns: topic presets only. Search, login and download live in ocean_download.py (shared).
-Temperature comes first. Composition and land groups follow.
+Temperature comes first. The land group follows.
 
 Groups (keywords are searched in CMR; see the dry run for what matches):
     temperature  atmospheric temperature, air temperature
-    composition  ozone, nitrogen dioxide, carbon monoxide, carbon dioxide, aerosol optical depth
     land         land surface temperature, vegetation index, soil moisture
 
 Examples (Asia-Pacific box, 1992-2022):
     python src/trend_detective/ingest/atmos_download.py --group temperature --dry-run
     python src/trend_detective/ingest/atmos_download.py --group temperature
-    python src/trend_detective/ingest/atmos_download.py --group composition --dry-run
     python src/trend_detective/ingest/atmos_download.py --group land --dry-run
 
 Writes data/raw/<group>/<short_name>/ (git-ignored), with manifest.csv and provenance.json.
@@ -31,13 +29,6 @@ from trend_detective.ingest.ocean_download import ASIA_PACIFIC, cmd_download  # 
 
 GROUPS: dict[str, list[str]] = {
     "temperature": ["atmospheric temperature", "air temperature"],
-    "composition": [
-        "ozone",
-        "nitrogen dioxide",
-        "carbon monoxide",
-        "carbon dioxide",
-        "aerosol optical depth",
-    ],
     "land": ["land surface temperature", "vegetation index", "soil moisture"],
 }
 
