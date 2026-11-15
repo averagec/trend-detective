@@ -5,12 +5,12 @@ core/trend.py only (AGENTS.md rule 3).
 
 Examples:
     # What the NASA archive holds for the Asia-Pacific box, 1992-2022
-    python src/trend_detective/app/nasa_view.py catalog --keyword "sea surface height"
+    python scripts/nasa_view.py catalog --keyword "sea surface height"
     # What is already downloaded to data/raw/ocean/
-    python src/trend_detective/app/nasa_view.py local
+    python scripts/nasa_view.py local
     # List the variables in one file, then plot one of them
-    python src/trend_detective/app/nasa_view.py plot data/raw/ocean/<short_name>/<file>.nc
-    python src/trend_detective/app/nasa_view.py plot <file.nc> --var <name>
+    python scripts/nasa_view.py plot data/raw/ocean/<short_name>/<file>.nc
+    python scripts/nasa_view.py plot <file.nc> --var <name>
 
 Plotting needs: pip install xarray netCDF4 matplotlib numpy
 """
@@ -22,7 +22,7 @@ import csv
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from trend_detective.ingest.ocean_download import (  # noqa: E402

@@ -37,7 +37,7 @@ Every error on an `/api/*` route has this body and `Content-Type: application/js
 
 | Status | When |
 |---|---|
-| 400 | Bad or missing input: years not integers or outside 1-9999, `from` after `to`, a window with no months, a malformed `POST` body (see `/api/analyse`) |
+| 400 | Bad or missing input: years not integers or outside 1-9999, `from` after `to`, a window with no months, a malformed `POST` body (see `/api/analyse-series`) |
 | 404 | No data for that region and variable; unknown `/api/...` route |
 | 405 | Wrong HTTP method (the `Allow` header lists the right ones) |
 | 413 | `POST` body larger than 128 KiB |
@@ -102,7 +102,7 @@ Example: `/api/trend?variable=t2m&region=east_asia_land&from=1990&to=2019`
 | `sen_per_decade` | number | Sen's slope (Mann-Kendall's slope), `unit` per decade |
 | `mk_p` | number | Mann-Kendall p-value, **not** adjusted for autocorrelation |
 | `mk_significant` | boolean | `mk_p < 0.05` |
-| `mk_p_ar1` | number | Mann-Kendall p-value with the variance widened for lag-1 autocorrelation (same `n_eff` idea as the OLS test; docs/decisions/0005). Never below `mk_p` |
+| `mk_p_ar1` | number | Mann-Kendall p-value with the variance widened for lag-1 autocorrelation (same `n_eff` idea as the OLS test; docs/decisions/0007). Never below `mk_p` |
 | `mk_ar1_significant` | boolean | `mk_p_ar1 < 0.05` |
 | `tests_agree` | boolean | OLS and the **unadjusted** Mann-Kendall agree on the sign and on significance |
 | `ols_intercept` | number | Intercept of the OLS line, anomaly units, month 0 = first month of `series` |
@@ -114,7 +114,7 @@ With fewer than 24 months with a value, every statistic is `null` (`n_months`, `
 given, `ols_significant`, `mk_significant`, `mk_ar1_significant`, `tests_agree` are `false`) and `sentence` says there
 is not enough data.
 
-## `POST /api/analyse`
+## `POST /api/analyse-series`
 
 Analyse a monthly series you send. The server only computes: nothing is stored, no file is
 written, no network call is made, and the route works even when the processed data file is missing.
@@ -151,7 +151,7 @@ The same shape as `/api/trend`, so one renderer draws both. Differences:
   significance wording rules.
 
 ```bash
-curl -s -X POST localhost:5000/api/analyse -H 'Content-Type: application/json' \
+curl -s -X POST localhost:5000/api/analyse-series -H 'Content-Type: application/json' \
   -d '{"label":"Demo","unit":"K","start":"2000-01","values":[...]}'
 ```
 

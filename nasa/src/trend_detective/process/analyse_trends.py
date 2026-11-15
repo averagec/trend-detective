@@ -123,7 +123,7 @@ def analyse_series(
     `values` has one entry per month of `axis` and starts in January (NaN for missing months).
     `leading_pad` counts the NaN months at the front that only align the series to January.
     """
-    summary = summarise(values, unit, summary_label, leading_pad)
+    summary = summarise(values, unit, summary_label, leading_pad=leading_pad)
     anomalies = deseasonalize(values)
     return {
         "first_month": axis[0],

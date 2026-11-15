@@ -1,9 +1,9 @@
-# 0005 - The scan's test family, and an autocorrelation-aware Mann-Kendall test
+# 0007 - The scan's test family, and an autocorrelation-aware Mann-Kendall test
 
 - Status: proposed (2026-11-15). Needs the team's review of the choices marked **Review**.
-- Extends: 0004 (adds `POST /api/analyse`, `GET /api/scan` and the fields below)
-- Note: `exec-plans/active/web-integration.md` plans an ADR "0005" for the front-end switch. This
-  one took the number first; that ADR becomes 0006.
+- Extends: 0004 (adds `POST /api/analyse-series`, `GET /api/scan` and the fields below)
+- Note: this ADR was first numbered 0005 and the website ADR 0006; they became 0007 and 0008 when the
+  teammate's 0005-spatial-selection and 0006-flood-drought-flow reached `main`.
 
 ## Context
 Two statistical gaps remained in `docs/statistics.md` (§6 items 1 and 4, §4.3):

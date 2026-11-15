@@ -103,7 +103,7 @@ def test_benjamini_hochberg_never_lowers_a_p_value_and_keeps_order():
     assert np.all(q[i] <= q[j] + 1e-15)  # a larger p never gets a smaller q
 
 
-# --- Autocorrelation-aware Mann-Kendall (docs/decisions/0005) --------------------------------
+# --- Autocorrelation-aware Mann-Kendall (docs/decisions/0007) --------------------------------
 
 
 def independent_r1_of_sen_residuals(y):
@@ -170,7 +170,7 @@ def test_mk_ar1_white_noise_is_rarely_significant():
 
     rng = np.random.default_rng(21)
     hits = sum(mann_kendall_ar1(rng.normal(0, 1, MONTHS)).p_value < 0.05 for _ in range(300))
-    assert hits / 300 < 0.10  # nominal 5%; 3% measured (docs/decisions/0005)
+    assert hits / 300 < 0.10  # nominal 5%; 3% measured (docs/decisions/0007)
 
 
 def test_mk_ar1_trend_free_ar1_noise_is_less_often_significant_than_the_plain_test():

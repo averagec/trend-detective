@@ -235,7 +235,7 @@ def test_trend_response_is_valid_json_when_there_is_no_trend(client):
     assert response.get_json()["statistics"]["n_eff"] is None
 
 
-# --- POST /api/analyse ----------------------------------------------------------------------
+# --- POST /api/analyse-series ------------------------------------------------------------------
 
 
 def synthetic_months(n, slope_per_decade, start_month=1, noise=0.1, seed=5, amp=5.0):
@@ -263,7 +263,7 @@ def body(**changes):
 
 
 def test_analyse_returns_the_same_shape_as_trend(client):
-    response = client.post("/api/analyse", json=body())
+    response = client.post("/api/analyse-series", json=body())
     assert response.status_code == 200
     data = response.get_json()
     assert set(data) == TREND_KEYS
@@ -275,7 +275,7 @@ def test_analyse_returns_the_same_shape_as_trend(client):
 
 def test_analyse_recovers_a_known_slope_per_decade(client):
     # 0.30 K per decade, 20 years, small noise: both estimators must find it
-    data = client.post("/api/analyse", json=body()).get_json()
+    data = client.post("/api/analyse-series", json=body()).get_json()
     s = data["statistics"]
     assert s["ols_per_decade"] == pytest.approx(0.30, abs=0.03)
     assert s["ols_ci_per_decade"][0] < 0.30 < s["ols_ci_per_decade"][1]
@@ -287,20 +287,20 @@ def test_analyse_recovers_a_known_slope_per_decade(client):
 
 def test_analyse_recovers_a_known_negative_slope(client):
     values = synthetic_months(180, -0.50, seed=9)
-    s = client.post("/api/analyse", json=body(values=values)).get_json()["statistics"]
+    s = client.post("/api/analyse-series", json=body(values=values)).get_json()["statistics"]
     assert s["ols_per_decade"] == pytest.approx(-0.50, abs=0.04)
 
 
 def test_analyse_with_no_trend_says_no_significant_trend(client):
     values = synthetic_months(240, 0.0, noise=1.0, seed=3)
-    data = client.post("/api/analyse", json=body(values=values)).get_json()
+    data = client.post("/api/analyse-series", json=body(values=values)).get_json()
     assert data["statistics"]["ols_significant"] is False
     assert "no significant trend detected (yet)" in data["sentence"]
 
 
 def test_a_series_starting_mid_year_lands_on_its_real_calendar_months(client):
     values = synthetic_months(240, 0.30, start_month=3)
-    data = client.post("/api/analyse", json=body(start="1995-03", values=values)).get_json()
+    data = client.post("/api/analyse-series", json=body(start="1995-03", values=values)).get_json()
     assert data["first_month"] == "1995-01"  # the axis always starts in January
     assert [row["value"] for row in data["series"][:2]] == [None, None]  # Jan, Feb: padding
     assert data["series"][2] == {
@@ -323,7 +323,7 @@ def test_a_short_series_starting_in_december_has_no_false_gap_warning(client):
     # 24 values from December: 11 padded months of 35 are 31% of the axis. They are padding,
     # not missing data, so the "months are missing" warning must not appear.
     values = synthetic_months(24, 0.30, start_month=12)
-    data = client.post("/api/analyse", json=body(start="1995-12", values=values)).get_json()
+    data = client.post("/api/analyse-series", json=body(start="1995-12", values=values)).get_json()
     assert not any("missing" in w for w in data["warnings"])
     assert data["statistics"]["n_months"] == 24
 
@@ -331,8 +331,8 @@ def test_a_short_series_starting_in_december_has_no_false_gap_warning(client):
 def test_padding_does_not_change_the_statistics(client):
     # the same 240 values, said to start in January or in December: the trend is the same
     values = synthetic_months(240, 0.30)
-    a = client.post("/api/analyse", json=body(values=values)).get_json()["statistics"]
-    b = client.post("/api/analyse", json=body(start="1995-12", values=values)).get_json()
+    a = client.post("/api/analyse-series", json=body(values=values)).get_json()["statistics"]
+    b = client.post("/api/analyse-series", json=body(start="1995-12", values=values)).get_json()
     for key in ("ols_per_decade", "ols_p", "sen_per_decade", "mk_p", "n_eff", "r1"):
         assert b["statistics"][key] == pytest.approx(a[key], rel=1e-9)
 
@@ -341,7 +341,7 @@ def test_analyse_with_gaps_counts_only_real_months(client):
     values = synthetic_months(240, 0.30)
     for i in range(5, 240, 7):  # about 14% of the months are missing
         values[i] = None
-    data = client.post("/api/analyse", json=body(values=values)).get_json()
+    data = client.post("/api/analyse-series", json=body(values=values)).get_json()
     n_missing = sum(v is None for v in values)
     assert data["statistics"]["n_months"] == 240 - n_missing
     assert any("missing" in w for w in data["warnings"])
@@ -360,33 +360,33 @@ def test_sen_slope_survives_gaps(client):
     values = synthetic_months(240, 0.30)
     for i in range(5, 240, 7):
         values[i] = None
-    s = client.post("/api/analyse", json=body(values=values)).get_json()["statistics"]
+    s = client.post("/api/analyse-series", json=body(values=values)).get_json()["statistics"]
     assert s["sen_per_decade"] == pytest.approx(0.30, abs=0.04)
 
 
 def test_a_constant_series_is_handled(client):
-    data = client.post("/api/analyse", json=body(values=[5.0] * 60)).get_json()
+    data = client.post("/api/analyse-series", json=body(values=[5.0] * 60)).get_json()
     assert data["statistics"]["ols_p"] == 1.0
     assert data["statistics"]["ols_significant"] is False
 
 
 def test_analyse_works_without_the_data_file(tmp_path):
     client = create_app(tmp_path / "absent.csv").test_client()
-    assert client.post("/api/analyse", json=body()).status_code == 200
+    assert client.post("/api/analyse-series", json=body()).status_code == 200
 
 
 def test_analyse_accepts_integers_and_a_label_with_markup_unchanged(client):
     data = client.post(
-        "/api/analyse", json=body(label="<b>x</b> & y", values=list(range(60)))
+        "/api/analyse-series", json=body(label="<b>x</b> & y", values=list(range(60)))
     ).get_json()
     assert data["label"] == "<b>x</b> & y"  # the page escapes it when drawing
     assert data["statistics"]["ols_per_decade"] > 0
 
 
 def test_too_short_series_is_refused(client):
-    r = client.post("/api/analyse", json=body(values=synthetic_months(23, 0.3)))
+    r = client.post("/api/analyse-series", json=body(values=synthetic_months(23, 0.3)))
     assert "24 to 2000" in assert_json_error(r, 400)["error"]
-    r = client.post("/api/analyse", json=body(values=[]))
+    r = client.post("/api/analyse-series", json=body(values=[]))
     assert_json_error(r, 400)
 
 
@@ -394,14 +394,14 @@ def test_a_series_with_too_few_real_numbers_is_refused(client):
     values = synthetic_months(40, 0.3)
     for i in range(20):
         values[i] = None  # 40 entries, 20 numbers
-    r = client.post("/api/analyse", json=body(values=values))
+    r = client.post("/api/analyse-series", json=body(values=values))
     assert "at least 24 numbers" in assert_json_error(r, 400)["error"]
 
 
 def test_too_long_series_is_refused(client):
-    r = client.post("/api/analyse", json=body(values=[1.0] * 2001))
+    r = client.post("/api/analyse-series", json=body(values=[1.0] * 2001))
     assert "24 to 2000" in assert_json_error(r, 400)["error"]
-    assert client.post("/api/analyse", json=body(values=[1.0] * 2000)).status_code == 200
+    assert client.post("/api/analyse-series", json=body(values=[1.0] * 2000)).status_code == 200
 
 
 @pytest.mark.parametrize(
@@ -416,12 +416,12 @@ def test_too_long_series_is_refused(client):
     ],
 )
 def test_malformed_bodies_are_refused(client, payload, fragment):
-    r = client.post("/api/analyse", data=payload, content_type="application/json")
+    r = client.post("/api/analyse-series", data=payload, content_type="application/json")
     assert fragment in assert_json_error(r, 400)["error"]
 
 
 def test_a_body_that_is_not_declared_as_json_is_refused(client):
-    r = client.post("/api/analyse", data=json.dumps(body()), content_type="text/plain")
+    r = client.post("/api/analyse-series", data=json.dumps(body()), content_type="text/plain")
     assert_json_error(r, 400)
 
 
@@ -429,7 +429,7 @@ def test_a_body_that_is_not_declared_as_json_is_refused(client):
 def test_every_field_is_required(client, missing):
     payload = body()
     del payload[missing]
-    r = client.post("/api/analyse", json=payload)
+    r = client.post("/api/analyse-series", json=payload)
     assert missing in assert_json_error(r, 400)["error"]
 
 
@@ -461,7 +461,7 @@ def test_every_field_is_required(client, missing):
     ],
 )
 def test_bad_fields_are_refused_with_a_clear_message(client, changes, fragment):
-    r = client.post("/api/analyse", json=body(**changes))
+    r = client.post("/api/analyse-series", json=body(**changes))
     assert fragment in assert_json_error(r, 400)["error"]
 
 
@@ -472,7 +472,7 @@ def test_bad_fields_are_refused_with_a_clear_message(client, changes, fragment):
 def test_values_must_be_numbers_or_null(client, bad):
     values = synthetic_months(30, 0.3)
     values[7] = bad
-    r = client.post("/api/analyse", json=body(values=values))
+    r = client.post("/api/analyse-series", json=body(values=values))
     assert "values[7]" in assert_json_error(r, 400)["error"]
 
 
@@ -481,17 +481,17 @@ def test_non_finite_and_overflowing_numbers_are_refused(client, token):
     # Python's JSON parser accepts NaN and Infinity, and turns 1e999 into infinity
     values = json.dumps(synthetic_months(30, 0.3)[:-1] + [0]).replace("0]", token + "]")
     raw = '{"label": "x", "unit": "K", "start": "2000-01", "values": %s}' % values
-    r = client.post("/api/analyse", data=raw, content_type="application/json")
+    r = client.post("/api/analyse-series", data=raw, content_type="application/json")
     assert "values[29]" in assert_json_error(r, 400)["error"]
 
 
 def test_an_oversize_body_is_refused_with_413(client):
-    r = client.post("/api/analyse", json=body(label="x" * 200_000))
+    r = client.post("/api/analyse-series", json=body(label="x" * 200_000))
     assert_json_error(r, 413)
 
 
 def test_analyse_only_accepts_post(client):
-    r = client.get("/api/analyse")
+    r = client.get("/api/analyse-series")
     assert_json_error(r, 405)
     assert "POST" in r.headers["Allow"]
 
@@ -646,7 +646,7 @@ def test_both_mann_kendall_p_values_are_reported(client):
     s = client.get("/api/trend?variable=t2m&region=east_asia_land").get_json()["statistics"]
     assert s["mk_p_ar1"] >= s["mk_p"]  # adjusting for autocorrelation never lowers the p-value
     assert s["mk_ar1_significant"] == (s["mk_p_ar1"] < 0.05)
-    a = client.post("/api/analyse", json=body()).get_json()["statistics"]
+    a = client.post("/api/analyse-series", json=body()).get_json()["statistics"]
     assert a["mk_p_ar1"] >= a["mk_p"]
 
 
@@ -680,7 +680,7 @@ def test_the_plain_page_stays_at_classic(site_client):
 def test_the_api_is_not_shadowed_by_the_site(site_client):
     assert site_client.get("/api/meta").status_code == 200
     assert_json_error(site_client.get("/api/nothing-here"), 404)
-    assert site_client.post("/api/analyse", json=body()).status_code == 200
+    assert site_client.post("/api/analyse-series", json=body()).status_code == 200
 
 
 def test_the_site_cannot_serve_files_outside_its_folder(site_client):
@@ -719,7 +719,7 @@ def test_web_fixtures_have_the_shape_of_the_live_api(client, scan_client):
     live = {
         "trend": client.get("/api/trend?variable=t2m&region=east_asia_land").get_json(),
         "scan": scan_client.get("/api/scan").get_json(),
-        "analyse": client.post("/api/analyse", json=body()).get_json(),
+        "analyse": client.post("/api/analyse-series", json=body()).get_json(),
     }
     for name, response in live.items():
         fixture = json.loads((WEB_FIXTURES / f"{name}.json").read_text(encoding="utf-8"))

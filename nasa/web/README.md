@@ -22,7 +22,7 @@ python src/trend_detective/app/web.py           # serves the site and /api at ht
 
 For live reload while editing the site, run the backend as above and `npm run dev` in `web/`
 (Vite proxies `/api` to port 5000). `npm test` checks the response mapper against real API
-responses in `tests/fixtures/`. Contract: `docs/api.md`; decision: `docs/decisions/0006-*.md`.
+responses in `tests/fixtures/`. Contract: `docs/api.md`; decision: `docs/decisions/0008-*.md`.
 
 ## How it works
 

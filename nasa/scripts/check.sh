@@ -30,14 +30,18 @@ offenders=$(grep -rlE "$net" $PKG --include=*.py 2>/dev/null | grep -v "^$PKG/in
 if [ -n "$offenders" ]; then
   echo "✗ network imports outside ingest/:"; echo "$offenders"; fail=1
 fi
+# The engine (core, process, app) never imports ingest: downloads stay in ingest/ and scripts/.
+if grep -rnE '(from|import) +trend_detective\.ingest' $PKG/core $PKG/process $PKG/app 2>/dev/null; then
+  echo "✗ core, process or app imports ingest"; fail=1
+fi
 # Golden tests must exist (science sensors)
 [ -f tests/core/test_trend.py ] || { echo "✗ tests/core/test_trend.py missing (golden tests)"; fail=1; }
 
 # --- Stack checks (auto-enable when the stack exists) ---
 if [ -f pyproject.toml ] || [ -f requirements.txt ]; then
-  command -v ruff >/dev/null && run "ruff" ruff check --quiet .
   # tests live in tests/core, tests/app, ...: the old `ls tests/*.py` guard never matched them
-  command -v pytest >/dev/null && [ -d tests ] && run "pytest" pytest -q
+  if python -m ruff --version >/dev/null 2>&1; then run "ruff" python -m ruff check --quiet .; fi
+  if python -m pytest --version >/dev/null 2>&1 && [ -d tests ]; then run "pytest" python -m pytest -q; fi
 fi
 # The website (web/) must still build: Flask serves web/dist. Skipped until `npm ci` has run there.
 if [ -f web/package.json ] && [ -d web/node_modules ] && command -v npm >/dev/null; then

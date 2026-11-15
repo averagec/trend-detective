@@ -168,7 +168,7 @@ def mann_kendall_ar1(values: np.ndarray) -> TrendResult:
     n_eff = n (1 - r1) / (1 + r1) (at least 3). r1 is the lag-1 autocorrelation of the series
     with Sen's trend removed, floored at 0: when it is not positive, the result equals
     `mann_kendall`; otherwise the p-value is larger. Method and measured error rates:
-    docs/decisions/0005-scan-family-and-autocorrelation-aware-mann-kendall.md.
+    docs/decisions/0007-scan-family-and-autocorrelation-aware-mann-kendall.md.
 
     `values` may contain NaN (ignored). Sen's slope here is per time step of `values`, so a missing
     month still counts as a step (unlike `mann_kendall`, which drops NaNs before computing it).
@@ -197,14 +197,6 @@ def mann_kendall_ar1(values: np.ndarray) -> TrendResult:
     return TrendResult(slope, np.nan, np.nan, p, n, float(n_eff), "mann-kendall-ar1", r1=float(r1))
 
 
-def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
-    """Mean of a (lat, lon) grid weighted by cos(latitude). NaNs ignored."""
-    f = np.asarray(field, dtype=float)
-    w = np.cos(np.deg2rad(np.asarray(lats, dtype=float)))[:, None] * np.ones_like(f)
-    m = ~np.isnan(f)
-    return float(np.sum(f[m] * w[m]) / np.sum(w[m]))
-
-
 def benjamini_hochberg(p_values) -> np.ndarray:
     """Benjamini-Hochberg adjusted p-values (false discovery rate) for many tests at once.
 
@@ -225,3 +217,13 @@ def benjamini_hochberg(p_values) -> np.ndarray:
     vals[order] = np.minimum(adjusted, 1.0)
     out[ok] = vals
     return out
+
+
+def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
+    """Mean of a (lat, lon) grid weighted by cos(latitude). NaNs ignored."""
+    f = np.asarray(field, dtype=float)
+    w = np.cos(np.deg2rad(np.asarray(lats, dtype=float)))[:, None] * np.ones_like(f)
+    m = ~np.isnan(f)
+    return float(np.sum(f[m] * w[m]) / np.sum(w[m]))
+
+

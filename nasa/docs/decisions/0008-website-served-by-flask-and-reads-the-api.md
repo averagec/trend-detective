@@ -1,7 +1,7 @@
-# 0006 - The website is served by Flask and gets every number from the API
+# 0008 - The website is served by Flask and gets every number from the API
 
 - Status: proposed (2026-11-15). Needs the team's review of the choices marked **Review**.
-- Extends: 0004 (Flask app) and 0005 (new API routes). Settles decision 1 of
+- Extends: 0004 (Flask app) and 0007 (new API routes). Settles decision 1 of
   `exec-plans/active/web-integration.md` for the TREND.EXE part.
 
 ## Context

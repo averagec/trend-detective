@@ -65,7 +65,9 @@ def test_rewriting_the_committed_csv_changes_nothing(tmp_path):
         pytest.skip("processed CSV not present")
     rewritten = tmp_path / "monthly_regional.csv"
     bp.write_rows(bp.read_rows(path), rewritten)
-    assert rewritten.read_bytes() == path.read_bytes()
+    # Line endings may differ on Windows (the committed file is CRLF); compare the content.
+    norm = lambda b: b.replace(b"\r\n", b"\n")  # noqa: E731
+    assert norm(rewritten.read_bytes()) == norm(path.read_bytes())
 
 
 def test_demo_step_makes_an_offline_folder_the_app_can_serve(data_dir):

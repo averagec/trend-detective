@@ -248,7 +248,7 @@ function refresh() {
 }
 
 // Your own data: the numbers are sent to the server as they are typed; every check and
-// every statistic happens there (POST /api/analyse).
+// every statistic happens there (POST /api/analyse-series).
 function parseValues(text) {
   return text.split(/[\s,;]+/).filter(Boolean).map((tok) =>
     /^(na|nan|null|-)$/i.test(tok) ? null : Number.isFinite(Number(tok)) ? Number(tok) : tok);
@@ -257,7 +257,7 @@ function parseValues(text) {
 async function analyseOwn() {
   showError("");
   try {
-    const data = await api("api/analyse", {
+    const data = await api("api/analyse-series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label: $("own-label").value, unit: $("own-unit").value,

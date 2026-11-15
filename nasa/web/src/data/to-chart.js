@@ -1,4 +1,4 @@
-// Turns an /api/trend (or /api/analyse) response into the spec that ui/chart-view.js draws.
+// Turns an /api/trend (or /api/analyse-series) response into the spec that ui/chart-view.js draws.
 // No statistics here: it only reshapes numbers the server already computed.
 // Field meanings: docs/api.md. Time is `year + (month - 1) / 12`, as chart-view expects.
 

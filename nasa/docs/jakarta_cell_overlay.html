@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jakarta MERRA-2 cell overlay</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; font-size: 15px; color: #222; }
+  #bar { padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: #fff; border-bottom: 1px solid #ddd; }
+  #bar input[type=range] { width: 260px; }
+  #radout { font-weight: 600; min-width: 64px; }
+  #stat { font-size: 14px; }
+  #flag { font-size: 13px; }
+  .ok { color: #3B6D11; } .bad { color: #854F0B; }
+  #map { height: calc(100% - 52px); }
+  .legend { font-size: 12px; color: #555; }
+  .sw { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label for="rad">Radius</label>
+  <input type="range" id="rad" min="10" max="150" step="5" value="100">
+  <span id="radout">100 km</span>
+  <span id="stat"></span>
+  <span id="flag"></span>
+  <span class="legend">
+    <span class="sw" style="background:#378ADD;opacity:.45;border:1px solid #185FA5"></span>centre inside radius
+    <span class="sw" style="border:1px solid #888"></span>centre outside
+    <span class="sw" style="border:2px dashed #D85A30"></span>radius
+  </span>
+</div>
+<div id="map"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const CITY = { lat: -6.1805357, lon: 106.8280366 };
+const map = L.map('map').setView([CITY.lat, CITY.lon], 9);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+function km(a, b, c, d) {
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (c - a) * rad, dLon = (d - b) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a * rad) * Math.cos(c * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+const cells = [];
+for (let i = Math.ceil((104.8 + 180) / 0.625); i <= Math.floor((108.9 + 180) / 0.625); i++) {
+  const lon = Math.round((-180 + 0.625 * i) * 10000) / 10000;
+  for (let j = Math.ceil((-7.9 + 90) / 0.5); j <= Math.floor((-4.6 + 90) / 0.5); j++) {
+    const lat = Math.round((-90 + 0.5 * j) * 10000) / 10000;
+    const rect = L.rectangle([[lat - 0.25, lon - 0.3125], [lat + 0.25, lon + 0.3125]], { weight: 1, color: '#888', fillOpacity: 0 }).addTo(map);
+    cells.push({ lon, lat, d: km(CITY.lat, CITY.lon, lat, lon), rect });
+  }
+}
+
+L.circleMarker([CITY.lat, CITY.lon], { radius: 5, color: '#222', fillColor: '#222', fillOpacity: 1 })
+  .bindTooltip('Central Jakarta (place pin)').addTo(map);
+const ring = L.circle([CITY.lat, CITY.lon], { radius: 100000, color: '#D85A30', weight: 2, dashArray: '6 5', fill: false }).addTo(map);
+
+function update() {
+  const r = Number(document.getElementById('rad').value);
+  document.getElementById('radout').textContent = r + ' km';
+  ring.setRadius(r * 1000);
+  let n = 0;
+  cells.forEach(c => {
+    const inside = c.d <= r;
+    if (inside) n++;
+    c.rect.setStyle(inside
+      ? { color: '#185FA5', weight: 1, fillColor: '#378ADD', fillOpacity: 0.4 }
+      : { color: '#888', weight: 1, fillOpacity: 0 });
+  });
+  document.getElementById('stat').textContent = n + ' cell' + (n === 1 ? '' : 's') + ' with centres inside ' + r + ' km';
+  const f = document.getElementById('flag');
+  f.className = n >= 4 ? 'ok' : 'bad';
+  f.textContent = n >= 4 ? 'Meets the 4-cell minimum.' : 'Below the 4-cell minimum: flag this result.';
+}
+document.getElementById('rad').addEventListener('input', update);
+update();
+</script>
+</body>
+</html>

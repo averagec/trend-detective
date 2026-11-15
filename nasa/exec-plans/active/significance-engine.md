@@ -2,7 +2,7 @@
 
 - Owner: team (drafted by Claude, 2026-11-15)
 - Started: 2026-11-15
-- Status: **draft, nothing executed.** Waiting on the gates marked [GATE].
+- Status: **Phase 0 done** (merged, branch `feature/significance-engine`). Phase 1 next.
 
 ## Goal
 The trend engine (cells, circles, regions, user series) hands every series to one significance
@@ -71,16 +71,18 @@ uncorrected sentence. The page shows `significance.sentence`.
 ## Steps (each ends with `scripts/check.sh` green; commits only on the user's OK)
 
 ### Phase 0: merge (needs approval)
-- [ ] 0.1 [GATE] Commit our branch (leave the three stray `package-lock.json` files out).
-- [ ] 0.2 New branch `feature/significance-engine`; merge `main`. Resolutions: keep both sides in
+- [x] 0.1 [GATE] Commit our branch (leave the three stray `package-lock.json` files out).
+- [x] 0.2 New branch `feature/significance-engine`; merge `main`. Resolutions: keep both sides in
       `ARCHITECTURE.md`, `app/web.py`, `core/summary.py`, `core/trend.py`; `vite.config.js` take main's.
-- [ ] 0.3 Rename our `POST /api/analyse` to `/api/analyse-series` (code, tests, docs, fixtures, classic
+- [x] 0.3 Rename our `POST /api/analyse` to `/api/analyse-series` (code, tests, docs, fixtures, classic
       page, `web/src/data/api.js`). Theirs keeps `/api/analyse`.
-- [ ] 0.4 Make `leading_pad` keyword-only in `summarise` (merged signature has `steps_per_year` before it).
-- [ ] 0.5 Their `SelectionError` handler returns our `{error, status}` shape.
-- [ ] 0.6 Renumber our ADRs 0005 to 0007 and 0006 to 0008; fix every reference; resolve the duplicate
+- [x] 0.4 Make `leading_pad` keyword-only in `summarise` (merged signature has `steps_per_year` before it).
+- [x] 0.5 Their `SelectionError` handler returns our `{error, status}` shape.
+- [x] 0.6 Renumber our ADRs 0005 to 0007 and 0006 to 0008; fix every reference; resolve the duplicate
       section 4.5 in `docs/statistics.md`.
-- [ ] 0.7 Expected result: 269 passed, 5 skipped (no cell cube), 1 xfailed, web build and tests green.
+- [x] 0.7 Result: 269 passed, 5 skipped (no cell cube), 1 xfailed; ruff, site build and web tests green. Every route
+      family answers over HTTP. **Not done:** a browser run after the merge (the pane refused localhost:5060);
+      `desktop.js` was checked statically instead (main + our four lines).
 
 ### Phase 1: freeze today's behaviour
 - [ ] 1.1 Snapshot tests on seeded synthetic data for `analyse_city`, `analyse_circle` and `build_map`
@@ -150,6 +152,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 ## Progress log
 <!-- Append one line per session: date — what changed — what's next. -->
 - 2026-11-15 — plan drafted after the audit of main (a7185e0). Decisions 1 to 3 recorded. Nothing executed. Next: user OK on Phase 0.
+- 2026-11-15 — Phase 0 done: our work committed (e758415) on feature/trend-exe-api-integration, branch feature/significance-engine merges main (a7185e0). Route renamed to /api/analyse-series, leading_pad keyword-only, their errors now carry `status`, our ADRs are 0007 and 0008, their events section is statistics.md 3.6. Not pushed. Next: Phase 1 (freeze today's numbers).
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after

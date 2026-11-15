@@ -43,7 +43,7 @@ export const getTrend = ({ variable, region, from, to }) => get(`api/trend?${que
 export const getScan = ({ from, to } = {}) => get(`api/scan?${query({ from, to })}`);
 // Your own monthly series: {label, unit, start: "YYYY-MM", values: [number|null, ...]}
 export const analyseOwn = (body) =>
-  request("api/analyse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  request("api/analyse-series", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 // For rapid changes (a year box, a picker): only the newest request may update the screen.
 //   const latest = newest();  latest(getTrend(...)).then((data) => { if (data !== STALE) draw(data); });

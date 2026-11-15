@@ -44,7 +44,7 @@ class Summary:
     ols_slope_per_month: float = float("nan")  # same slope as ols_per_decade / 120
     n_eff: float = float("nan")  # effective sample size behind ols_p and the CI
     r1: float = float("nan")  # lag-1 autocorrelation of the OLS residuals (floored at 0)
-    # Mann-Kendall with the variance adjusted for lag-1 autocorrelation (ADR 0005). mk_p stays
+    # Mann-Kendall with the variance adjusted for lag-1 autocorrelation (ADR 0007). mk_p stays
     # the unadjusted one; this is shown next to it.
     mk_p_ar1: float = float("nan")
     mk_ar1_significant: bool = False
@@ -53,17 +53,22 @@ class Summary:
     ols_band_by_year: tuple[tuple[int, float, float, float], ...] = ()
 
 
-def summarise(series: np.ndarray, unit: str, label: str, leading_pad: int = 0) -> Summary:
-    """Summarise one monthly series. `series` must start in January, one value per month
-    (NaN where a month is missing).
+def summarise(
+    series: np.ndarray, unit: str, label: str, steps_per_year: int = 12, *, leading_pad: int = 0
+) -> Summary:
+    """Summarise one series. steps_per_year=12 (monthly): `series` starts in January, one value per
+    month, NaN where missing, and is deseasonalised. steps_per_year=1 (yearly): one annual value per
+    year, NaN where missing, not deseasonalised. The slope is always reported per decade.
 
-    `leading_pad` is the number of NaN months at the front that only align a series to January
-    (for data that starts mid-year). They are not gaps in the record, so they are left out of
-    the share of missing months.
+    `leading_pad` counts NaN steps at the front that only align a series to January (data that
+    starts mid-year). They are not gaps in the record, so they are left out of the share missing.
     """
+    if steps_per_year not in (1, 12):
+        raise ValueError("steps_per_year must be 1 (yearly) or 12 (monthly)")
     y = np.asarray(series, dtype=float)
     n_valid = int(np.isfinite(y).sum())
-    years = n_valid / 12.0
+    years = n_valid / steps_per_year
+    per = steps_per_year * 10  # steps per decade: 120 monthly, 10 yearly
     warnings: list[str] = []
     if years < MIN_YEARS:
         warnings.append(
@@ -72,7 +77,8 @@ def summarise(series: np.ndarray, unit: str, label: str, leading_pad: int = 0) -
     missing = 1.0 - n_valid / (y.size - leading_pad)
     if missing > MAX_MISSING_FRACTION:
         warnings.append(f"{missing:.0%} of months are missing.")
-    if n_valid < 24:  # with under two years each calendar month has at most one value
+    min_points = 24 if steps_per_year == 12 else 3  # monthly: two years; yearly: three values
+    if n_valid < min_points:  # with under two years each calendar month has at most one value
         nan = float("nan")
         return Summary(
             n_months=n_valid,
@@ -86,23 +92,28 @@ def summarise(series: np.ndarray, unit: str, label: str, leading_pad: int = 0) -
             mk_significant=False,
             tests_agree=False,
             warnings=tuple(warnings),
-            sentence=f"{label}: not enough data for a trend (need at least two years).",
+            sentence=f"{label}: not enough data for a trend (need at least "
+            f"{'two years' if steps_per_year == 12 else 'three years'}).",
         )
 
-    anomalies = deseasonalize(y)  # science rule 1
+    anomalies = deseasonalize(y) if steps_per_year == 12 else y  # rule 1: monthly only
     ols = ols_trend(anomalies)  # science rule 3
     mk = mann_kendall(anomalies)
     mk_ar1 = mann_kendall_ar1(anomalies)
 
     # One point per year, only where it lies inside the record (no extrapolation).
-    year_offsets = np.arange((y.size - 1 - BAND_OFFSET) // 12 + 1)  # y.size >= 24 here
-    fit, low, high = ols_band(anomalies, year_offsets * 12 + BAND_OFFSET)
+    if steps_per_year == 12:
+        year_offsets = np.arange((y.size - 1 - BAND_OFFSET) // 12 + 1)  # y.size >= 24
+        positions = year_offsets * 12 + BAND_OFFSET
+    else:
+        year_offsets = np.arange(y.size)  # yearly: one value per year
+        positions = year_offsets
+    fit, low, high = ols_band(anomalies, positions)
     band = tuple(
         (int(k), float(f), float(lo), float(hi))
         for k, f, lo, hi in zip(year_offsets, fit, low, high, strict=True)
     )
 
-    per = MONTHS_PER_DECADE
     ols_per = ols.slope * per
     ci = (ols.ci_low * per, ols.ci_high * per)
     sen_per = mk.slope * per

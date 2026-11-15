@@ -68,5 +68,33 @@ VARIABLES: dict[str, Variable] = {
             "Is the air pressure at the surface changing?",
             "Air pressure at the surface of the Earth, averaged over each month.",
         ),
+        Variable(
+            "gpcp_precip",
+            "Precipitation (GPCP satellite and gauge)",
+            "Is it raining more or less? Checked against a second source.",
+            "Rain from satellites adjusted with rain gauges, in mm per day (monthly mean). "
+            "Independent of MERRA-2.",
+        ),
+        Variable(
+            "enso",
+            "ENSO indicator (sea-surface height)",
+            "Did the El Niño or La Niña pattern move with the rain?",
+            "NASA's sea-surface height index for the El Niño and La Niña pattern, averaged over "
+            "each month. Co-movement only.",
+        ),
+        Variable(
+            "iod",
+            "Indian Ocean Dipole indicator (sea-surface height)",
+            "Did the Indian Ocean Dipole move with the rain?",
+            "NASA's sea-surface height index for the Indian Ocean Dipole, averaged over each "
+            "month. Co-movement only.",
+        ),
+        Variable(
+            "pdo",
+            "Pacific Decadal Oscillation indicator (sea-surface height)",
+            "Did the Pacific Decadal Oscillation move with the rain?",
+            "NASA's sea-surface height index for the Pacific Decadal Oscillation, averaged over "
+            "each month. Co-movement only.",
+        ),
     ]
 }

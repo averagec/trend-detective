@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Trend Detective map: pick a city or draw a circle of 75 to 250 km, and see the trend of the grid cells inside it."
+    />
+    <title>Trend Detective map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <style>
+      .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+      @media (min-width: 860px) { .layout { grid-template-columns: 300px minmax(0, 1fr); } }
+      #map { height: 340px; border: 1px solid var(--line); border-radius: 8px; }
+      .stack { display: flex; flex-direction: column; gap: 10px; }
+      .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .row label { min-width: 4.5rem; }
+      .btn { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent);
+        background: var(--accent); color: #fff; cursor: pointer; }
+      .btn:focus-visible, input[type="range"]:focus-visible, input[type="number"]:focus-visible {
+        outline: 3px solid var(--accent); outline-offset: 2px; }
+      .agree { font-size: 1.05rem; margin: 6px 0; }
+      .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px;
+        vertical-align: -1px; margin-right: 4px; border: 1px solid var(--line); }
+      .chart { width: 100%; height: auto; }
+      .chart text { fill: var(--muted); font-size: 12px; }
+      .chart .axis { stroke: var(--grid); }
+      .chart .line { fill: none; stroke-width: 1.5; }
+      .result h3 small { font-weight: normal; color: var(--muted); }
+      .avg { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <h1>Map: city or circle</h1>
+        <p class="lede">
+          Pick a city, or switch to a circle and click the map. A circle takes every grid cell
+          whose centre lies inside it. The page shows how those cells agree, and the combined
+          average underneath as a reference.
+        </p>
+        <p class="lede"><a href="/">← Back to the trend app</a></p>
+      </header>
+
+      <div id="error" class="error" role="alert" hidden></div>
+
+      <div class="layout">
+        <section class="panel" aria-labelledby="sel-h">
+          <h2 id="sel-h">Selection</h2>
+          <div class="stack">
+            <div class="row">
+              <label for="mode">Mode</label>
+              <select id="mode">
+                <option value="city">City (one grid cell)</option>
+                <option value="circle">Circle (75 to 250 km)</option>
+              </select>
+            </div>
+            <div class="row" id="city-row">
+              <label for="city">City</label>
+              <select id="city"></select>
+            </div>
+            <div class="stack" id="circle-row" hidden>
+              <div class="row">
+                <label for="radius">Radius</label>
+                <input type="range" id="radius" min="75" max="250" step="5" value="100" />
+                <span id="radius-out">100 km</span>
+              </div>
+              <p class="muted">Click the map to set the centre of the circle.</p>
+            </div>
+            <div>
+              <h3>Variables</h3>
+              <div id="vars" class="chips" role="group" aria-label="Variables"></div>
+            </div>
+            <div class="row">
+              <label for="from">From</label>
+              <input type="number" id="from" min="1980" max="2026" placeholder="1980" />
+              <label for="to">to</label>
+              <input type="number" id="to" min="1980" max="2026" placeholder="2026" />
+            </div>
+            <button class="btn" id="run" type="button">Analyse</button>
+          </div>
+        </section>
+
+        <section aria-label="Map">
+          <div id="map"></div>
+          <p class="muted" id="legend">
+            <span class="swatch" style="background:#c2410c"></span>rising, significant ·
+            <span class="swatch" style="background:#1d4ed8"></span>falling, significant ·
+            <span class="swatch" style="background:#94a3b8"></span>no significant trend
+          </p>
+        </section>
+      </div>
+
+      <main id="results" aria-live="polite"></main>
+
+      <footer class="foot">
+        Data: NASA GES DISC MERRA-2 reanalysis and GPCP v3.3, read from local files. Method:
+        docs/statistics.md in the project.
+      </footer>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='map.js') }}"></script>
+  </body>
+</html>

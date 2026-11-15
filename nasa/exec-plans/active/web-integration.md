@@ -33,7 +33,7 @@ network runs all demo cases, and `web/` contains no statistics code.
 - [ ] 1. Import into `nasa/web/`. Leave out `assets/source/office_original.glb` (12 MB, rebuild-only)
       and keep `package-lock.json`. Add `node_modules/`, `dist/` to the ignore list. Verify
       `npm ci && npm run build` works (it did on the clone: 668 kB JS, 179 kB gzip).
-- [x] 2. (done on feature/trend-exe-api-integration; ADR 0006) Serve the build from Flask (`/` -> `web/dist/index.html`, static assets). Dev: Vite proxy
+- [x] 2. (done on feature/trend-exe-api-integration; ADR 0008) Serve the build from Flask (`/` -> `web/dist/index.html`, static assets). Dev: Vite proxy
       `/api` -> Flask. Add the web build to `scripts/check.sh` when `web/` exists.
 - [~] 3. (done for TREND.EXE only: `data/api.js`, `to-chart.js`; SETUP/PLOT/MAP still use browser data) Adapter `web/src/data/api.js` (fetch `/api/meta`, `/api/trend`) replacing
       `DATASETS`/`makeSeries`/`analyse` in `desktop.js` (SETUP, PLOT). Use `catalog/` text for

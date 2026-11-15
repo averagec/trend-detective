@@ -13,7 +13,7 @@ process/merra2_clean.py     QC, units, VPD,   ->  data/processed/merra2/monthly_
 core/summary.py + core/trend.py                   (pure statistics, no files)
                             (includes the 95% band around the OLS line, 4.2a)
 app/web.py (Flask)          per request: build() for the chosen region, variable and years
-                            -> JSON to the page. Also: POST /api/analyse (a series the user
+                            -> JSON to the page. Also: POST /api/analyse-series (a series the user
                             sends) and GET /api/scan (all series, corrected for many tests).
                             Response fields: docs/api.md
 (optional) process/analyse_trends.py  ->  data/processed/json/  (static export)
@@ -80,6 +80,37 @@ largest in months with large day-to-day swings. State this next to any VPD resul
 - Daily T2MMAX: the regional mean is taken for each day, then averaged over the days of
   the month. The number of valid days is kept.
 
+### 3.5 Cell-level series and circles (`process/cell_cube.py`, `process/selection.py`)
+- The cube keeps every cell of the box, with the same cleaning as §3.1 to §3.3. Nothing is
+  averaged in the cube.
+- **City:** the series of the one cell that contains the point. No averaging.
+- **Circle:** the cells whose centres lie within the radius (75 to 250 km, at least 4 cells; see
+  `docs/decisions/0005-spatial-selection.md`). A cell with no value in any month is dropped, so
+  the cell set is fixed. Each cell goes through `summarise` on its own. The area average of the
+  used cells (cos-latitude weights, §3.4) goes through `summarise` as a reference.
+- Gaps: a missing month is NaN on a full monthly timeline. Series start in January, as the
+  seasonal removal in §4.1 needs.
+
+### 3.6 Flood and drought events and co-movement (`core/events.py`, `core/comovement.py`)
+- **Monthly totals:** rainfall rate (mm/day) × days in the month (mm). The trend is tested on
+  the rate, the amounts on the totals.
+- **Percentile:** the share of the same calendar month's values (monthly periods) or of the
+  complete annual totals (yearly periods) at or below the period's value. Partial years are
+  left out.
+- **Extreme:** at or above the 90th percentile for a flood, at or below the 10th for a drought.
+- **Trend:** the OLS trend of the deseasonalised rate (§4.2). Reported only when significant at
+  95%, with the direction ("wetter" or "drier").
+- **Call:** "not unusual" if not extreme; "extreme, in line with a trend" if extreme and the
+  significant trend is in the same direction; otherwise "one-time event".
+- **Amount:** observed minus the median of the same baseline (mm), and as a percent of the median.
+- **Peak:** for a year, the month whose percentile is furthest toward the incident.
+- **Co-movement:** Pearson correlation of the deseasonalised anomalies over the shared months.
+  The effective sample size uses the lag-1 autocorrelation of both series, as in §4.2.
+  The slope is the least-squares slope of rainfall on the factor. The implied rainfall change is
+  that slope × the factor's average anomaly in the period.
+- **Interpretation:** co-movement is not a cause (science rules 7 and 8). Several factors are
+  tested at once, and the p-values are not corrected for that (§6, item 4).
+
 ## 4. Statistics (`core/`)
 
 Every trend uses **monthly data** and its **deseasonalised anomalies**. Annual series are not
@@ -136,7 +167,7 @@ by one extreme month.
 ### 4.3a Mann-Kendall adjusted for autocorrelation (`mann_kendall_ar1`)
 Added because the plain p-value of §4.3 is too optimistic on autocorrelated anomalies: on
 trend-free AR(1) noise with φ = 0.6 it calls 29% of series significant at 5%, not 5%. Method
-and the measured error rates are in `docs/decisions/0005-scan-family-and-autocorrelation-aware-mann-kendall.md`;
+and the measured error rates are in `docs/decisions/0007-scan-family-and-autocorrelation-aware-mann-kendall.md`;
 in short, with the same S as §4.3:
 - `r1` = lag-1 autocorrelation of the series with Sen's trend removed, floored at 0;
 - `n_eff = n (1 − r1) / (1 + r1)`, at least 3, as in §4.2;
@@ -172,7 +203,7 @@ OLS test is significant **and** its adjusted p < 0.05.
 `GET /api/scan` applies the same correction to the region × variable results: one family of all
 series with at least 24 months in the chosen window (24 for the current data), OLS p-values
 only. Each row has `ols_p`, `ols_q` and `significant_q` (q < 0.05); the page shows the q-value
-next to the p-value. Choices to review (ADR 0005): the family is whatever the data holds for
+next to the p-value. Choices to review (ADR 0007): the family is whatever the data holds for
 that window, so q-values from different scans are not comparable; Benjamini-Hochberg is valid for
 independent or positively dependent tests, and variables of one region are positively related.
 On the MERRA-2 record as of 2026-11-15 (1980-2026, 24 series) the correction removes none of the
@@ -203,7 +234,7 @@ On the MERRA-2 record as of 2026-11-15 (1980-2026, 24 series) the correction rem
 - Limitation: ocean-model sea level next to the coast. It does not include land subsidence,
   which dominates relative sea-level rise in Jakarta and Semarang.
 
-### 4.7 A series the user supplies (`POST /api/analyse`)
+### 4.7 A series the user supplies (`POST /api/analyse-series`)
 The same `summarise` runs on a monthly series sent in the request body. Deseasonalising works by
 position (every 12th value), so the series is padded with NaN at the front until its first value
 sits on its calendar month; this makes the yearly bars and the band fall on calendar years and
@@ -257,7 +288,7 @@ least 24 of them numbers, finite and at most 1e12 in size, a valid start month. 
   significant rarely, is far less often "significant" than the plain test on trend-free AR(1)
   noise, and still finds a real trend; `leading_pad` is not counted as missing months.
 - `tests/app/test_web.py`: the `/api/trend` key sets are frozen; JSON errors for every failure;
-  `/api/analyse` validation (malformed bodies, too short or long, NaN and overflow tokens,
+  `/api/analyse-series` validation (malformed bodies, too short or long, NaN and overflow tokens,
   oversize body), a known slope per decade recovered, gaps; `/api/scan` q-values equal
   scipy's `false_discovery_control`, and a borderline series is significant by p but not by q.
 - `tests/process/test_ocean_cities.py`: land and far cells are never picked, cells are nearest
@@ -276,7 +307,7 @@ least 24 of them numbers, finite and at most 1e12 in size, a valid start month. 
 ## 8. Not yet decided
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).
 - Whether to add a seasonal test (§6, item 5). The multiple-testing correction is done (§4.5).
-- Whether `tests_agree` should compare OLS with `mk_p_ar1` instead of `mk_p` (ADR 0005). Left as
+- Whether `tests_agree` should compare OLS with `mk_p_ar1` instead of `mk_p` (ADR 0007). Left as
   it was, because changing it alters existing output.
 - Whether to fix Sen's slope with missing months (§6, item 8).
 - Whether annual means are shown alongside the monthly trend as a plain-language check.
