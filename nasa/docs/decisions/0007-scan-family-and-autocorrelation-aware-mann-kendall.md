@@ -1,6 +1,7 @@
 # 0007 - The scan's test family, and an autocorrelation-aware Mann-Kendall test
 
-- Status: proposed (2026-11-15). Needs the team's review of the choices marked **Review**.
+- Status: proposed (2026-11-15). Part A (the scan family, every region x variable) is superseded by 0009: the
+  family is now the regions of one variable. Part B (the adjusted Mann-Kendall test) stands.
 - Extends: 0004 (adds `POST /api/analyse-series`, `GET /api/scan` and the fields below)
 - Note: this ADR was first numbered 0005 and the website ADR 0006; they became 0007 and 0008 when the
   teammate's 0005-spatial-selection and 0006-flood-drought-flow reached `main`.

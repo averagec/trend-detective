@@ -24,8 +24,11 @@ change, so a new field also means updating that test and this file.
   there is not enough data (fewer than 24 months with a value).
 - **Months.** `"YYYY-MM"`. Every series starts in January of its first year, because
   deseasonalising assumes it (months before the data start are `null`).
-- **Wording.** `sentence` is the plain-language result: "statistically significant at 95%" or
-  "no significant trend detected (yet)". Do not paraphrase it into "proves" or "caused by".
+- **Verdict and wording.** The `significance` block (below) is the verdict. Its `sentence` is the
+  plain-language result: "statistically significant at 95%" or "no significant trend detected (yet)".
+  Do not paraphrase it into "proves" or "caused by". The older top-level `sentence` and the
+  `*_significant` flags in `statistics` describe the series **alone**, with no correction for the other
+  regions tested; they are kept so nothing breaks, but a page must not show them next to a verdict.
 
 ## Errors
 
@@ -86,8 +89,9 @@ Example: `/api/trend?variable=t2m&region=east_asia_land&from=1990&to=2019`
 | `annual` | array | `{year, mean_anomaly, months}`: mean anomaly of each year and how many months it has (a display aggregate, not a statistic) |
 | `band` | array | The 95% band around the OLS line, one row per year: `{year, fit, low, high}`, in anomaly units, evaluated at July. Empty when there is no trend |
 | `statistics` | object | See below |
-| `sentence` | string | The plain-language result |
-| `warnings` | array of string | Record under 10 years; more than 10% of months missing; the two tests disagree |
+| `sentence` | string | This series on its own, with no correction (kept for compatibility). **Show `significance.sentence`** |
+| `warnings` | array of string | Record under 10 years; more than 10% of months missing; the two tests disagree (uncorrected). `significance.warnings` is the corrected list with codes |
+| `significance` | object | The verdict, both q-values and the sentence. See below |
 
 ### `statistics`
 
@@ -109,6 +113,28 @@ Example: `/api/trend?variable=t2m&region=east_asia_land&from=1990&to=2019`
 | `ols_slope_per_month` | number | The OLS slope per month (`ols_per_decade / 120`). **The OLS line** is `ols_intercept + ols_slope_per_month * i` at month index `i` of `series` |
 | `n_eff` | number | Effective sample size behind `ols_p` and the CI: `n_months * (1 - r1) / (1 + r1)`, at least 3 |
 | `r1` | number | Lag-1 autocorrelation of the OLS residuals, floored at 0. The larger it is, the smaller `n_eff` and the wider the CI |
+
+### `significance`
+
+The significance engine's verdict (`core/significance.py`, `docs/decisions/0009-*`). The same block
+is returned by `/api/trend`, `/api/analyse-series`, `/api/scan` and, for each city, circle cell and
+region, by the selection and map routes.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `family` | object | `{name, n_tests, method, alpha}`. `name` is `"layer"` (this variable across its regions), `"circle"` (the cells of one circle) or `"none"` (a single series: no correction, `n_tests` and `method` are `null`) |
+| `ols_p`, `mk_p_ar1` | number | The two tests' p-values: OLS (adjusted for autocorrelation) and Mann-Kendall (adjusted for autocorrelation, ADR 0007) |
+| `ols_q`, `mk_q` | number | Each p-value after Benjamini-Hochberg across the family. Equal to the p-values when `family.name` is `"none"`. Never below the p-value |
+| `verdict` | string | `"rise"` or `"fall"`: **both** q-values below 0.05 and the two slopes have the same sign. `"unclear"`: exactly one is, or both but with opposite signs. `"none"`: neither. `"no_data"`: too little data (under 24 months monthly, 3 values yearly) |
+| `significant` | boolean | The verdict is `"rise"` or `"fall"` |
+| `expected_by_chance` | number or null | How many series of the family would look significant in one direction by luck alone if each were tested at 5% (2.5% per direction); `null` for a single series |
+| `sentence` | string | Built from the verdict: only "statistically significant at 95%" (with "after correcting for N tests at once" when the family has more than one) or "no significant trend detected (yet)" |
+| `warnings` | array | `{code, text}`: `short_record`, `missing_months`, `not_enough_data`, `one_test_significant`, `tests_disagree`, `note` |
+
+Why a region can be significant on its own and still not be `rise`: with 4 regions tested, a p-value
+of 0.029 at rank 2 becomes q = 0.029 x 4 / 2 = 0.059. A limit worth knowing: on 10 years of monthly data
+with strong autocorrelation (phi 0.6), about 15% of families of 50 trend-free series contain a flagged
+one (`docs/statistics.md` section 4.8).
 
 With fewer than 24 months with a value, every statistic is `null` (`n_months`, `n_years` are still
 given, `ols_significant`, `mk_significant`, `mk_ar1_significant`, `tests_agree` are `false`) and `sentence` says there
@@ -157,50 +183,56 @@ curl -s -X POST localhost:5000/api/analyse-series -H 'Content-Type: application/
 
 ## `GET /api/scan`
 
-Every region × variable in the data over one year window, with a correction for testing many
-series at once. Testing 24 series at 5% flags about one by chance alone; the correction controls
-the share of false alarms among the series flagged.
+One variable in every region over one year window, judged together as one family (the "layer"
+family, ADR 0009). Testing several regions at 5% flags some by chance alone; the correction controls
+the share of false alarms among the regions flagged.
 
 | Parameter | Required | Meaning |
 |---|---|---|
+| `variable` | yes | A `variables[].key` from `/api/meta`. Missing: `400`. Unknown: `404` |
 | `from`, `to` | no | As for `/api/trend` (default: the whole record) |
 
-Example: `/api/scan?from=1990&to=2019`
+Example: `/api/scan?variable=t2m&from=1990&to=2019`
 
 ### Response
 
 | Key | Type | Meaning |
 |---|---|---|
 | `from`, `to` | integer | The window |
-| `method` | string | `"benjamini-hochberg"` (false discovery rate) |
-| `alpha` | number | 0.05: a result is significant when `ols_q < alpha` |
-| `n_tests` | integer | How many series were tested together (those with at least 24 months) |
-| `n_significant_p` | integer | How many have `ols_p < 0.05` on their own (no correction) |
-| `n_significant_q` | integer | How many have `ols_q < 0.05` (after the correction) |
-| `note` | string | One sentence for the page explaining the q-value |
-| `results` | array | One row per series, sorted by `region` then `variable` |
+| `variable`, `family` | string | The variable, and `"layer"` |
+| `method`, `alpha` | string, number | `"benjamini-hochberg"`, 0.05 |
+| `n_tests` | integer | Regions tested together (those with enough data) |
+| `n_significant_p` | integer | Regions with `ols_p < 0.05` on their own (no correction) |
+| `n_significant_q` | integer | Regions that are `rise` or `fall` (both tests, after correction) |
+| `note` | string | One sentence for the page explaining the correction |
+| `results` | array | One row per region, in region order |
 
-Row of `results` (the trend numbers are the same as in `statistics` of `/api/trend`):
+Row of `results`: the region and `statistics`-like numbers (`region`, `region_name`, `variable`, `label`,
+`unit`, `first_month`, `last_month`, `n_months`, `n_years`, `n_eff`, `ols_per_decade`,
+`ols_ci_per_decade`, `ols_p`, `sen_per_decade`, `mk_p`, `mk_p_ar1`, `tests_agree`, `warnings`), plus:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `region`, `region_name`, `variable`, `label`, `unit` | string | As in `/api/trend` |
-| `first_month`, `last_month` | string | `"YYYY-MM"` |
-| `n_months`, `n_years`, `n_eff` | number | Months with a value, years, effective sample size |
-| `ols_per_decade`, `ols_ci_per_decade` | number, [number, number] | OLS trend and its 95% CI, `unit` per decade |
-| `ols_p` | number | OLS p-value (adjusted for autocorrelation), **before** the multiple-testing correction |
-| `ols_q` | number | `ols_p` adjusted for all `n_tests` tests together (Benjamini-Hochberg). Never below `ols_p` |
-| `significant_q` | boolean | `ols_q < 0.05`. **Use this one to say "significant" when results are shown together** |
-| `ols_significant` | boolean | `ols_p < 0.05` alone. Shown so the page can say that a result lost significance after the correction |
-| `sen_per_decade`, `mk_p`, `mk_p_ar1` | number | Sen's slope, the unadjusted Mann-Kendall p-value and the autocorrelation-adjusted one |
-| `tests_agree` | boolean | OLS and Mann-Kendall agree |
-| `warnings` | array of string | As in `/api/trend` |
+| `ols_q` | number | `ols_p` after the correction (same as `significance.ols_q`) |
+| `significant_q` | boolean | `significance.significant`: both tests, after correction |
+| `ols_significant` | boolean | `ols_p < 0.05` alone, so a page can say a region lost significance after correction |
+| `significance` | object | The block above. For one region it is identical to the block in `/api/trend` for the same window |
 
-A series with under 24 months has `null` for its numbers, `ols_q: null` and
-`significant_q: false`, and does not count in `n_tests`.
+A region with under 24 months has `null` numbers and `verdict: "no_data"`, and is not counted in `n_tests`.
+A window with no months in any region is a `400`.
 
-Limit: Benjamini-Hochberg assumes the tests are independent or positively dependent. Variables in
-one region are related (air temperature and land surface temperature move together), which this
-accepts; see `docs/statistics.md`.
+Limit: Benjamini-Hochberg assumes independent or positively dependent tests. Regions of one variable
+are positively related; ADR 0009 measures this.
 
-A window with no months in any series is a `400`.
+## Selection and map routes (the trend engine)
+
+`POST /api/analyse` (city and circle), `GET /api/map`, `GET /api/cities`, `GET /api/cell`,
+`GET /api/variables` and `POST /api/event` belong to the trend engine (`docs/decisions/0005-spatial-selection.md`,
+`0006-flood-drought-flow.md`). The significance engine adds only these fields; nothing was renamed:
+
+| Route | Added |
+|---|---|
+| `POST /api/analyse`, city | `significance` on each result (family `"none"`: a city is one test) |
+| `POST /api/analyse`, circle | `significance` on each cell (family `"circle"`, corrected across the cells) and on `average` (alone, a reference). A cell counts in `agreement.rising` or `falling` only when its verdict is `rise` or `fall`, so **both tests** must be significant after correction |
+| `summary` objects | `n_eff`, `r1`, `mk_p_ar1`, `mk_ar1_significant` |
+| `GET /api/map`, each region | `significance` (family `"layer"`), `mk_p_ar1`, `mk_p_ar1_adj`. `direction` is the verdict (`rise`, `fall`, `unclear`, `none`; `no_data` is reported as `none`). `ols_p_adj` is unchanged; `mk_p_adj` is kept as the corrected *unadjusted* Mann-Kendall p-value, for compatibility only |

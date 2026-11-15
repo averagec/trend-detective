@@ -192,6 +192,8 @@ It corrects lag-1 memory only.
   of that share (`summarise(..., leading_pad=)`).
 - **Agreement:** if the OLS and Mann-Kendall tests disagree on sign or significance, the summary
   says so and asks the reader to check for outliers or non-linearity (science rule 3).
+- **The sentence above is for one series on its own.** What a page shows is the significance engine's
+  verdict and sentence (§4.8), which allow for the other series tested at the same time.
 
 ### 4.5 Many places at once: Benjamini-Hochberg (`benjamini_hochberg`)
 The Indonesia map tests one trend per coastal city (62 tests). At p < 0.05 about 3 of them would
@@ -200,14 +202,11 @@ adjusted p-values that control the false discovery rate: among the cities shown 
 the expected share of false alarms is at most 5%. A city is shown as a clear trend only when its
 OLS test is significant **and** its adjusted p < 0.05.
 
-`GET /api/scan` applies the same correction to the region × variable results: one family of all
-series with at least 24 months in the chosen window (24 for the current data), OLS p-values
-only. Each row has `ols_p`, `ols_q` and `significant_q` (q < 0.05); the page shows the q-value
-next to the p-value. Choices to review (ADR 0007): the family is whatever the data holds for
-that window, so q-values from different scans are not comparable; Benjamini-Hochberg is valid for
-independent or positively dependent tests, and variables of one region are positively related.
-On the MERRA-2 record as of 2026-11-15 (1980-2026, 24 series) the correction removes none of the
-18 trends significant at 5%.
+The correction is applied by the significance engine (§4.8) to three named families: the cells of one
+circle, the regions of one variable (`GET /api/scan`, `GET /api/map`, `GET /api/trend`), and nothing for
+a single series. On the MERRA-2 record as of 2026-11-15 (1980-2026, 24 series) the correction removes none
+of the 18 trends significant at 5%; for 1990-2019 it turns one (East China air temperature) into
+`unclear`.
 
 ### 4.6 Sea level next to Indonesian cities (`process/ocean_cities.py`, `scripts/export_indonesia.py`)
 - Data: ECCO V4r4 dynamic sea surface height (`SSH`, inverse-barometer corrected), 0.5° monthly,
@@ -241,6 +240,30 @@ sits on its calendar month; this makes the yearly bars and the band fall on cale
 adds no information. The request is checked before any statistics run: 24 to 2000 values, at
 least 24 of them numbers, finite and at most 1e12 in size, a valid start month. Nothing is stored.
 
+### 4.8 The significance engine (`core/significance.py`, ADR 0009)
+The trend engine (`process/`) chooses cells, regions and averages and hands over series; this module
+decides what counts as significant. It never computes a trend itself: every slope, CI and p-value is from
+`summarise` (§4.2, §4.3, §4.3a).
+
+- **Families.** One variable across its regions (`layer`), the cells of one circle (`circle`), or a single
+  series with no correction (`none`: a city, a pasted series). The OLS p-values and, separately, the
+  autocorrelation-adjusted Mann-Kendall p-values are corrected with Benjamini-Hochberg (§4.5) across the
+  family. Series without a p-value are not counted as tests.
+- **Verdict ladder (both tests, after correction).** `rise` or `fall`: both q-values below 0.05 and the OLS
+  and Sen slopes have the same sign. `unclear`: exactly one is significant, or both with opposite signs.
+  `none`: neither. `no_data`: too little data.
+- **Wording (rule 7).** Only "statistically significant at 95%" (with "after correcting for N tests at
+  once" for a family) or "no significant trend detected (yet)". `unclear` uses the second phrase and adds
+  a warning asking the reader to check for outliers or non-linearity.
+- **Measured behaviour** (seeded simulations of 50-series families, 10 years of monthly data, 100 runs;
+  `tests/core/test_significance_simulation.py`): independent trend-free series: any flagged 6%, a rise and
+  a fall together 0% (57% without correction); shared noise between cells: 5%; **autocorrelated noise
+  (phi 0.6): 15%, three times the nominal rate**; three strong trends among 47 nulls: all three found in
+  every run, false discovery proportion 5.5% (Benjamini-Hochberg promises at most 4.7%). Read a flagged
+  series in a short, strongly autocorrelated record as a lead and check `r1` and `n_eff`.
+- **Not covered:** `years_needed` (`core/detect.py`) simulates the OLS test only, so under the two-test
+  rule more years are needed than it says. `core/events.py` still tests its own trend at p < 0.05.
+
 ## 5. Interpretation rules
 - Say "statistically significant at 95%", never "proves". Never say "caused by" unless a
   cited source does.
@@ -258,9 +281,10 @@ least 24 of them numbers, finite and at most 1e12 in size, a valid start month. 
 3. **VPD is approximate** (§3.3).
 4. **Multiple tests.** Showing three regions and eight variables means about 24 tests. At
    5% some will look significant by chance. Corrected with Benjamini-Hochberg for the Indonesia
-   city map and, across all region × variable series, in `GET /api/scan` (§4.5). The page shows
-   the q-value next to each p-value. Limits: the family is "all series in this window", so q-values
-   differ between scans, and the method assumes independent or positively dependent tests.
+   city map, and by the significance engine (§4.8) across the regions of one variable and the cells of one
+   circle. Limits: q-values depend on the family (the window and the regions in the data), the method
+   assumes independent or positively dependent tests, and with strong autocorrelation on short records
+   the chance that a family of null series contains a flagged one is about 15%, not 5%.
 5. **Seasonal structure.** Deseasonalising removes the mean seasonal cycle but not a change in
    the cycle itself (for example, a longer summer). A seasonal Mann-Kendall test would be
    needed for that. Not done yet.
@@ -291,6 +315,11 @@ least 24 of them numbers, finite and at most 1e12 in size, a valid start month. 
   `/api/analyse-series` validation (malformed bodies, too short or long, NaN and overflow tokens,
   oversize body), a known slope per decade recovered, gaps; `/api/scan` q-values equal
   scipy's `false_discovery_control`, and a borderline series is significant by p but not by q.
+- `tests/core/test_significance.py` (ladder table, hand-worked family, the original contradiction,
+  wording, invariants) and `tests/core/test_significance_simulation.py` (ADR 0009 ranges);
+  `tests/process/test_engine_snapshots.py` freezes the trend engine's numbers while its decisions are
+  reviewed; `tests/process/test_engine_significance.py` shows the map following the ladder (an
+  autocorrelated region whose unadjusted Mann-Kendall p 0.0006 would have made a `rise` is `unclear`).
 - `tests/process/test_ocean_cities.py`: land and far cells are never picked, cells are nearest
   first, the series is in millimetres and keeps missing months, inland cities get no series.
 - Band (`ols_band`, same file): a hand-worked 5-point series gives the exact half-widths
@@ -307,8 +336,11 @@ least 24 of them numbers, finite and at most 1e12 in size, a valid start month. 
 ## 8. Not yet decided
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).
 - Whether to add a seasonal test (§6, item 5). The multiple-testing correction is done (§4.5).
-- Whether `tests_agree` should compare OLS with `mk_p_ar1` instead of `mk_p` (ADR 0007). Left as
-  it was, because changing it alters existing output.
+- `tests_agree` and the `*_significant` flags in `statistics` are per-series and uncorrected. The verdict
+  (§4.8) supersedes them for anything shown to users; whether to retire them is open.
+- Whether `years_needed` should simulate both tests, and whether `core/events.py` should follow the
+  verdict ladder (§4.8).
+- Pre-whitened Mann-Kendall (`docs/stats_trend.md`) is not built; it could join as a third test.
 - Whether to fix Sen's slope with missing months (§6, item 8).
 - Whether annual means are shown alongside the monthly trend as a plain-language check.
 - Band level term: `s² / n_eff` with `s² = SSR / (n − 2)` (§4.2a). The slope part is the existing

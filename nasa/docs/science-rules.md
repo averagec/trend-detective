@@ -10,7 +10,9 @@ Judges include NASA scientists: a wrong "significant" costs more than a missing 
    A non-significant trend may just need a longer record: say so in the UI, don't hide it.
 3. **Two tests, both shown.** OLS slope with an autocorrelation-adjusted 95% CI
    (`ols_trend`) plus Mann-Kendall with Sen's slope (`mann_kendall`). If they disagree,
-   show both and explain why (outliers, non-linearity).
+   show both and explain why (outliers, non-linearity). A trend counts as rising or falling only when
+   **both** tests are significant, after correction when several series are tested together, and
+   agree in sign (`core/significance.py`, ADR 0009); one test alone is "unclear".
 4. **Autocorrelation.** Monthly anomalies are usually autocorrelated, which makes naive
    p-values too optimistic. OLS uses n_eff. The `mann_kendall` p-value is unadjusted, so label it
    that way; `mann_kendall_ar1` (`mk_p_ar1`) is the adjusted one, label it as such.
@@ -18,7 +20,8 @@ Judges include NASA scientists: a wrong "significant" costs more than a missing 
 6. **Units always.** Report the trend per decade in native units (slope × 120 for monthly
    data), e.g. "+0.21 K/decade". Never a bare number.
 7. **Significance language.** p < 0.05 → "statistically significant at 95%".
-   Otherwise → "no significant trend detected (yet)". Never "proves", "caused by", or
+   Otherwise → "no significant trend detected (yet)". The p-value used is the corrected one (q) when
+   several series are shown together. Never "proves", "caused by", or
    "climate change did X" unless a cited source says it.
 8. **Opposite regional trends are a feature**, not a bug (a core point of the challenge).
    Compare regions side by side rather than averaging them together.

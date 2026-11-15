@@ -2,7 +2,7 @@
 
 - Owner: team (drafted by Claude, 2026-11-15)
 - Started: 2026-11-15
-- Status: **Phase 0 done** (merged, branch `feature/significance-engine`). Phase 1 next.
+- Status: **Phases 0 to 5 done** on branch `feature/significance-engine`, local only (not pushed). Open items below.
 
 ## Goal
 The trend engine (cells, circles, regions, user series) hands every series to one significance
@@ -126,12 +126,13 @@ uncorrected sentence. The page shows `significance.sentence`.
       tests passing); not re-checked in a browser. The classic page was also switched to the block.
 
 ### Phase 5: docs and sign-off
-- [ ] 5.1 `docs/api.md`, `docs/statistics.md` (reporting section, families, verdict),
+- [x] 5.1 `docs/api.md`, `docs/statistics.md` (reporting section, families, verdict),
       `docs/science-rules.md` rule 3 and 7 (significant means both tests, after correction when several
       are shown), a note in `docs/stats_trend.md` that the headline question is settled here.
-- [ ] 5.2 Browser check on real data: East China temperature 1990 to 2019 (p 0.041 alone) must show a
-      verdict and a sentence that agree. Try a null-looking layer and a window with under 24 months.
-- [ ] 5.3 Full gate; progress log; nothing pushed until the user says so.
+- [x] 5.2 Browser check on real data (done on port 5058): East China temperature 1990 to 2019 (p 0.041 alone) shows
+      `unclear`, q OLS 0.061 / MK 0.007 and a matching sentence; the full record shows `rising` with the
+      corrected sentence. Not tried in the browser: a null layer and a window with under 24 months (API tests cover them).
+- [x] 5.3 Full gate; progress log; nothing pushed until the user says so.
 
 ## Acceptance
 - No screen shows "statistically significant at 95%" next to "no significant trend detected (yet)".
@@ -156,6 +157,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — Phase 1 done (snapshots of today's numbers and decisions). Phase 2 done: ADR 0009, `core/significance.py` (ladder, per-test BH, verdict sentence), 24 golden tests, 4 seeded simulations. Finding: the pre-registered criterion (d) was the wrong statistic (BH controls FDR, not the chance of any false flag); amended in the ADR with the reasoning, measured FDR 5.5% vs the 4.7% bound. Limitation: autocorrelated nulls (phi 0.6, 10 years) give 15% of families with a false flag. Next: Phase 3.
 - 2026-11-15 — Phase 3 done: city, circle, map, /api/trend, /api/scan (now `?variable=`, layer family) and /api/analyse-series return the `significance` block (shared `process/significance_json.py`); circle cells and map `direction` follow the ladder; legacy keys kept, `mk_p_ar1`, `mk_p_ar1_adj` added. Trend/CI/p numbers unchanged (snapshot). Proven behaviour change: an AR(1) region with unadjusted MK p 0.0006 but adjusted 0.087 was a `rise`, is now `unclear`. Fixtures regenerate with `scripts/make_web_fixtures.py`. Next: Phase 4 (website).
 - 2026-11-15 — Phase 4 done: TREND.EXE and the classic page read the `significance` block (verdict, both q-values, family label, server sentence); TREND.EXE no longer calls /api/scan; web tests 12. Next: Phase 5 (docs, science rules, real-data check).
+- 2026-11-15 — Phase 5 done: docs/api.md, statistics.md 4.8, science-rules 3 and 7, ADR 0007/0008/0009 cross-references, ARCHITECTURE (stale duplicate app row removed). Real data: East China temperature 1990-2019 `unclear` (OLS q 0.061, MK q 0.007); full record 18 rises unchanged. Everything is local; nothing pushed.
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after

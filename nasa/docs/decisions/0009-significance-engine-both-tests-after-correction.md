@@ -1,6 +1,7 @@
 # 0009 - One significance engine: both tests, after correction, one verdict
 
-- Status: proposed (2026-11-15). Decisions 1 to 3 were made by the user; the rest needs team review.
+- Status: implemented on branch feature/significance-engine (2026-11-15), proposed for the team. Decisions 1 to 3
+  were made by the user; the rest needs team review.
 - Extends: 0005-spatial-selection, 0007 (adjusted Mann-Kendall, scan family), 0008 (website).
 - Plan: `exec-plans/active/significance-engine.md`.
 

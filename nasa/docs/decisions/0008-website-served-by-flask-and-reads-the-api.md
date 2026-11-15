@@ -20,8 +20,8 @@ data (`web/src/stats/trend-analysis.js`). `ARCHITECTURE.md` says every user-faci
   The backend does not know about the site's code.
 - **TREND.EXE** (`web/src/os/trend-app.js`) is a desktop app: pick a question, a place and the
   years; it shows the monthly series, the OLS line, the 95% band and the analysis the server returns
-  (trend and CI, adjusted p, effective months, both Mann-Kendall p-values, the q-value from
-  `/api/scan`, the server's sentence and warnings, verbatim).
+  (trend and CI, adjusted p, effective months, both Mann-Kendall p-values, the verdict and both q-values
+  from the `significance` block of `/api/trend`, the server's sentence and warnings, verbatim).
 - **Contract tests both ways.** `web/tests/fixtures/*.json` are real responses. `npm test` runs the
   mapper on them; `tests/app/test_web.py` fails if the live API's shape drifts from them.
   `scripts/check.sh` builds the site and runs both when `web/node_modules` exists.
@@ -29,11 +29,10 @@ data (`web/src/stats/trend-analysis.js`). `ARCHITECTURE.md` says every user-faci
 ## Consequences
 - The browser still computes statistics elsewhere (MAP.EXE synthetic layers, CASES lineup). They are
   not touched here; the integration plan retires them step by step.
-- **Review:** the page shows the server's sentence (decided at p < 0.05) next to the q-value verdict
-  (decided at q < 0.05). They can disagree: for Eastern China and Korea air temperature, 1990-2019,
-  p = 0.041 but q = 0.076 over 24 tests. Both are shown and labelled; which one should lead is a
-  wording decision for the team (`docs/science-rules.md`, rule 7).
+- Resolved by 0009: the page shows only the `significance` block's sentence, which allows for the other
+  regions of the variable, so it no longer contradicts the q-value (East China air temperature 1990-2019:
+  p = 0.041, q = 0.061, adjusted Mann-Kendall q = 0.007: verdict `unclear`).
 - The first answer for a query is cached in the page, so a window already opened keeps working if the
   server stops; a new query shows "Cannot reach the analysis server".
-- The `/api/scan` family is every region x variable in the data, so only the 3 MERRA-2 boxes can be
+- The family is the regions of one variable, so only the 3 MERRA-2 boxes can be
   drawn, not the 11 countries of the map, until country masks exist (plan step 8).
