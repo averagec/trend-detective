@@ -11,7 +11,7 @@ An interactive detective game for the NASA Space Apps Challenge 2026 (Earth Syst
 
 **How it addresses the challenge.** The challenge asks what is changing, where, how much, and whether the change is significant. Trend Detective answers each part:
 
-- **Variables:** sea level, air temperature, rainfall and water storage on land, from ECCO, MERRA-2, GPCP and GRACE.
+- **Variables:** sea level, air temperature, rainfall and water storage on land, from ECCO, MERRA-2, GPCP, GRACE and GLDAS.
 - **Where and how much:** a trend per year for each city or circle, with units and a 95% range.
 - **Significance:** a trend test that adjusts for autocorrelation, a Mann-Kendall test with Sen's slope, and a comparison against 1,000 simulated trend-free records.
 - **Opposite trends:** regions are shown side by side rather than averaged, and when many places are tested together, the Benjamini-Hochberg procedure controls false discoveries.
@@ -106,9 +106,39 @@ npm run build:map
 
 ## References
 
-Data citations, one per collection, are in [`docs/references.md`](docs/references.md).
+Full citations and access dates for each collection are in [`docs/references.md`](docs/references.md).
 
-Methods:
+### Datasets
+
+**Sea level (ECCO)**
+
+- Forget, G., et al. (2015). ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation. *Geoscientific Model Development*, 8, 3071–3104. https://doi.org/10.5194/gmd-8-3071-2015
+- ECCO Consortium, Fukumori, I., Wang, O., Fenty, I., Forget, G., Heimbach, P., and Ponte, R. M. (2021). ECCO Sea Surface Height – Monthly Mean 0.5 Degree (Version 4 Release 4). PO.DAAC. https://doi.org/10.5067/ECG5M-SSH44
+
+**Air temperature and rainfall (MERRA-2)**
+
+- Gelaro, R., et al. (2017). The Modern-Era Retrospective Analysis for Research and Applications, Version 2 (MERRA-2). *Journal of Climate*, 30(14), 5419–5454. https://doi.org/10.1175/JCLI-D-16-0758.1
+- GMAO (2015). MERRA-2 daily maximum 2 m air temperature (M2SDNXSLV), version 5.12.4. NASA GES DISC. https://doi.org/10.5067/9SC1VNTWGWV3
+- GMAO (2015). MERRA-2 2 m air temperature (M2TMNXSLV), version 5.12.4. NASA GES DISC. https://doi.org/10.5067/AP1B0BA5PD2K
+- GMAO (2015). MERRA-2 surface flux diagnostics, precipitation (M2TMNXFLX), version 5.12.4. NASA GES DISC. https://doi.org/10.5067/0JRLVL8YV2Y4
+- GMAO (2015). MERRA-2 land surface diagnostics (M2TMNXLND), version 5.12.4. NASA GES DISC. https://doi.org/10.5067/8S35XF81C28F
+
+**Rainfall (GPCP)**
+
+- Adler, R. F., et al. (2003). The Version-2 Global Precipitation Climatology Project (GPCP) Monthly Precipitation Analysis (1979–Present). *Journal of Hydrometeorology*, 4(6), 1147–1167. https://doi.org/10.1175/1525-7541(2003)004<1147:TVGPCP>2.0.CO;2
+- Huffman, G. J., and Bolvin, D. T. (2025). GPCP Precipitation Level 3 Monthly 0.5-Degree V3.3 (GPCPMON). NASA GES DISC. https://doi.org/10.5067/MEASURES/GPCP/DATA306
+
+**Water storage on land (GRACE / GRACE-FO)**
+
+- Watkins, M. M., et al. (2015). Improved methods for observing Earth's time variable mass distribution with GRACE using spherical cap mascons. *Journal of Geophysical Research: Solid Earth*, 120. https://doi.org/10.1002/2014JB011547
+- Wiese, D. N., Yuan, D.-N., Boening, C., Landerer, F. W., and Watkins, M. M. JPL GRACE and GRACE-FO Mascon Ocean, Ice, and Hydrology Equivalent Water Height, JPL Release 06.3, Version 04. PO.DAAC. https://doi.org/10.5067/TEMSC-3MJ634
+
+**Soil moisture and rainfall (GLDAS)**
+
+- Rodell, M., et al. (2004). The Global Land Data Assimilation System. *Bulletin of the American Meteorological Society*, 85(3), 381–394. https://doi.org/10.1175/BAMS-85-3-381
+- Beaudoing, H., and Rodell, M. (2020). GLDAS Noah Land Surface Model L4 monthly 0.25 x 0.25 degree V2.1 (GLDAS_NOAH025_M). NASA GES DISC. https://doi.org/10.5067/SXAVCZFAQLNO
+
+### Methods
 
 - Santer, B. D., et al. (2000). Statistical significance of trends and trend differences in layer-average atmospheric temperature time series. *Journal of Geophysical Research*, 105(D6), 7337–7356. https://doi.org/10.1029/1999JD901105
 - Mann, H. B. (1945). Nonparametric tests against trend. *Econometrica*, 13, 245–259.
