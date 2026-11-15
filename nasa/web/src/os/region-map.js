@@ -1605,7 +1605,7 @@ async function circleResult() {
   if (!st.seen["circle" + L.k]) {
     st.seen["circle" + L.k] = 1;
     const word = up >= down ? L.upV : L.downV;
-    say([`${L.name}. ${c.res.n} grid cells inside, ${Math.max(up, down)} of them ${word} clearly.`, "Switch the layer and the same circle tells a different story."]);
+    say(["Switch the layer and the same circle tells a different story."]);
   }
 }
 function circleCard(box) {
