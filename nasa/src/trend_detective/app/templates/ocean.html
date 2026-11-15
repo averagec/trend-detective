@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Trend Detective: sea-surface height in Southeast Asia and the Sentinel-1 radar scenes used in the study."
+    />
+    <title>Ocean pictures · Trend Detective</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <style>
+      .figure { padding: 12px; margin-bottom: 20px; }
+      .figure img { display: block; width: 100%; height: auto; border-radius: 8px; }
+      .figure figcaption { margin: 12px 4px 4px; color: var(--muted); font-size: 0.95rem; }
+      .back { color: var(--accent); text-decoration: none; font-size: 0.95rem; }
+      .back:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <p><a class="back" href="/">← Trend Detective</a></p>
+        <h1>Ocean and radar pictures</h1>
+        <p class="lede">
+          What the sea surface looks like in the study region, and the radar scenes behind the
+          coastal study. The pictures show context. The trends and their significance are on the
+          main page.
+        </p>
+      </header>
+
+      <main>
+        {% if present["ocean_ssh_mean.png"] %}
+        <figure class="panel figure">
+          <img
+            src="{{ url_for('demo_image', name='ocean_ssh_mean.png') }}"
+            alt="Map of Southeast Asia coloured red where the average sea-surface height sits above the box average and blue where it sits below, with the Singapore, Ca Mau and North Jakarta sites marked and the radar scene outlines drawn."
+            loading="lazy"
+          />
+          <figcaption>
+            Sea-surface height from NASA's ECCO ocean model, averaged over 1992 to 2017. Red
+            cells sit above the box average, blue below. The white dots are the study sites; the
+            yellow lines are the outlines of the radar scenes.
+          </figcaption>
+        </figure>
+        {% else %}
+        <p class="panel muted">The ocean map is not rendered yet. Run scripts/render_demo_images.py.</p>
+        {% endif %}
+
+        {% if present["sar_browse_scenes.png"] %}
+        <figure class="panel figure">
+          <img
+            src="{{ url_for('demo_image', name='sar_browse_scenes.png') }}"
+            alt="Five radar preview images from a Sentinel-1 satellite pass on 31 March 2024, showing land and sea near northern Sumatra."
+            loading="lazy"
+          />
+          <figcaption>
+            Five Sentinel-1 radar previews from 31 March 2024, out of the 20 scenes we have
+            listed. They show what the radar sees; they are not measurements, and they do not
+            cover the three study sites.
+          </figcaption>
+        </figure>
+        {% else %}
+        <p class="panel muted">The radar previews are not rendered yet. Run scripts/render_demo_images.py.</p>
+        {% endif %}
+      </main>
+
+      <footer class="foot">
+        Data: NASA ECCO ocean model (PO.DAAC) and Alaska Satellite Facility Sentinel-1 browse
+        images. Pictures are rendered by scripts/render_demo_images.py from the raw downloads.
+      </footer>
+    </div>
+  </body>
+</html>

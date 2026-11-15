@@ -1,0 +1,20 @@
+[project]
+name = "trend-detective"
+version = "0.1.0"
+description = "NASA Space Apps 2026: Be An Earth System Trend Detective"
+requires-python = ">=3.11"
+dependencies = ["numpy", "scipy", "pandas", "h5py", "harmony-py", "flask", "matplotlib"]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]

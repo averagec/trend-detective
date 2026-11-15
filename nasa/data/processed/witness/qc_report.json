@@ -1,0 +1,43 @@
+{
+  "generated_utc": "2026-11-14T18:03:08+00:00",
+  "rows": 7110,
+  "errors": [],
+  "variables": {
+    "gldas_sm_0_10cm": {
+      "cells": 66811360,
+      "fill_masked": 46797619,
+      "out_of_range_masked": 0
+    },
+    "gldas_sm_10_40cm": {
+      "cells": 66811360,
+      "fill_masked": 46797619,
+      "out_of_range_masked": 0
+    },
+    "gldas_sm_40_100cm": {
+      "cells": 66811360,
+      "fill_masked": 46797619,
+      "out_of_range_masked": 0
+    },
+    "gldas_sm_100_200cm": {
+      "cells": 66811360,
+      "fill_masked": 46797619,
+      "out_of_range_masked": 0
+    },
+    "gldas_rain": {
+      "cells": 66811360,
+      "fill_masked": 46797619,
+      "out_of_range_masked": 0
+    },
+    "gpcp_precip": {
+      "cells": 27017760,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "grace_lwe": {
+      "cells": 67132800,
+      "fill_masked": 0,
+      "out_of_range_masked": 276846,
+      "duplicate_steps_dropped": 2
+    }
+  }
+}

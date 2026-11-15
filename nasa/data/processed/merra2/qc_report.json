@@ -1,0 +1,53 @@
+{
+  "generated_utc": "2026-11-14T17:11:51+00:00",
+  "files_read": {
+    "M2TMNXSLV": 561,
+    "M2TMNXFLX": 561,
+    "M2TMNXLND": 561,
+    "M2SDNXSLV": 17076
+  },
+  "rows": 13467,
+  "errors": [],
+  "variables": {
+    "ps": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "qv2m": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "t2m": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "vpd": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "evap": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "precip": {
+      "cells": 23804352,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    },
+    "tsurf": {
+      "cells": 23804352,
+      "fill_masked": 14994969,
+      "out_of_range_masked": 0
+    },
+    "t2mmax": {
+      "cells": 724568832,
+      "fill_masked": 0,
+      "out_of_range_masked": 0
+    }
+  }
+}
