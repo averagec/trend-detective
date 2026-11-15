@@ -10,9 +10,14 @@ from trend_detective.app.web import create_app
 TREND_KEYS = {
     "region", "region_name", "variable", "label", "unit", "first_month", "last_month",
     "series", "annual", "band", "statistics", "sentence", "warnings", "significance", "lineup",
+    "yearly",
+}  # fmt: skip
+YEARLY_KEYS = {
+    "frequency", "first_year", "last_year", "series", "statistics", "band", "significance",
+    "lineup", "warnings", "comparison",
 }  # fmt: skip
 LINEUP_KEYS = {
-    "verdict", "explanation", "n_sims", "beat", "share", "observed_per_decade",
+    "verdict", "headline", "explanation", "n_sims", "beat", "share", "observed_per_decade",
     "sims_per_decade", "checks", "years", "years_needed",
 }  # fmt: skip
 CHECK_KEYS = {"code", "text", "ok"}
@@ -111,3 +116,72 @@ def test_series_rules_are_the_same_as_analyse_series(client):
     assert post(client, values=months(23, 0.3)).status_code == 400
     assert post(client, start="1992-13").status_code == 400
     assert client.post("/api/lineup", data="nope").status_code in (400, 415)
+
+
+# --- the yearly block (ADR 0011) -----------------------------------------------------------------
+
+
+def test_the_yearly_block_has_its_own_statistics_lineup_and_checks(client):
+    y = post(client).get_json()["yearly"]
+    assert set(y) == YEARLY_KEYS and y["frequency"] == "yearly"
+    assert set(y["lineup"]) == LINEUP_KEYS and len(y["lineup"]["sims_per_decade"]) == 1000
+    assert (y["first_year"], y["last_year"]) == (1992, 2016)
+    assert len(y["series"]) == 25 and all(set(r) == {"year", "anomaly"} for r in y["series"])
+    assert len(y["band"]) == 25 and set(y["band"][0]) == {"year", "fit", "low", "high"}
+    assert set(y["significance"]) >= {"verdict", "ols_q", "mk_q", "sentence", "explanation"}
+
+
+def test_the_yearly_slope_matches_the_monthly_slope_and_the_verdicts_agree_on_a_clear_trend(client):
+    data = post(client).get_json()
+    y = data["yearly"]
+    assert y["statistics"]["ols_per_decade"] == pytest.approx(
+        data["statistics"]["ols_per_decade"], abs=0.03
+    )
+    assert y["lineup"]["verdict"] == "detected" and y["lineup"]["beat"] == 0
+    assert y["significance"]["verdict"] == "rise"
+    assert "agree" in y["comparison"] and "a rise" in y["comparison"]
+    assert data["lineup"]["verdict"] == "detected"  # the monthly block is as it was
+
+
+def test_a_weak_trend_can_be_significant_monthly_but_not_yearly_and_the_sentence_says_why(client):
+    found = None
+    for seed in range(40):
+        rng = np.random.default_rng(seed)
+        vals, x = [], 0.0
+        for i in range(300):
+            x = 0.5 * x + rng.normal(0, 0.8)
+            vals.append(round(10 * math.sin(2 * math.pi * (i % 12) / 12) + 0.3 / 120 * i + x, 5))
+        data = post(client, values=vals).get_json()
+        monthly_sig = data["significance"]["significant"]
+        if monthly_sig and not data["yearly"]["significance"]["significant"]:
+            found = data
+            break
+    assert found is not None, "expected at least one record that only the monthly view detects"
+    text = found["yearly"]["comparison"]
+    assert "independent values" in text and "25 yearly values" in text and "300 months" in text
+    assert "differ in significance, not in the trend" in text
+    assert "the monthly view has more power" in text or "about the same information" in text
+
+
+def test_a_short_record_has_no_yearly_trend_and_says_so(client):
+    y = post(client, values=months(30, 1.0)).get_json()["yearly"]  # 2.5 years: 2 full years
+    assert y["lineup"]["verdict"] == "not_detected"
+    assert y["lineup"]["n_sims"] is None and y["lineup"]["sims_per_decade"] == []
+    assert "too few full years" in y["comparison"]
+
+
+def test_yearly_values_need_ten_months_of_a_calendar_year(client):
+    march = post(client, start="1992-03", values=months(300, 1.5, start_month=3)).get_json()
+    april = post(client, start="1992-04", values=months(300, 1.5, start_month=4)).get_json()
+    assert march["yearly"]["first_year"] == april["yearly"]["first_year"] == 1992
+    assert march["yearly"]["series"][0]["anomaly"] is not None  # March to December: 10 months
+    assert april["yearly"]["series"][0]["anomaly"] is None  # April to December: 9 months
+
+
+def test_the_headline_is_in_both_views_and_agrees_with_the_verdict(client):
+    data = post(client).get_json()
+    assert data["lineup"]["headline"].startswith("Rising trend detected: about ")
+    assert data["yearly"]["lineup"]["headline"].startswith("Rising trend detected: about ")
+    short = post(client, values=months(72, 3.0)).get_json()
+    assert short["lineup"]["headline"].startswith("No significant trend detected (yet): ")
+    assert "years long" in short["lineup"]["headline"]

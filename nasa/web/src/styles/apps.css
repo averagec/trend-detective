@@ -69,6 +69,17 @@
   background: var(--red);
   color: #fff;
 }
+/* The one-sentence answer at the top of a case result: what was found, and why, in plain words. */
+.headline {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 6px solid var(--blue);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 22px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
 .verdict {
   display: inline-flex;
   align-items: center;
