@@ -1,6 +1,7 @@
 // Full-size chart preview. Every graph in the app opens here when clicked.
 // spec: { title, sub, unit, series: [[x, y]], seriesLabel, fit: [[x, y]], fitLabel,
 //         band: [[x, lo, hi]], bandLabel, stats: [[label, value]], notes: [text], source }
+import { glossaryFor } from "../data/glossary.js";
 const NS = "http://www.w3.org/2000/svg";
 const W = 860, H = 380, L = 64, R = 18, T = 16, B = 40;
 
@@ -41,6 +42,7 @@ function renderChart(el, spec) {
       <div class="cv-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"></svg><div class="cv-read" hidden></div></div>
       <div class="cv-leg"></div>
       ${spec.stats && spec.stats.length ? `<div class="cv-stats">${spec.stats.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>` : ""}
+      ${glossaryFor((spec.stats || []).map((r) => r[0]))}
       ${(spec.notes || []).map((n) => `<div class="cv-note">${n}</div>`).join("")}
       ${spec.source ? `<div class="cv-src">SOURCE · ${spec.source}</div>` : ""}`;
   const o = el;

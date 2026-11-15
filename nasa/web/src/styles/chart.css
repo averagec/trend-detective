@@ -236,3 +236,13 @@
   color: var(--cream);
   background: var(--ink);
 }
+
+/* short definitions under significance stats */
+.gloss {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted, #8c9bb8);
+}
+.gloss div { margin: 2px 0; }
+.gloss b { color: var(--cream, #e6ecf7); font-weight: 600; }

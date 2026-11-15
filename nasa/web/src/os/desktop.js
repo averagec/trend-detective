@@ -2,6 +2,7 @@ import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
 import { analysis } from "../stats/trend-analysis.js";
 import { openChart } from "../ui/chart-view.js";
+import { glossaryFor } from "../data/glossary.js";
 import { regionMap } from "./region-map.js";
 import { trendApp } from "./trend-app.js";
 import { leaveDesk } from "../scene/office.js";
@@ -408,6 +409,7 @@ function openTest() {
         ${core ? `<span>PYTHON CORE</span><span>${fmt(core.per_decade, 2)} ${unit} over the ${full ? "same" : "full"} record (OLS, ${core.significant ? "significant" : "not significant"})</span>` : ""}
         ${R.needed ? `<span>YEARS NEEDED</span><span>about ${R.needed} years of record for a change this size (you have ${R.years})</span>` : ""}
       </div>
+      ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="margin-top:8px">${R.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${c.k}</div>`).join("")}</div>
       <div class="dim" style="margin-top:8px">${R.verdict === "NOT YET DETECTABLE" ? "Not detecting a trend does not mean nothing is changing. The record is too short or too noisy to tell yet." : R.verdict === "SUSPECT" ? "Something in the checks above makes this result unsafe to trust as it stands." : "The trend survives every check."}</div>
       <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"}</div>
