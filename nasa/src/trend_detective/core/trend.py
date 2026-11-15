@@ -156,14 +156,6 @@ def mann_kendall(values: np.ndarray) -> TrendResult:
     return TrendResult(slope, np.nan, np.nan, p, n, float(n), "mann-kendall")
 
 
-def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
-    """Mean of a (lat, lon) grid weighted by cos(latitude). NaNs ignored."""
-    f = np.asarray(field, dtype=float)
-    w = np.cos(np.deg2rad(np.asarray(lats, dtype=float)))[:, None] * np.ones_like(f)
-    m = ~np.isnan(f)
-    return float(np.sum(f[m] * w[m]) / np.sum(w[m]))
-
-
 def benjamini_hochberg(p_values) -> np.ndarray:
     """Benjamini-Hochberg adjusted p-values (false discovery rate) for many tests at once.
 
@@ -184,3 +176,13 @@ def benjamini_hochberg(p_values) -> np.ndarray:
     vals[order] = np.minimum(adjusted, 1.0)
     out[ok] = vals
     return out
+
+
+def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
+    """Mean of a (lat, lon) grid weighted by cos(latitude). NaNs ignored."""
+    f = np.asarray(field, dtype=float)
+    w = np.cos(np.deg2rad(np.asarray(lats, dtype=float)))[:, None] * np.ones_like(f)
+    m = ~np.isnan(f)
+    return float(np.sum(f[m] * w[m]) / np.sum(w[m]))
+
+

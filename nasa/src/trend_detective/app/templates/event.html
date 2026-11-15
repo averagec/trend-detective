@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Trend Detective flood and drought check: pick a city and a month or year, and see whether it was a trend or a one-time event, where and when, by how much, and which factors moved with the rain."
+    />
+    <title>Trend Detective: flood and drought</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <style>
+      fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; }
+      legend { padding: 0 6px; color: var(--muted); }
+      .radio { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
+      table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+      th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+      th { font-weight: 600; color: var(--muted); }
+      .num { text-align: right; white-space: nowrap; }
+      .call { font-size: 1.1rem; margin: 6px 0 10px; }
+      .note { font-size: 0.9rem; color: var(--muted); }
+      .btn { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent);
+        background: var(--accent); color: #fff; cursor: pointer; }
+      .btn:focus-visible, select:focus-visible, input:focus-visible {
+        outline: 3px solid var(--accent); outline-offset: 2px; }
+      .stack { display: flex; flex-direction: column; gap: 10px; }
+      .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .row label { min-width: 4.5rem; }
+      .table-wrap { overflow-x: auto; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <h1>Flood or drought in a city</h1>
+        <p class="lede">
+          Pick the incident, the city, and a month or a year. The answers come from the rainfall
+          record of that city's grid cell. Factors that moved with the rain are shown as moving
+          together, not as causes.
+        </p>
+        <p class="lede"><a href="/">← Back to the trend app</a> · <a href="/map">Map view</a></p>
+      </header>
+
+      <div id="error" class="error" role="alert" hidden></div>
+
+      <section class="panel" aria-labelledby="pick-h">
+        <h2 id="pick-h">Pick</h2>
+        <div class="stack">
+          <fieldset>
+            <legend>Incident</legend>
+            <label class="radio"><input type="radio" name="incident" value="flood" checked /> Flood (unusually wet)</label>
+            <label class="radio"><input type="radio" name="incident" value="drought" /> Drought (unusually dry)</label>
+          </fieldset>
+          <div class="row">
+            <label for="city">City</label>
+            <select id="city"></select>
+          </div>
+          <fieldset>
+            <legend>Period</legend>
+            <label class="radio"><input type="radio" name="ptype" value="month" checked /> A month</label>
+            <label class="radio"><input type="radio" name="ptype" value="year" /> A year</label>
+            <div class="row" style="margin-top: 10px">
+              <label for="year">Year</label>
+              <input type="number" id="year" min="1980" max="2026" value="2015" />
+              <span id="month-row" class="row">
+                <label for="month">Month</label>
+                <select id="month"></select>
+              </span>
+            </div>
+          </fieldset>
+          <div>
+            <button class="btn" id="run" type="button">Analyse</button>
+          </div>
+        </div>
+      </section>
+
+      <main id="results" aria-live="polite"></main>
+
+      <footer class="foot">
+        Data: NASA GES DISC MERRA-2 reanalysis and GPCP v3.3 rainfall, read from local files;
+        NASA sea-surface height indicators. Method: docs/statistics.md and
+        docs/decisions/0006-flood-drought-flow.md in the project.
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='event.js') }}"></script>
+  </body>
+</html>

@@ -46,7 +46,8 @@ const LAYERS = [
     sd: 0.15,
     base: 27,
     amp: 1.2,
-    s: [0.2, 0.22, 0.17, 0.24, 0.21, 0.23, 0.19, 0.245, 0.25, 0.14, 0.22]
+    s: [0.2, 0.22, 0.17, 0.24, 0.21, 0.23, 0.19, 0.245, 0.25, 0.14, 0.22],
+    lock: "the regional panel (real 3-region values, not built yet)"
   },
   {
     k: "precip",
@@ -61,7 +62,8 @@ const LAYERS = [
     sd: 22,
     base: 210,
     amp: 90,
-    s: [6, -4, 3, -2, 8, -6, 12, 5, -3, -9, 4]
+    s: [6, -4, 3, -2, 8, -6, 12, 5, -3, -9, 4],
+    lock: "the regional panel (real 3-region values, not built yet)"
   },
   {
     k: "tws",
@@ -78,7 +80,8 @@ const LAYERS = [
     amp: 8,
     gap: [2017, 2018],
     s: [-0.5, 1.8, -2.4, 0.6, -1.2, -1, 0.8, -0.3, 1.5, -0.4, 2.2],
-    na: { Singapore: "No data. Too small for GRACE satellites.", Brunei: "No data. Too small for GRACE satellites.", "Timor-Leste": "No data. Too small for GRACE satellites." }
+    na: { Singapore: "No data. Too small for GRACE satellites.", Brunei: "No data. Too small for GRACE satellites.", "Timor-Leste": "No data. Too small for GRACE satellites." },
+    lock: "the regional panel (real 3-region values, not built yet)"
   },
   {
     k: "sst",
@@ -94,7 +97,8 @@ const LAYERS = [
     base: 29,
     amp: 0.8,
     s: [0.18, 0.16, 0.2, 0.15, 0.21, 0.12, 0.23, 0.19, 0.17, 0.24, 0.2],
-    na: { Laos: "No data. Laos has no coastline." }
+    na: { Laos: "No data. Laos has no coastline." },
+    lock: "SST data (no real series in the Python pipeline yet)"
   },
   { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "CASE 002" },
   { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "CASE 003" }
@@ -102,7 +106,7 @@ const LAYERS = [
 const SSL_BINS = [30, 36, 42, 48];
 const PAL = { s: ["#d8e6ee", "#9fd0e8", "#5aa6dd", "#2f6fc0", "#1c3d8c"], t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52], idn: [273, 78, 50, 28] };
-const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1 };
+const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, circ: { on: false, lat: null, lon: null, r: 150, v: "merra2:t2m", cells: null, out: null, msg: "" } };
 let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
@@ -291,6 +295,7 @@ function buildSvg() {
     for (const [n, d] of Object.entries(st.prov.provinces)) el("path", { d, class: "rm-prv", "data-n": n, "vector-effect": "non-scaling-stroke" }, pg);
   }
   el("g", { id: "rm-gridg" }, svg);
+  el("g", { id: "rm-circg", "pointer-events": "none" }, svg);
   const [sx, sy] = P(...LAB.Singapore);
   const sg = el("circle", { cx: sx, cy: sy, r: 0.5, class: "rm-c", "data-c": 7, stroke: "#ece6d6", "stroke-width": 2, "vector-effect": "non-scaling-stroke", fill: "#0b1534" }, svg);
   sg.onclick = () => {
@@ -733,6 +738,7 @@ function toolbar() {
       <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
     <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
     <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">FX ${st.fx ? "ON" : "OFF"}</button>
+    <button class="rm-chip${st.circ.on ? " on" : ""}" data-circ title="Draw a circle of grid cells and test it">CIRCLE ${st.circ.on ? "ON" : "OFF"}</button>
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
@@ -766,6 +772,7 @@ function toolbar() {
     e.currentTarget.textContent = `SAT ${st.sat ? "ON" : "OFF"}`;
     satRefresh();
   };
+  W.querySelector("[data-circ]").onclick = () => circleToggle(!st.circ.on);
   if (!LAYERS[st.v].real) bindRange(lo, hi);
   bindSearch();
 }
@@ -1157,6 +1164,14 @@ function bindNav() {
     const u = toUnits(e);
     zoomAt(e.deltaY < 0 ? 1 / 1.2 : 1.2, u.x, u.y);
   }, { passive: false });
+  // In circle mode a map click places the circle centre, and the country and city clicks are skipped.
+  mc.addEventListener("click", (e) => {
+    if (!st.circ.on || st.dragged || e.target.closest("#rm-circ,.rm-nav,.rm-float,.rm-zoom,.rm-seg,button")) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const p = toUnits(e);
+    circleCentre(p.x - 180, 90 - p.y);
+  }, true);
   let drag = null;
   mc.addEventListener("pointerdown", (e) => {
     if (st.view === "world" || e.button !== 0 || e.target.closest("button,.rm-tip,.rm-float")) return;
@@ -1274,6 +1289,183 @@ async function open(win, helpers) {
   setTimeout(() => zoom("idn"), 1700);
   if (st.ssl) setTimeout(() => talk([`${st.ssl.cities.length} cities. ${st.ssl.tests} of them on the coast.`, "Pick one from CITIES. I’ll show you exactly which ocean cells the number comes from."], "map"), 2900);
   H.log && H.log(st.ssl ? `MAP: ECCO SEA LEVEL FOR ${st.ssl.tests} COASTAL CITIES LOADED.` : "MAP: SAMPLE DATA.");
+}
+// CIRCLE mode: click the map for the centre, pick a radius (75 to 250 km) and a variable, RUN.
+// The page draws cells and text only. Every number comes from POST api/analyse (Python core).
+const CIRC_VARS = [
+  ["merra2:t2m", "Air temperature (MERRA-2)"],
+  ["merra2:precip", "Rainfall (MERRA-2)"],
+  ["merra2:evap", "Evaporation (MERRA-2)"],
+  ["merra2:vpd", "Vapour pressure deficit (MERRA-2)"],
+  ["merra2:qv2m", "Humidity (MERRA-2)"],
+  ["merra2:tsurf", "Land surface temperature (MERRA-2)"],
+  ["gpcp:gpcp_precip", "Rainfall (GPCP)"],
+];
+const CIRC_COL = { rise: "#d94a36", fall: "#1f4fa0", none: "#c9c2b2" };
+const signed = (v) => (v == null ? "n/a" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`);
+function circleToggle(on) {
+  const c = st.circ;
+  c.on = on;
+  c.msg = on ? "Click the map to place the circle." : "";
+  if (!on) {
+    c.lat = c.lon = null;
+    c.cells = null;
+    c.out = null;
+  }
+  sfx("select");
+  circleDraw();
+  circlePanel();
+  toolbar();
+}
+function circleCentre(lon, lat) {
+  const c = st.circ;
+  c.lon = lon;
+  c.lat = lat;
+  c.cells = null;
+  c.out = null;
+  c.msg = "Centre set. Press RUN.";
+  circleDraw();
+  circlePanel();
+}
+function circleDraw() {
+  const g = W.querySelector("#rm-circg");
+  if (!g) return;
+  g.innerHTML = "";
+  const c = st.circ;
+  if (!c.on || c.lat == null) return;
+  (c.cells || []).forEach((q) => {
+    const h = q.height_km / KM_DEG, w = q.width_km / (KM_DEG * Math.cos((q.lat * Math.PI) / 180));
+    const kind = q.significant ? (q.slope_per_decade > 0 ? "rise" : "fall") : "none";
+    el("rect", { x: q.lon + 180 - w / 2, y: 90 - q.lat - h / 2, width: w, height: h, fill: CIRC_COL[kind], "fill-opacity": 0.7, stroke: "#06090f", "stroke-width": 0.04, "vector-effect": "non-scaling-stroke" }, g);
+  });
+  const ry = c.r / KM_DEG, rx = ry / Math.cos((c.lat * Math.PI) / 180);
+  el("ellipse", { cx: c.lon + 180, cy: 90 - c.lat, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
+}
+function circlePanel() {
+  const c = st.circ;
+  let p = $("#rm-circ");
+  if (!c.on) {
+    if (p) p.remove();
+    return;
+  }
+  if (!p) {
+    p = document.createElement("div");
+    p.id = "rm-circ";
+    p.className = "rm-float rm-card";
+    p.style.cssText = "left:12px;bottom:12px;right:auto;top:auto;width:300px";
+    p.innerHTML = `<div class="hd"><h3>CIRCLE</h3><button class="x" id="rm-cx" aria-label="Close circle">×</button></div>
+      <div style="display:grid;gap:6px;margin-top:6px">
+        <label>Variable <select id="rm-cv">${CIRC_VARS.map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select></label>
+        <label>Radius <b id="rm-cr-v">${c.r}</b> km <input id="rm-cr" type="range" min="75" max="250" step="5" value="${c.r}"></label>
+        <div><button id="rm-crun" class="obtn">RUN</button></div>
+      </div>
+      <div id="rm-cchart" style="margin-top:6px"></div>
+      <div id="rm-cmsg" class="sub"></div><div id="rm-cout" style="font-size:14px;line-height:1.4;margin-top:6px"></div>`;
+    $("#rm-mapc").appendChild(p);
+    $("#rm-cx").onclick = () => circleToggle(false);
+    $("#rm-cv").value = c.v;
+    $("#rm-cv").onchange = (e) => {
+      c.v = e.target.value;
+      c.cells = null;
+      c.out = null;
+      circleDraw();
+      circlePanel();
+    };
+    $("#rm-cr").oninput = (e) => {
+      c.r = +e.target.value;
+      c.cells = null;
+      c.out = null;
+      $("#rm-cr-v").textContent = c.r;
+      circleDraw();
+    };
+    $("#rm-crun").onclick = circleRun;
+  }
+  $("#rm-cmsg").textContent = c.msg;
+  const box = $("#rm-cout");
+  box.replaceChildren(...(c.out || []).map((t) => {
+    const d = document.createElement("div");
+    d.textContent = t;
+    return d;
+  }));
+  circleChart();
+}
+// Monthly average of the cells inside the circle, as returned by /api/analyse. Only in-circle cells
+// are averaged, and the line is drawn from that average. Raw monthly values (seasonal cycle included).
+function circleChart() {
+  const box = $("#rm-cchart"), c = st.circ;
+  if (!box) return;
+  box.replaceChildren();
+  if (!c.cells || !c.avg) return;
+  const { periods, series, valid, unit } = c.avg;
+  const pts = series.map((v, i) => [i, v]).filter(([, v]) => v != null);
+  if (pts.length < 2) return;
+  const W = 280, H = 130, L = 34, R = 270, T = 8, B = 112;
+  const lo = Math.min(...pts.map((p) => p[1])), hi = Math.max(...pts.map((p) => p[1]));
+  const span = hi - lo || 1;
+  const x = (i) => L + (i / (series.length - 1)) * (R - L);
+  const y = (v) => B - ((v - lo) / span) * (B - T);
+  const cap = document.createElement("div");
+  cap.style.fontSize = "12px";
+  cap.textContent = `Average of the ${c.cells.length} cells inside the circle, monthly (${unit}). Cells with data each month: ${Math.min(...valid)} to ${Math.max(...valid)}.`;
+  box.appendChild(cap);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Monthly average of the cells inside the circle" }, box);
+  el("line", { x1: L, y1: B, x2: R, y2: B, stroke: "#56628a", "stroke-width": 1 }, svg);
+  el("line", { x1: L, y1: T, x2: L, y2: B, stroke: "#56628a", "stroke-width": 1 }, svg);
+  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
+  el("path", { d, fill: "none", stroke: "#1b2440", "stroke-width": 1.2 }, svg);
+  const label = (txt, x0, y0) => {
+    const t = el("text", { x: x0, y: y0, "font-size": 10, fill: "#1b2440" }, svg);
+    t.textContent = txt;
+  };
+  label(hi.toFixed(2), 2, T + 6);
+  label(lo.toFixed(2), 2, B);
+  label(periods[0].slice(0, 4), L, H - 2);
+  label(periods[periods.length - 1].slice(0, 4), R - 20, H - 2);
+}
+async function circleRun() {
+  const c = st.circ;
+  if (c.lat == null) {
+    c.msg = "Click the map first to place the circle.";
+    circlePanel();
+    return;
+  }
+  c.msg = "Working...";
+  c.out = null;
+  circlePanel();
+  let res;
+  try {
+    res = await fetch("api/analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "circle", lat: c.lat, lon: c.lon, radius_km: c.r, variables: [c.v] }),
+    });
+  } catch {
+    c.msg = "The analysis server is not running, so no numbers can be shown.";
+    circlePanel();
+    return;
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    c.msg = body.error || `The server said ${res.status}.`;
+    c.cells = null;
+    circleDraw();
+    circlePanel();
+    return;
+  }
+  const r = body.results[0], a = r.agreement;
+  c.cells = r.cells;
+  c.avg = { periods: r.average.periods, series: r.average.series, valid: r.average.valid_per_month, unit: r.unit };
+  c.msg = "";
+  c.out = [
+    `${r.label}, circle of ${c.r} km`,
+    `${r.cells_used} of ${r.cells_in_circle} cells used (centres inside the circle).`,
+    `Significant rises: ${a.rising}. Significant falls: ${a.falling}. Not significant: ${a.not_significant}.`,
+    `Cell slopes range from ${signed(a.slope_min)} to ${signed(a.slope_max)} per decade.`,
+    r.average.summary.sentence,
+    ...r.warnings.map((w) => `Note: ${w}`),
+  ];
+  circleDraw();
+  circlePanel();
 }
 const regionMap = { open };
 export {
