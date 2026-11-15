@@ -189,6 +189,35 @@ curl -s -X POST localhost:5000/api/analyse-series -H 'Content-Type: application/
   -d '{"label":"Demo","unit":"K","start":"2000-01","values":[...]}'
 ```
 
+## `POST /api/lineup`
+
+The CASES flow's LINEUP (ADR 0010): the analysis of a series you send, plus the noise lineup, the
+robustness checks and the case verdict. Same body, limits and errors as `POST /api/analyse-series`, with
+one optional field:
+
+| Field | Rule |
+|---|---|
+| `gap_years` | optional `[first, last]`: the years of a known change of instrument inside the record (GRACE to GRACE-FO: `[2017, 2018]`). Two integers 1 to 9999, `first <= last`. Anything else is a `400` naming `gap_years` |
+
+The series is analysed as sent (no cut to the 1980 to 2018 project window), like `/api/analyse-series`.
+Nothing is stored.
+
+### Response
+
+The `/api/analyse-series` response, plus a `lineup` block. `significance` is the one the lineup judged,
+so a page never shows two verdicts for one series.
+
+| `lineup` field | Meaning |
+|---|---|
+| `verdict` | `"detected"`: the engine says rise or fall, fewer than 5% of the fakes are as strong, and every check passes. `"suspect"`: significant evidence but a check fails, or a known instrument change is inside the window and a test is significant. `"not_detected"`: not enough evidence yet, always so under 10 years |
+| `explanation` | Why, in plain words: the engine's explanation, how many fakes were as strong, and the failed checks |
+| `n_sims`, `beat`, `share` | The number of fakes (1000), how many had a slope as strong as the real one (either direction), and `beat / n_sims`. `null` when there is too little data |
+| `observed_per_decade` | The real OLS slope, in `unit` per decade |
+| `sims_per_decade` | The fakes' slopes (trend-free AR(1) noise with the real lag-1 autocorrelation and residual spread, same missing months), in `unit` per decade, for drawing the histogram. Seeded from the data: the same request always gets the same fakes. `[]` when there is too little data |
+| `checks` | `[{code, text, ok}]`: `record_length` (10 years), `tests_agree` (both tests and the lineup), `later_start` (still the same sign and Mann-Kendall p below 0.1 after cutting 3, 5 or 8 years), `one_year` (no single year moves the slope by 35% or flips it), `instrument_change`. The last two checks only count when there is a trend to protect |
+| `years` | Years with data |
+| `years_needed` | For `not_detected`: the record length (years) that would detect a trend of this size (`core/detect.py`); `10` under ten years; `null` when it cannot be estimated or the case is not `not_detected` |
+
 ## `GET /api/scan`
 
 One variable in every region over one year window, judged together as one family (the "layer"

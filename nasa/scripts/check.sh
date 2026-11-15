@@ -43,6 +43,13 @@ if [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   if python -m ruff --version >/dev/null 2>&1; then run "ruff" python -m ruff check --quiet .; fi
   if python -m pytest --version >/dev/null 2>&1 && [ -d tests ]; then run "pytest" python -m pytest -q; fi
 fi
+# The website computes no statistics (ADR 0008, web-integration step 6): no browser stats engine.
+if [ -d web/src ]; then
+  [ ! -d web/src/stats ] || { echo "✗ web/src/stats/ exists: statistics come from the server (core/)"; fail=1; }
+  if grep -rnE "(from|import) +[\"'][^\"']*/stats/|\b(ncdf|mannKendall|benjaminiHochberg|lag1)\(" web/src; then
+    echo "✗ web/src computes or imports statistics: call the API instead (data/api.js)"; fail=1
+  fi
+fi
 # The website (web/) must still build: Flask serves web/dist. Skipped until `npm ci` has run there.
 if [ -f web/package.json ] && [ -d web/node_modules ] && command -v npm >/dev/null; then
   run "web build" npm --prefix web run -s build

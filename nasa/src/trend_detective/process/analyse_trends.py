@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "src"))  # lets the script run without `pip instal
 
 from trend_detective.catalog.regions import REGIONS  # noqa: E402
 from trend_detective.catalog.variables import VARIABLES  # noqa: E402
+from trend_detective.core.lineup import judge_case  # noqa: E402
 from trend_detective.core.significance import (  # noqa: E402
     ALPHA,
     Assessment,
@@ -211,6 +212,56 @@ def build_custom(
         "label": label,
         "unit": unit,
         **analyse_series(padded, axis, unit, label, leading_pad=pad),
+    }
+
+
+def build_lineup(
+    label: str,
+    unit: str,
+    start_year: int,
+    start_month: int,
+    values: list[float | None],
+    gap_years: tuple[int, int] | None = None,
+) -> dict:
+    """`build_custom` plus the noise lineup and the case verdict (core/lineup.py).
+
+    The `significance` block is the one the lineup judged, so a page never shows two verdicts for
+    one series. `lineup` holds the fakes' slopes (for drawing the histogram), the checks and the
+    case verdict.
+    """
+    pad = start_month - 1
+    padded = np.array(
+        [math.nan] * pad + [math.nan if v is None else v for v in values], dtype=float
+    )
+    case = judge_case(
+        padded, unit, label, gap_years=gap_years, first_year=start_year, leading_pad=pad
+    )
+    last = pad + len(values) - 1
+    axis = monthly_axis([f"{start_year + last // 12:04d}-{last % 12 + 1:02d}"], start_year)
+    lu = case.lineup
+    return {
+        "region": "custom",
+        "region_name": "Your data",
+        "variable": "custom",
+        "label": label,
+        "unit": unit,
+        **analyse_series(
+            padded, axis, unit, label, leading_pad=pad, assessment=case.assessment
+        ),
+        "lineup": {
+            "verdict": case.verdict,
+            "explanation": case.explanation,
+            "n_sims": None if lu is None else lu.n_sims,
+            "beat": None if lu is None else lu.beat,
+            "share": None if lu is None else jsonable(lu.share),
+            "observed_per_decade": None if lu is None else jsonable(lu.observed_per_decade),
+            "sims_per_decade": (
+                [] if lu is None else [round(float(x), 5) for x in lu.sims_per_decade]
+            ),
+            "checks": [{"code": c.code, "text": c.text, "ok": c.ok} for c in case.checks],
+            "years": jsonable(case.years),
+            "years_needed": jsonable(case.years_needed),
+        },
     }
 
 

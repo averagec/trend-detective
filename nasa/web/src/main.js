@@ -10,5 +10,5 @@ import "./styles/chart.css";
 import "./styles/trend.css";
 import "./ui/menu.js";
 import "./scene/office.js";
-import { analysis } from "./stats/trend-analysis.js";
-analysis.load().catch(() => {});
+import { caseData } from "./data/case-data.js";
+caseData.load().catch(() => {});

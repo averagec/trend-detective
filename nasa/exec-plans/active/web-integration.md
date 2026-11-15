@@ -35,16 +35,16 @@ network runs all demo cases, and `web/` contains no statistics code.
       `npm ci && npm run build` works (it did on the clone: 668 kB JS, 179 kB gzip).
 - [x] 2. (done on feature/trend-exe-api-integration; ADR 0008) Serve the build from Flask (`/` -> `web/dist/index.html`, static assets). Dev: Vite proxy
       `/api` -> Flask. Add the web build to `scripts/check.sh` when `web/` exists.
-- [~] 3. (done for TREND.EXE only: `data/api.js`, `to-chart.js`; SETUP/PLOT/MAP still use browser data) Adapter `web/src/data/api.js` (fetch `/api/meta`, `/api/trend`) replacing
+- [x] 3. (TREND.EXE, then SETUP/PLOT/LINEUP on branch feature/case-flow-on-engine; MAP reads the engine already) Adapter `web/src/data/api.js` (fetch `/api/meta`, `/api/trend`) replacing
       `DATASETS`/`makeSeries`/`analyse` in `desktop.js` (SETUP, PLOT). Use `catalog/` text for
       labels. Units come from the API (K, mm day-1): convert for display in the adapter only.
-- [ ] 4. Move the LINEUP and verdict logic into `core/` (new `core/lineup.py`): AR(1) surrogates
+- [x] 4. (done: `core/lineup.py`, `POST /api/lineup`, ADR 0010) Move the LINEUP and verdict logic into `core/` (new `core/lineup.py`): AR(1) surrogates
       (seeded), later-start-year check, leave-one-year-out check, instrument-gap flag, verdict
       (DETECTED / NOT YET DETECTABLE / SUSPECT). Golden tests with known answers; update
       `docs/statistics.md`. Expose `POST /api/lineup`. UI only draws the histogram it gets back.
 - [ ] 5. Map: add `core` functions for Benjamini-Hochberg across regions and "years needed"
       (Weatherhead). Expose `/api/map?variable&from&to`. Port the map window to read it.
-- [ ] 6. Delete `web/src/stats/` and the stats in `region-map.js` (`compute`, `ncdf`, `demoMonthly`).
+- [x] 6. (done on feature/case-flow-on-engine; `check.sh` rule added; synthetic map statistics removed) Delete `web/src/stats/` and the stats in `region-map.js` (`compute`, `ncdf`, `demoMonthly`).
       Add a `check.sh` rule: no `web/src/stats/`, no `Math.sqrt` in `web/src/os/`.
       Migration check before deleting: run JS and Python on the same series, list the differences.
 - [ ] 7. Offline demo safety: self-host the fonts (the ttf files exist in `scripts/fonts/`; convert
@@ -74,6 +74,7 @@ network runs all demo cases, and `web/` contains no statistics code.
 <!-- Append one line per session: date — what changed — what's next. -->
 - 2026-11-15 — cloned the web repo, built it, read both sides, drafted this plan. Nothing merged. Next: decisions 1-4.
 - 2026-11-15 — ui-update: map-first MAP.EXE, fullscreen/scaling, Indonesia focus. New real layer SEA LVL: per-city ECCO sea level computed by `core` (`summarise` + new `benjamini_hochberg`), exported to `web/public/data/indonesia_sea_level.json` by `scripts/export_indonesia.py`; the page computes nothing for it. Province outlines and cities from Natural Earth (`scripts/build_indonesia_geo.py`). Other layers still synthetic and labelled SAMPLE DATA. Next: step 3 (API adapter) for t2m/precip; per-province MERRA-2 needs the raw grids (Jacob).
+- 2026-11-15 — case-flow-on-engine: steps 3, 4, 6 done. CASES call `/api/lineup` (`core/lineup.py`, ADR 0010); `web/src/stats/` deleted; synthetic per-country map statistics and the year slider removed from `region-map.js` (unreachable); `check.sh` fails if browser statistics return. Left: step 5 (`/api/map` for the 11-country map; the box layers already read the engine), steps 7 to 10.
 
 ## Decisions & surprises
 - The web `tws` / `sst` / `ndvi` / `aod` layers have no data in this repo (only t2m and precip for 3

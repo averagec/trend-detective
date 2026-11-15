@@ -26,3 +26,13 @@ export const isSignificant = (sig) => !!sig && (sig.verdict === "rise" || sig.ve
 
 // The verdict's word for an unknown value is shown rather than dropped.
 export const shortVerdict = (sig) => VERDICT_SHORT[sig.verdict] || String(sig.verdict).toUpperCase();
+
+// The case verdict of the CASES flow (core/lineup.py, docs/api.md "lineup"): the engine's verdict
+// plus the noise lineup and the robustness checks. The words only; the page never decides which.
+export const CASE_VERDICT = {
+  detected: "DETECTED",
+  suspect: "SUSPECT",
+  not_detected: "NOT YET DETECTABLE",
+};
+export const CASE_VERDICT_COLOR = { detected: "#2c7a2a", suspect: "#d94a36", not_detected: "#1f4fa0" };
+export const CASE_VERDICT_MARK = { detected: "●", suspect: "▲", not_detected: "◌" };

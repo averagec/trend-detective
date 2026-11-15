@@ -1,6 +1,6 @@
 import { SFX } from "../audio/sfx.js";
 import { say } from "../ui/dialogue.js";
-import { analysis } from "../stats/trend-analysis.js";
+import { caseData } from "../data/case-data.js";
 import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
 import { uiScale } from "../ui/scale.js";
@@ -59,133 +59,14 @@ const talk = (lines, key) => {
   if (key) st.seen[key] = 1;
   say(lines);
 };
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = s * 1664525 + 1013904223 >>> 0;
-    return s / 4294967296;
-  };
-}
-function gauss(r) {
-  let u = 0;
-  while (!u) u = r();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r());
-}
-function demoMonthly(li, ci) {
-  const L = LAYERS[li], r = rng(1e3 * li + 37 * ci + 7), m = [];
-  let a = 0;
-  for (let y = L.y0; y <= L.y1; y++) {
-    a = 0.45 * a + gauss(r) * L.sd * 0.89;
-    for (let k = 0; k < 12; k++) {
-      if (L.gap && (y > L.gap[0] || y === L.gap[0] && k >= 6) && (y < L.gap[1] || y === L.gap[1] && k < 5)) {
-        m.push(null);
-        continue;
-      }
-      m.push(L.base + L.amp * Math.sin((k - 3) / 12 * 2 * Math.PI) + L.s[ci] * (y + k / 12 - L.y0) / 10 + a + gauss(r) * L.sd * 0.8);
-    }
-  }
-  return { y0: L.y0, m };
-}
-function monthly(li, ci) {
-  const L = LAYERS[li], real = st.data && st.data[L.k] && st.data[L.k][NAMES[ci]];
-  return real ? { ...real, real: true } : { ...demoMonthly(li, ci), real: false };
-}
-function annual(mo) {
-  const out = { x: [], y: [] };
-  for (let i = 0; i + 12 <= mo.m.length; i += 12) {
-    const v = mo.m.slice(i, i + 12).filter((x) => x != null);
-    if (v.length >= 10) {
-      out.x.push(mo.y0 + i / 12);
-      out.y.push(v.reduce((a, b) => a + b) / v.length);
-    }
-  }
-  return out;
-}
-const ncdf = (z) => {
-  const t = 1 / (1 + 0.2316419 * Math.abs(z));
-  const d = 0.3989423 * Math.exp(-z * z / 2);
-  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return z > 0 ? 1 - p : p;
-};
-function span(li) {
-  if (LAYERS[li].real) return st.ssl ? st.ssl.period.slice() : [LAYERS[li].y0, LAYERS[li].y1];
-  const L = LAYERS[li];
-  let lo = L.y0, hi = L.y1;
-  const d = st.data && st.data[L.k];
-  if (d) {
-    const any = Object.values(d)[0];
-    if (any) {
-      lo = any.y0;
-      hi = any.y0 + Math.floor(any.m.length / 12) - 1;
-    }
-  }
-  return [lo, hi];
-}
+// The rows the map draws, one per country. They carry no statistics: every number on the map comes
+// from the server (the sea level cells, the region boxes, the circle). Only the span is set here.
 function compute() {
-  const li = st.v, L = LAYERS[li];
-  if (L.real || L.box) {
-    const rows = NAMES.map((n, ci) => ({ n, ci, na: "", neutral: true }));
-    st.rows = rows;
-    st.mxAbs = 1;
-    const b = L.box && boxStat();
-    st.span = L.real ? (st.ssl ? st.ssl.period.slice() : [1992, 2017]) : b ? [+b.first_period.slice(0, 4), +b.last_period.slice(0, 4)] : [0, 0];
-    return rows;
-  }
-  const [lo, hi0] = span(li);
-  let y0 = lo, hi = hi0;
-  if (st.yr) {
-    y0 = Math.max(lo, Math.min(st.yr[0], hi0 - 9));
-    hi = Math.min(hi0, Math.max(st.yr[1], y0 + 9));
-  }
-  const rows = NAMES.map((n, ci) => {
-    if (L.na && L.na[n]) return { n, na: L.na[n] };
-    const mo = monthly(li, ci), an = annual(mo), xs = [], ys = [];
-    an.x.forEach((x, i) => {
-      if (x >= y0 && x <= hi) {
-        xs.push(x);
-        ys.push(an.y[i]);
-      }
-    });
-    const N = xs.length;
-    if (N < 5) return { n, na: "Not enough years in this window." };
-    const mx = xs.reduce((a2, b2) => a2 + b2) / N, my = ys.reduce((a2, b2) => a2 + b2) / N;
-    let sxx = 0, sxy = 0;
-    xs.forEach((x, i) => {
-      sxx += (x - mx) ** 2;
-      sxy += (x - mx) * (ys[i] - my);
-    });
-    const b = sxy / sxx, a = my - b * mx, res = ys.map((y, i) => y - a - b * xs[i]);
-    let c0 = 0, c1 = 0;
-    res.forEach((q, i) => {
-      c0 += q * q;
-      if (i) c1 += q * res[i - 1];
-    });
-    const r1 = Math.max(0, Math.min(0.95, c1 / c0)), neff = Math.max(3, N * (1 - r1) / (1 + r1));
-    const sig = Math.sqrt(c0 / (N - 2)), se = sig / Math.sqrt(sxx) * Math.sqrt((N - 2) / Math.max(1, neff - 2));
-    const p = 2 * (1 - ncdf(Math.abs(b / se)));
-    const nstar = Math.pow(3.3 * sig / Math.max(1e-9, Math.abs(b)) * Math.sqrt((1 + r1) / (1 - r1)), 2 / 3);
-    return { n, ci, xs, ys, N, b10: b * 10, se10: se * 10, a, b, r1, neff, p, nstar, real: mo.real, mo, y0, y1: hi };
-  });
-  const ok = rows.filter((r) => !r.na), ord = ok.slice().sort((p, q) => p.p - q.p);
-  let run = 1;
-  for (let q = ord.length - 1; q >= 0; q--) {
-    run = Math.min(run, ord[q].p * ord.length / (q + 1));
-    ord[q].padj = run;
-  }
-  const mxAbs = Math.max(...ok.map((r) => Math.abs(r.b10)), 1e-6);
-  rows.forEach((r) => {
-    if (r.na) return;
-    r.det = r.padj < 0.05;
-    r.sus = r.det && !!L.gap && r.y0 <= L.gap[0];
-    if (r.sus) r.det = false;
-    const z = r.b10 / mxAbs;
-    r.bin = z < -0.5 ? 0 : z < -0.1 ? 1 : z <= 0.1 ? 2 : z <= 0.5 ? 3 : 4;
-    r.col = r.det || r.sus ? PAL[L.pal][r.bin] : GREY;
-  });
-  st.rows = rows;
-  st.mxAbs = mxAbs;
-  st.span = [y0, hi];
-  return rows;
+  const L = LAYERS[st.v], b = L.box && boxStat();
+  st.rows = NAMES.map((n, ci) => ({ n, ci, na: "", neutral: true }));
+  st.mxAbs = 1;
+  st.span = L.real ? (st.ssl ? st.ssl.period.slice() : [1992, 2017]) : b ? [+b.first_period.slice(0, 4), +b.last_period.slice(0, 4)] : [0, 0];
+  return st.rows;
 }
 const P = (lon, lat) => [lon + 180, 90 - lat];
 function el(tag, attrs, parent) {
@@ -626,7 +507,7 @@ function boxSeries(b) {
   return { t: pts.map((p) => +p.period.slice(0, 4) + (+p.period.slice(5, 7) - 1) / 12 + 1 / 24), v: pts.map((p) => p.value) };
 }
 function boxCard(box) {
-  const L = LAYERS[st.v], b = boxStat(), ds = analysis.DATASETS[L.k], f = (v) => fmtBox(v, L), p = (v) => v < 1e-4 ? "< 0.0001" : v.toFixed(4);
+  const L = LAYERS[st.v], b = boxStat(), ds = caseData.DATASETS[L.k], f = (v) => fmtBox(v, L), p = (v) => v < 1e-4 ? "< 0.0001" : v.toFixed(4);
   if (!b || !b.significance) {
     box.innerHTML = `<div class="hd"><h3>NO DATA</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>`;
     box.querySelector("#rm-close").onclick = closeCard;
@@ -823,10 +704,10 @@ function hud() {
   $("#rm-hud").innerHTML = `${L.name.toUpperCase()} · <b>${det} of ${nn}</b> clear${sus ? ` · <span class="c">${sus} caution</span>` : ""}`;
 }
 function toolbar() {
-  const fixed = LAYERS[st.v].real || LAYERS[st.v].box, [lo, hi] = fixed ? [0, 0] : span(st.v), locked = LAYERS.filter((L) => L.lock);
+  const locked = LAYERS.filter((L) => L.lock);
   $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}${locked.length ? `<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button>` : ""}</div>
-    ${fixed ? `<span class="rm-fixed" title="Trends are computed once over the full record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
-    <span class="rm-yrs" id="rm-yrs">${fixed ? `${st.span[0]}-${st.span[1]}` : ""}</span>
+    <span class="rm-fixed" title="Trends are computed once over the full record by the Python core">FULL RECORD</span>
+    <span class="rm-yrs" id="rm-yrs">${st.span[0]}-${st.span[1]}</span>
     <div class="rm-dd" id="rm-dd"><button class="rm-ddb${st.city >= 0 ? " on" : ""}" id="rm-ddb" aria-haspopup="listbox" aria-expanded="false"><i class="pin"></i><span>${st.city >= 0 && st.ssl ? st.ssl.cities[st.city].name.toUpperCase() : "CITIES"}</span><b>▾</b></button>
       <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
     <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
@@ -868,7 +749,6 @@ function toolbar() {
     satRefresh();
   };
   W.querySelector("[data-circ]").onclick = () => circleTool(!st.tool);
-  if (!fixed) bindRange(lo, hi);
   bindSearch();
 }
 function bindSearch() {
@@ -974,62 +854,6 @@ function bindSearch() {
   }
   if (st.dd) show(true);
 }
-function bindRange(lo, hi) {
-  const box = $("#rm-range"), hs = box.querySelectorAll(".hd"), fl = box.querySelector(".fl"), lab = $("#rm-yrs");
-  const val = st.span.slice(), MIN = 9;
-  const pct = (y) => 7 + (hi > lo ? (y - lo) / (hi - lo) : 0) * (box.clientWidth - 14);
-  const draw = () => {
-    hs[0].style.left = pct(val[0]) + "px";
-    hs[1].style.left = pct(val[1]) + "px";
-    fl.style.left = pct(val[0]) + "px";
-    fl.style.width = pct(val[1]) - pct(val[0]) + "px";
-    lab.textContent = `${val[0]}-${val[1]}`;
-    hs[0].setAttribute("aria-valuetext", val[0]);
-    hs[1].setAttribute("aria-valuetext", val[1]);
-  };
-  const set = (h, y) => {
-    y = Math.round(Math.max(lo, Math.min(hi, y)));
-    if (h === 0) val[0] = Math.min(y, val[1] - MIN);
-    else val[1] = Math.max(y, val[0] + MIN);
-    val[0] = Math.max(lo, val[0]);
-    val[1] = Math.min(hi, val[1]);
-    draw();
-  };
-  const commit = () => {
-    if (val[0] === st.span[0] && val[1] === st.span[1]) return;
-    st.yr = val.slice();
-    sfx("select");
-    paint(true);
-  };
-  const yearAt = (e) => {
-    const r = box.getBoundingClientRect();
-    return lo + (e.clientX - r.left - 7 * uiScale) / Math.max(1, r.width - 14 * uiScale) * (hi - lo);
-  };
-  let drag = -1;
-  box.onpointerdown = (e) => {
-    const y = yearAt(e);
-    drag = e.target.dataset.h != null ? +e.target.dataset.h : Math.abs(y - val[0]) < Math.abs(y - val[1]) ? 0 : 1;
-    box.setPointerCapture(e.pointerId);
-    set(drag, y);
-  };
-  box.onpointermove = (e) => {
-    if (drag >= 0) set(drag, yearAt(e));
-  };
-  box.onpointerup = () => {
-    if (drag < 0) return;
-    drag = -1;
-    commit();
-  };
-  hs.forEach((h, i) => h.onkeydown = (e) => {
-    const d = e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : 0;
-    if (!d) return;
-    e.preventDefault();
-    set(i, val[i] + d);
-    commit();
-    W.querySelectorAll(".rm-range .hd")[i].focus();
-  });
-  draw();
-}
 function card() {
   const box = $("#rm-pv"), L = LAYERS[st.v];
   W.querySelector("#rm-selg").innerHTML = "";
@@ -1051,95 +875,7 @@ function card() {
     if (st.bx) boxCard(box);
     return;
   }
-  box.hidden = st.c < 0;
-  if (st.c < 0) return;
-  const r = st.rows[st.c];
-  const selg = W.querySelector("#rm-selg");
-  el("path", { d: st.map.sea[r.n], class: "rm-sel", "vector-effect": "non-scaling-stroke" }, selg);
-  const [px, py] = P(...LAB[r.n]);
-  el("circle", { cx: px, cy: py, r: 1.4, class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
-  if (r.na) {
-    box.innerHTML = `<div class="hd"><h3>${r.n.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div><div class="sub">${L.name.toUpperCase()}</div><div style="margin-top:12px;font-size:20px">${r.na}</div>`;
-    box.querySelector("#rm-close").onclick = closeCard;
-    return;
-  }
-  const Wd = 250, Hd = 70, lo = Math.min(...r.ys), hi = Math.max(...r.ys), pad = (hi - lo) * 0.15 || 1;
-  const X = (x) => 8 + (x - r.y0) / Math.max(1, r.y1 - r.y0) * (Wd - 16), Y = (y) => Hd - 8 - (y - lo + pad) / (hi - lo + 2 * pad) * (Hd - 16);
-  let line = "";
-  r.xs.forEach((x, i) => {
-    line += (i && x - r.xs[i - 1] > 1 ? "M" : i ? "L" : "M") + X(x).toFixed(1) + " " + Y(r.ys[i]).toFixed(1);
-  });
-  const gap = L.gap && r.y0 <= L.gap[0] ? `<rect x="${X(L.gap[0] - 0.5)}" y="2" width="${X(L.gap[1] + 0.5) - X(L.gap[0] - 0.5)}" height="${Hd - 4}" fill="#d94a36" fill-opacity=".28"/>` : "";
-  const dp = L.sd < 1 ? 2 : 1, f = (x) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(dp);
-  const need = Math.ceil(r.nstar), det = r.det, sus = r.sus;
-  const verdict = det ? "TREND DETECTED" : sus ? "USE CAUTION" : "NO CLEAR TREND";
-  const note = sus ? "Trend found, but the 2017-2018 satellite gap is inside this period." : det ? "Clear trend over this period." : need > r.N ? `No clear trend yet. About ${need - r.N} more years of data needed.` : "No clear trend once all 11 countries are compared.";
-  box.innerHTML = `<div class="hd"><h3>${r.n.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
-    <div class="sub">${L.name.toUpperCase()} · ${r.y0}-${r.y1}${r.real ? "" : " · SAMPLE DATA"}</div>
-    <div class="big"><b id="rm-count">${f(0)}</b><span>${L.ud.replace("/dec", " / decade")}</span></div>
-    <span class="rm-verd" style="background:${det ? "var(--grn)" : sus ? "var(--red)" : "var(--mus)"};color:${sus ? "#fff" : "var(--ink)"}">${verdict}</span>
-    <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart">
-      ${[0.33, 0.66].map((q) => `<path d="M4 ${(Hd * q).toFixed(0)}H${Wd - 4}" stroke="#1a2f6e" stroke-dasharray="2 2"/>`).join("")}${gap}
-      <path class="ln" d="${line}"/>
-      <path class="tr" d="M${X(r.xs[0])} ${Y(r.a + r.b * r.xs[0])}L${X(r.xs[r.N - 1])} ${Y(r.a + r.b * r.xs[r.N - 1])}"/></svg>
-    <table class="rm-tab">
-      <tr><td>95% range</td><td>${f(r.b10 - 1.96 * r.se10)} .. ${f(r.b10 + 1.96 * r.se10)}</td></tr>
-      ${FXTXT[fxOf(r)] ? `<tr><td>Linked risk</td><td>${FXTXT[fxOf(r)](L)}</td></tr>` : ""}
-    </table>
-    <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
-    ${st.more ? `<table class="rm-tab">
-      <tr><td>Autocorr. r1</td><td>${r.r1.toFixed(2)}</td></tr>
-      <tr><td>n_eff / n</td><td>${r.neff.toFixed(1)} / ${r.N}</td></tr>
-      <tr><td>p / adj. p</td><td>${r.p < 1e-3 ? "<.001" : r.p.toFixed(3)} / ${r.padj < 1e-3 ? "<.001" : r.padj.toFixed(3)}</td></tr>
-      <tr><td>Years needed</td><td>${need > r.N ? "≈" : ""}${need} (have ${r.N})</td></tr></table>
-      <div class="rm-note">${note}</div>` : ""}
-    <div class="zoom-hint">${r.y0} · CLICK CHART TO ENLARGE · ${r.y1}</div>
-    <div class="rm-note">SAMPLE DATA, made up to show how the map works. Real NASA records live in the Indonesia sea level layer and in CASES.</div>
-    ${analysis.DATASETS[L.k] ? `<button class="obtn" id="rm-open">OPEN THE REAL ${L.k === "t2m" ? "TEMPERATURE" : "RAINFALL"} CASE ▸</button>` : ""}`;
-  box.querySelector("#rm-close").onclick = closeCard;
-  box.querySelector("#rm-more").onclick = () => {
-    st.more = !st.more;
-    sfx("select");
-    card();
-  };
-  const ln = box.querySelector(".ln"), len = ln.getTotalLength();
-  ln.style.strokeDasharray = `${len} ${len}`;
-  ln.style.strokeDashoffset = len;
-  const d0 = performance.now(), drawStep = (t) => {
-    const k = Math.min(1, (t - d0) / 900);
-    ln.style.strokeDashoffset = (len * (1 - Math.floor(k * 24) / 24)).toFixed(1);
-    if (k < 1) requestAnimationFrame(drawStep);
-  };
-  requestAnimationFrame(drawStep);
-  const t0 = performance.now(), el2 = box.querySelector("#rm-count");
-  const tick = (t) => {
-    const k = Math.min(1, (t - t0) / 500);
-    el2.textContent = f(r.b10 * (1 - Math.pow(1 - k, 3)));
-    if (k < 1) requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-  const ob = box.querySelector("#rm-open");
-  if (ob) ob.onclick = () => {
-    const ds = analysis.DATASETS[L.k];
-    sfx("chime");
-    desktop.startCase({ v: L.k, r: "idn", y0: ds.start, y1: ds.end });
-  };
-  const zs = box.querySelector("#rm-zoom");
-  zs.onclick = () => {
-    sfx("select");
-    openChart({
-      title: `${r.n.toUpperCase()} · ${L.name.toUpperCase()} · SAMPLE DATA`,
-      sub: `${r.y0}-${r.y1} · YEARLY · NOT NASA DATA`,
-      unit: L.unit,
-      series: r.xs.map((x, i) => [x, r.ys[i]]),
-      seriesLabel: "Yearly value (sample)",
-      fit: [[r.xs[0], r.a + r.b * r.xs[0]], [r.xs[r.N - 1], r.a + r.b * r.xs[r.N - 1]]],
-      fitLabel: `Trend ${f(r.b10)} ${L.ud}`,
-      stats: [["TREND", `${f(r.b10)} ${L.ud}`], ["95% RANGE", `${f(r.b10 - 1.96 * r.se10)} .. ${f(r.b10 + 1.96 * r.se10)}`], ["VERDICT", verdict]],
-      notes: ["Sample data, generated to demonstrate the map. Use the Indonesia sea level layer or CASES for real NASA records."],
-      dp
-    });
-  };
+  box.hidden = true;
 }
 function closeCard() {
   st.c = -1;
@@ -1620,6 +1356,8 @@ function areaResult(J, D, cities, layer) {
 }
 // A city on a layer other than sea level: the trend of the grid cells around it, judged the way a CIRCLE is.
 const CITY_RADII = [75, 150, 250];
+// The key of a city in cases_data.json (scripts/export_indonesia.py, export_city_cases.py).
+const citySlug = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
 function cityLayerCard(box) {
   const c = st.ssl.cities[st.city], L = LAYERS[st.v], D = cellLayer(), key = `${st.city}|${L.k}`;
   const selg = W.querySelector("#rm-selg"), [px, py] = P(c.lon, c.lat);
@@ -1636,7 +1374,7 @@ function cityLayerCard(box) {
   if (g.pending) box.innerHTML = head(L.name.toUpperCase() + " · READING THE GRID CELLS") + `<div class="rm-note">Reading the grid cells around ${c.name}…</div>`;
   else if (g.failed) box.innerHTML = head(L.name.toUpperCase()) + `<div class="rm-note" style="color:var(--red)">${g.error}</div>`;
   else {
-    areaCard(box, { kind: "city", name: c.name, lat: c.lat, lon: c.lon, r: g.R, res: g.res });
+    areaCard(box, { kind: "city", name: c.name, lat: c.lat, lon: c.lon, r: g.R, res: g.res, caseKey: c.case || citySlug(c.name) });
     return;
   }
   box.querySelector("#rm-close").onclick = closeCard;
@@ -1676,6 +1414,8 @@ function circleCard(box) {
 // One card for an area read from the grid cells: a drawn CIRCLE, or a city's surroundings (kind "city", with a name).
 function areaCard(box, c) {
   const r = c.res, L = LAYERS[st.v], D = cellLayer(), dp = L.real ? 0 : L.dp, ud = L.real ? "mm/dec" : L.ud, city = c.kind === "city";
+  // A city on a layer that has case data for it can be investigated as a case (SETUP > LINEUP).
+  const caseSet = city && caseData.DATASETS[L.k], caseReg = caseSet && caseSet.regions[c.caseKey];
   const f = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(dp), ll = (v, a, b) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? a : b}`;
   const upW = L.upV, downW = L.downV;
   const Wd = 250, Hd = 70, vals = r.yrs, lo = Math.min(...vals.map((q) => q[1])), hi = Math.max(...vals.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
@@ -1705,9 +1445,14 @@ function areaCard(box, c) {
     <div class="rm-ccs">${cityRows}</div>`}
     <div class="rm-note">${r.note}</div>
     <div class="rm-note">NASA DATA · ${D.dataset}</div>
-    <button class="obtn" id="rm-redraw">${city ? "DRAW A CIRCLE HERE" : "DRAW ANOTHER CIRCLE"} ▸</button>`;
+    ${caseReg ? `<div class="rm-note">CASE DATA · ${caseReg.long}</div><button class="obtn" id="rm-case">INVESTIGATE AS A CASE ▸</button>` : `<button class="obtn" id="rm-redraw">${city ? "DRAW A CIRCLE HERE" : "DRAW ANOTHER CIRCLE"} ▸</button>`}`;
   box.querySelector("#rm-close").onclick = closeCard;
-  box.querySelector("#rm-redraw").onclick = () => circleTool(true);
+  const rc = box.querySelector("#rm-case"), rd = box.querySelector("#rm-redraw");
+  if (rc) rc.onclick = () => {
+    sfx("chime");
+    desktop.startCase({ v: L.k, r: c.caseKey, y0: caseSet.start, y1: caseSet.end });
+  };
+  if (rd) rd.onclick = () => circleTool(true);
   box.querySelectorAll(".rm-cc").forEach((b) => b.onclick = () => {
     st.circ = null;
     circleDraw();
