@@ -2,7 +2,7 @@
 
 Status as of 2026-11-15. Counts are files on disk under `data/raw/`, which is git-ignored and
 about 7.3 GB. Raw files are not committed. The regional tables, QC reports and GeoJSON files in
-`data/processed/` are committed (about 9 MB). The per-cell cubes are local only.
+`data/processed/` are committed (about 9 MB). The per-cell cubes (`data/processed/cells/`) are committed too, so the deployed site can serve CIRCLE.
 
 ## Project scope: 1980 to 2018
 
@@ -34,7 +34,7 @@ Download manifests: `data/raw/merra2/manifest.csv` (702 jobs ok, 1 skipped, 0 fa
 ## Processed outputs
 
 Regional tables are in `data/processed/<group>/` and are committed. The per-cell cubes in
-`data/processed/cells/` are local only (about 40 MB, not committed).
+`data/processed/cells/` are committed (about 46 MB: MERRA-2, GPCP and GLDAS cubes with their manifests).
 
 ### Regional monthly tables (committed)
 
@@ -64,7 +64,7 @@ daily regional maxima. A daily-resolution file is not saved yet.
 | `geojson/*.geojson` (8 files) | ECCO sea surface height for all four products (one polygon for the box per month), and the NASA SSH ENSO, IOD, PDO and GMSL indices (null geometry, one feature per time step) | `scripts/raw_to_json.py` |
 | `ocean_se_asia/*.npz` (625 files) | Monthly ECCO sea surface height for the Southeast Asia box, 1992 to 2017 | `ingest/ocean_download.py` |
 
-### Per-cell cubes (local only, not committed)
+### Per-cell cubes (committed)
 
 These are not from this session's pipeline. They were created on 15 November in the local folder,
 and their owner should confirm them before any commit.

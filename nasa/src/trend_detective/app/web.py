@@ -340,6 +340,11 @@ def create_app(
     def bad_selection(err):
         return json_error(str(err), 400)
 
+    @app.get("/healthz")
+    def healthz():
+        """Liveness check for the hosting service (reads no data)."""
+        return jsonify({"ok": True})
+
     @app.get("/")
     def index():
         if site is not None:

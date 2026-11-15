@@ -413,6 +413,7 @@ def test_too_long_series_is_refused(client):
         ("null", "JSON object"),
         ("[" * 100000, "JSON object"),  # nested deeper than the parser allows
     ],
+    ids=["not-json", "empty", "list", "string", "null", "deep-nesting"],  # short names (Windows)
 )
 def test_malformed_bodies_are_refused(client, payload, fragment):
     r = client.post("/api/analyse-series", data=payload, content_type="application/json")
