@@ -85,9 +85,9 @@ uncorrected sentence. The page shows `significance.sentence`.
       `desktop.js` was checked statically instead (main + our four lines).
 
 ### Phase 1: freeze today's behaviour
-- [ ] 1.1 Snapshot tests on seeded synthetic data for `analyse_city`, `analyse_circle` and `build_map`
+- [x] 1.1 Snapshot tests on seeded synthetic data for `analyse_city`, `analyse_circle` and `build_map`
       (numbers only). Reuse the synthetic grid helpers in `tests/process/test_selection.py`.
-- [ ] 1.2 Keep the teammate's Jakarta checks (T2M +0.1645 K/decade, rain +0.3276 mm/day/decade); they
+- [x] 1.2 (nothing to add: their tests already cover it; they stay skipped until the cube exists) Keep the teammate's Jakarta checks (T2M +0.1645 K/decade, rain +0.3276 mm/day/decade); they
       run once the cell cube exists (skipped today).
 
 ### Phase 2: the engine, doc first
