@@ -512,7 +512,11 @@ function pickCity(i, fly) {
   }
   st.city = i;
   st.c = -1;
-  sfx(cityState(c) === "inland" ? "err" : "select");
+  const k = cityState(c);
+  sfx(k === "inland" ? "err" : "select");
+  if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "The yellow squares are the ocean cells I averaged. Nothing hidden."], "sig");
+  else if (k === "ns") talk([`${c.name}. The sea climbs fast here too.`, "But it swings so much from year to year that I can’t prove it yet. That’s a different answer from no."], "ns");
+  else talk(["Inland. The ocean data can’t speak for this one.", "I’m not inventing a number to fill the gap."], "inland");
   if (fly) flyTo(cityBox(c));
   paint(false);
 }
@@ -732,6 +736,7 @@ function toolbar() {
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
+    if (!LAYERS[st.v].real) talk(["Careful. This layer is sample data. It shows how the map works, not what’s real.", "Real temperature and rain are in CASES."], "sample");
     st.yr = null;
     if (!LAYERS[st.v].real) st.city = -1;
     st.c = -1;
@@ -1267,6 +1272,7 @@ async function open(win, helpers) {
   });
   setTimeout(() => paint(true), 350);
   setTimeout(() => zoom("idn"), 1700);
+  if (st.ssl) setTimeout(() => talk([`${st.ssl.cities.length} cities. ${st.ssl.tests} of them on the coast.`, "Pick one from CITIES. I’ll show you exactly which ocean cells the number comes from."], "map"), 2900);
   H.log && H.log(st.ssl ? `MAP: ECCO SEA LEVEL FOR ${st.ssl.tests} COASTAL CITIES LOADED.` : "MAP: SAMPLE DATA.");
 }
 const regionMap = { open };

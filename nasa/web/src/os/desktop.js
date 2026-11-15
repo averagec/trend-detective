@@ -51,6 +51,8 @@ function drag(w) {
     if (e.target.closest(".bx")) return;
     const r = w.getBoundingClientRect(), pr = $("#wins").getBoundingClientRect();
     const ox = e.clientX - r.left, oy = e.clientY - r.top;
+    if (w.style.right && w.style.right !== "auto") w.style.width = toLocal(r.width) + "px";
+    if (w.style.bottom && w.style.bottom !== "auto") w.style.height = toLocal(r.height) + "px";
     w.style.right = "auto";
     w.style.bottom = "auto";
     const mv = (ev) => {

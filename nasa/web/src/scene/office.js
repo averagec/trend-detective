@@ -181,9 +181,9 @@ function play() {
     if (state.firstRoom) {
       state.firstRoom = false;
       say([
-        "Singapore again. Someone’s sure it’s getting hotter.",
-        "Could be true. Could also be a line someone drew through noise because it looked convincing.",
-        "Only one way to settle it. Computer first."
+        "Jakarta again. High tide came over the sea wall last night.",
+        "Everyone says the sea is rising. Could be true. Could also be a scary line drawn through noise.",
+        "Only one way to settle it. NASA’s records. Computer first."
       ]);
     }
   }, 58);
