@@ -1,8 +1,8 @@
 # Datasets
 
 Status as of 2026-11-15. Counts are files on disk under `data/raw/`, which is git-ignored and
-about 7.3 GB. Raw files are not committed. The cleaned outputs in `data/processed/` are committed
-(about 9 MB).
+about 7.3 GB. Raw files are not committed. The regional tables, QC reports and GeoJSON files in
+`data/processed/` are committed (about 9 MB). The per-cell cubes are local only.
 
 ## Status at a glance
 
@@ -23,18 +23,51 @@ about 7.3 GB. Raw files are not committed. The cleaned outputs in `data/processe
 Download manifests: `data/raw/merra2/manifest.csv` (702 jobs ok, 1 skipped, 0 failed) and
 `data/raw/witness/manifest.csv` (71 jobs ok or skipped, 0 failed).
 
-## Processed outputs (committed)
+## Processed outputs
+
+Regional tables are in `data/processed/<group>/` and are committed. The per-cell cubes in
+`data/processed/cells/` are local only (about 40 MB, not committed).
+
+### Regional monthly tables (committed)
+
+| File | Rows | Variables | Regions | Period | Made by |
+|---|---|---|---|---|---|
+| `merra2/monthly_regional.csv` | 13,467 | t2m, t2mmax, qv2m, ps, vpd, precip, evap, tsurf | 3 | 1980-01 to 2026-10 | `process/merra2_clean.py` |
+| `witness/witness_regional.csv` | 7,110 | gldas_sm_0_10cm, gldas_sm_10_40cm, gldas_sm_40_100cm, gldas_sm_100_200cm, gldas_rain, gpcp_precip, grace_lwe | 3 | GLDAS 2000-01 to 2026-07; GPCP 1983-01 to 2025-12; GRACE 2002-04 to 2026-09 | `process/witness_clean.py` |
+| `ocean/ocean_regional.csv` | 3,744 | ssh (metres), 4 products: ECCO 0.5° and LLC90, each V4R4 and V4R4B | 3 | 1992-01 to 2017-12 | `process/ocean_clean.py` |
+
+The regions are `se_asia_maritime`, `east_asia_land` and `north_asia_siberia` (`catalog/regions.py`).
+North Asia has no ocean cells, so its ocean rows are blank. The t2mmax rows are monthly means of the
+daily regional maxima. A daily-resolution file is not saved yet.
+
+### QC reports (committed)
+
+| File | What it records | Made by |
+|---|---|---|
+| `merra2/qc_report.json` | Files read, rows written, fill and out-of-range counts per variable | `process/merra2_clean.py` |
+| `witness/qc_report.json` | Masked counts per variable and the GRACE duplicate-month count | `process/witness_clean.py` |
+| `ocean/qc_report.json` | Masked counts per ECCO product | `process/ocean_clean.py` |
+
+### Other processed files (committed)
 
 | File | Contents | Made by |
 |---|---|---|
-| `data/processed/merra2/monthly_regional.csv` | 13,467 rows: 3 regions × 8 variables × months, with area-weighted values and cell counts | `process/merra2_clean.py` |
-| `data/processed/merra2/qc_report.json` | Files read, rows written, fill and out-of-range counts per variable | `process/merra2_clean.py` |
-| `data/processed/witness/witness_regional.csv` | 7,110 rows: GLDAS (5 variables), GPCP (1), GRACE (1) × 3 regions × months | `process/witness_clean.py` |
-| `data/processed/witness/qc_report.json` | Masked counts per variable and the GRACE duplicate-month count | `process/witness_clean.py` |
-| `data/processed/ocean/ocean_regional.csv` | 3,744 rows: ECCO SSH, 4 products (0.5° and native LLC90, V4R4 and V4R4B) × 3 regions × 312 months (metres) | `process/ocean_clean.py` |
-| `data/processed/ocean/qc_report.json` | Masked counts per version | `process/ocean_clean.py` |
-| `data/processed/geojson/*.geojson` | Ocean and sea-level series as GeoJSON (one polygon per month for the box, or null geometry for indices) | `scripts/raw_to_json.py` |
-| `data/processed/ocean_se_asia/*.npz` | Monthly Southeast Asia sea-surface height, 1992 to 2017 | `ingest/ocean_download.py` |
+| `geojson/*.geojson` (8 files) | ECCO sea surface height for all four products (one polygon for the box per month), and the NASA SSH ENSO, IOD, PDO and GMSL indices (null geometry, one feature per time step) | `scripts/raw_to_json.py` |
+| `ocean_se_asia/*.npz` (625 files) | Monthly ECCO sea surface height for the Southeast Asia box, 1992 to 2017 | `ingest/ocean_download.py` |
+
+### Per-cell cubes (local only, not committed)
+
+These are not from this session's pipeline. They were created on 15 November in the local folder,
+and their owner should confirm them before any commit.
+
+| File | Contents | Size | Made by |
+|---|---|---|---|
+| `cells/merra2_idn.npz` (+ manifest) | MERRA-2 monthly values for each grid cell of the Indonesia box (94°E to 142°E, 12°S to 7°N): 39 × 77 cells, 561 months, with t2m, qv2m, ps, precip, evap, tsurf, vpd | 35 MB | `process/cell_cube.py` |
+| `cells/gpcp_idn.npz` (+ manifest) | GPCP monthly rainfall for each cell of the same box: 38 × 96 cells, 516 months, 1983-01 to 2025-12 | 6.8 MB | `process/cell_cube.py` |
+
+Other local files that read these outputs: `process/event_series.py` (monthly series for the flood and
+drought flow, using the cubes and the ENSO, IOD and PDO indices), and `process/cities.py` and
+`process/selection.py`. These were added in the same local folder and are not committed.
 
 ## MERRA-2 (NASA GMAO reanalysis)
 

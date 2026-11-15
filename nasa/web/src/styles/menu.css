@@ -250,3 +250,21 @@ body.playing #menu {
   font-size: 15px;
   color: #6d675a;
 }
+.panel p {
+  margin: 0 0 10px;
+}
+.panel b {
+  color: #f3ecdc;
+  font-weight: 400;
+}
+.panel .small {
+  font-size: 14px;
+  color: #8a8371;
+}
+.panel .team {
+  margin: 14px 0 0;
+  font-family: "VT323", monospace;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: #e8c98a;
+}

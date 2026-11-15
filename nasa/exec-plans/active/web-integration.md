@@ -82,3 +82,4 @@ network runs all demo cases, and `web/` contains no statistics code.
   strong fit with the science rules.
 - Python's Mann-Kendall p is unadjusted; the web's is autocorrelation-adjusted. Do not show both
   labels for one number: pick one in `docs/statistics.md` and use it everywhere.
+- 2026-11-15 — ui-update: limited to the team's 31 cities (23 coastal, 14 clear rises); 10m coastline for coast distance; grid-cell focus, CITIES dropdown, GIBS SAT toggle, animated flood sprite, click-to-enlarge charts. CASES now real-data only (`cases_data.json`: ECCO per city + MERRA-2 regional t2m/precip), synthetic case datasets removed, lineup shows the PYTHON CORE result beside its own. ABOUT.TXT and title ABOUT panel (mission, references, Team SanSong). Next: per-province MERRA-2 (Jacob's raw grids) to replace the SAMPLE layers.

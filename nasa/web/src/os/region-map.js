@@ -4,6 +4,7 @@ import { analysis } from "../stats/trend-analysis.js";
 import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
 import { uiScale } from "../ui/scale.js";
+import { openChart } from "../ui/chart-view.js";
 const NAMES = ["Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam"];
 const LAB = {
   Brunei: [114.6, 5.9],
@@ -101,7 +102,7 @@ const LAYERS = [
 const SSL_BINS = [30, 36, 42, 48];
 const PAL = { s: ["#d8e6ee", "#9fd0e8", "#5aa6dd", "#2f6fc0", "#1c3d8c"], t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52], idn: [273, 78, 50, 28] };
-const st = { v: 0, city: -1, q: "", yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1 };
+const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1 };
 let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
@@ -260,6 +261,9 @@ function buildSvg() {
   for (let x = 0; x <= 360; x += 15) g += `M${x} -30V210`;
   for (let y = 0; y <= 180; y += 15) g += `M-20 ${y}H380`;
   el("path", { d: g, stroke: "#14255a", "stroke-width": 1, "vector-effect": "non-scaling-stroke", fill: "none" }, svg);
+  const sg0 = el("g", { id: "rm-satg", style: "display:none" }, svg);
+  el("image", { id: "rm-sat0", preserveAspectRatio: "none", class: "rm-satimg" }, sg0);
+  el("image", { id: "rm-sat1", preserveAspectRatio: "none", class: "rm-satimg" }, sg0);
   const rest = el("path", { d: st.map.rest, class: "rm-rest", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, svg);
   rest.onclick = (e) => {
     if (!st.dragged) denied(e);
@@ -286,6 +290,7 @@ function buildSvg() {
     const pg = el("g", { id: "rm-prov", "pointer-events": "none" }, svg);
     for (const [n, d] of Object.entries(st.prov.provinces)) el("path", { d, class: "rm-prv", "data-n": n, "vector-effect": "non-scaling-stroke" }, pg);
   }
+  el("g", { id: "rm-gridg" }, svg);
   const [sx, sy] = P(...LAB.Singapore);
   const sg = el("circle", { cx: sx, cy: sy, r: 0.5, class: "rm-c", "data-c": 7, stroke: "#ece6d6", "stroke-width": 2, "vector-effect": "non-scaling-stroke", fill: "#0b1534" }, svg);
   sg.onclick = () => {
@@ -378,6 +383,90 @@ function cities() {
   });
   cityFades();
   cityLabels();
+  drawGrid();
+}
+const KM_DEG = 111.32;
+function drawGrid() {
+  const g = W.querySelector("#rm-gridg");
+  if (!g) return;
+  g.innerHTML = "";
+  const c = st.ssl && st.city >= 0 ? st.ssl.cities[st.city] : null;
+  if (!c || !c.grid || !LAYERS[st.v].real) return;
+  const step = st.ssl.grid.cell_deg, R = st.ssl.grid.radius_km, h = step / 2;
+  c.grid.forEach((q) => {
+    const x = q.lon + 180 - h, y = 90 - q.lat - h;
+    const fill = q.ocean && q.trend_mm_per_decade != null ? PAL.s[sslBin(q.trend_mm_per_decade)] : "none";
+    const r = el("rect", { x, y, width: step, height: step, fill, "fill-opacity": q.used ? 0.92 : 0.45, "pointer-events": "all", class: "rm-cell" + (q.used ? " used" : "") + (q.ocean ? "" : " land"), "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
+    r.onmousemove = (e) => cellTip(e, c, q);
+    r.onmouseleave = () => tip(null);
+    if (q.ocean && q.trend_mm_per_decade != null) {
+      const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : ""), "font-size": (step * 0.24).toFixed(3) }, g);
+      t.textContent = (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0);
+    }
+  });
+  const [cx, cy] = P(c.lon, c.lat), ry = R / KM_DEG, rx = ry / Math.cos(c.lat * Math.PI / 180);
+  el("ellipse", { cx, cy, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
+  const used = c.grid.filter((q) => q.used).length;
+  const cap = el("text", { x: cx, y: cy + ry + 0.22, class: "rm-gridcap", "font-size": 0.17 }, g);
+  cap.textContent = `${used} OF ${c.grid.length} CELLS USED · CENTRES WITHIN ${R} KM`;
+}
+function cellTip(e, c, q) {
+  const t = $("#rm-tip"), box = $("#rm-mapc").getBoundingClientRect(), ll = (v, p, n) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? p : n}`;
+  const val = q.ocean && q.trend_mm_per_decade != null ? `<b style="font-weight:400">${q.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(q.trend_mm_per_decade).toFixed(1)} mm/dec</b>` : '<span class="dim">land · no sea data</span>';
+  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${q.used ? `used for ${c.name}` : "not used"}</span>`;
+  t.style.display = "block";
+  const z = uiScale;
+  t.style.left = Math.min((e.clientX - box.left) / z + 14, box.width / z - t.offsetWidth - 6) + "px";
+  t.style.top = (e.clientY - box.top) / z + 16 + "px";
+}
+const GIBS = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi";
+const SAT_LAYERS = ["BlueMarble_NextGeneration", "BlueMarble_ShadedRelief_Bathymetry"];
+const SAT_BASE = [88, -16, 148, 32];
+function satUrl(b, w, li) {
+  const h = Math.max(16, Math.round(w * (b[3] - b[1]) / (b[2] - b[0])));
+  return [`${GIBS}?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=${SAT_LAYERS[li]}&STYLES=&SRS=EPSG:4326&BBOX=${b.map((v) => v.toFixed(3)).join(",")}&WIDTH=${w}&HEIGHT=${h}&FORMAT=image/jpeg`, h];
+}
+function satImage(img, b, w, li = 0) {
+  const [url] = satUrl(b, w, li);
+  if (img.dataset.u === url) return;
+  img.dataset.u = url;
+  Object.entries({ x: b[0] + 180, y: 90 - b[3], width: b[2] - b[0], height: b[3] - b[1] }).forEach(([k, v]) => img.setAttribute(k, v));
+  img.style.opacity = 0;
+  img.onload = () => {
+    img.style.opacity = 1;
+    satStatus(true);
+  };
+  img.onerror = () => {
+    if (li + 1 < SAT_LAYERS.length) {
+      img.dataset.u = "";
+      satImage(img, b, w, li + 1);
+    } else satStatus(false);
+  };
+  img.setAttribute("href", url);
+}
+function satStatus(ok) {
+  const chip = W && W.querySelector("[data-sat]");
+  if (!chip || !st.sat) return;
+  chip.classList.toggle("bad", !ok);
+  chip.title = ok ? "NASA GIBS Blue Marble imagery" : "Satellite imagery needs internet (NASA GIBS). Offline: map only.";
+}
+function satRefresh() {
+  const g = W && W.querySelector("#rm-satg");
+  if (!g) return;
+  g.style.display = st.sat ? "" : "none";
+  $("#rm-mapc").classList.toggle("sat", st.sat);
+  if (!st.sat) return;
+  satImage(W.querySelector("#rm-sat0"), SAT_BASE, 1024);
+  const vb = st.vb, d = W.querySelector("#rm-sat1");
+  if (!vb || st.view === "world" || vb[2] > 24) {
+    d.style.display = "none";
+    return;
+  }
+  d.style.display = "";
+  const pad = vb[2] * 0.25, b = [vb[0] - 180 - pad, 90 - vb[1] - vb[3] - pad, vb[0] - 180 + vb[2] + pad, 90 - vb[1] + pad];
+  const q = Math.pow(2, Math.ceil(Math.log2(vb[2] * 1.5)));
+  const snap = (v) => Math.round(v / (q / 8)) * (q / 8);
+  satImage(d, [snap(b[0]), snap(b[1]), snap(b[0]) + q, snap(b[1]) + q * (b[3] - b[1]) / (b[2] - b[0])], 512);
 }
 function zoomedIn() {
   return st.view !== "world" && st.vb && st.vb[2] <= 34;
@@ -428,7 +517,7 @@ function pickCity(i, fly) {
   paint(false);
 }
 function cityBox(c) {
-  const w = 9, h = w * VB.idn[3] / VB.idn[2], x = c.lon + 180, y = 90 - c.lat;
+  const w = c.grid ? 5.6 : 9, h = w * VB.idn[3] / VB.idn[2], x = c.lon + 180, y = 90 - c.lat;
   return [x - w * 0.42, y - h / 2, w, h];
 }
 function boxOf(d) {
@@ -450,12 +539,16 @@ function cityCard(box) {
   const c = st.ssl.cities[st.city], k = cityState(c), m = st.ssl;
   const selg = W.querySelector("#rm-selg");
   const [px, py] = P(c.lon, c.lat);
-  el("circle", { cx: px, cy: py, r: (0.9 * Math.min(1, (st.vb || VB.sea)[2] / VB.sea[2])).toFixed(3), class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
+  if (!c.grid) el("circle", { cx: px, cy: py, r: (0.9 * Math.min(1, (st.vb || VB.sea)[2] / VB.sea[2])).toFixed(3), class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
   const head = `<div class="hd"><h3>${c.name.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
     <div class="sub">${c.province.toUpperCase()} · SEA LEVEL · ${m.period[0]}-${m.period[1]}</div>`;
   if (k === "inland") {
-    box.innerHTML = head + `<div style="margin-top:10px;font-size:20px;line-height:1.15">${c.note}</div><div class="rm-note">Pick a coastal city to see its sea level.</div>`;
+    const nc = c.nearest_coastal, ni = nc && nc.km <= 200 ? m.cities.findIndex((x) => x.name === nc.name) : -1;
+    box.innerHTML = head + `<div style="margin-top:10px;font-size:20px;line-height:1.15">${c.note}</div>
+      <div class="rm-note">Sea level is measured in the ocean, so it only tells you about cities on the coast. Rivers can still carry high tides inland, but this data cannot show that.</div>
+      ${ni >= 0 ? `<button class="obtn" id="rm-near" style="margin-top:8px">SEE ${nc.name.toUpperCase()} · ${nc.km} KM ▸</button>` : ""}`;
     box.querySelector("#rm-close").onclick = closeCard;
+    if (ni >= 0) box.querySelector("#rm-near").onclick = () => pickCity(ni, true);
     return;
   }
   const f = (v, d = 1) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d);
@@ -470,12 +563,14 @@ function cityCard(box) {
   box.innerHTML = head + `
     <div class="big"><b>${f(c.trend_mm_per_year)}</b><span>mm a year</span></div>
     <span class="rm-verd" style="background:${sig ? "var(--grn)" : "var(--mus)"}">${sig ? "TREND DETECTED" : "NO CLEAR TREND"}</span>
-    <svg class="rm-spark" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none">
+    <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart">
       <path d="${band}" fill="#e9a93a" fill-opacity=".18"/><path class="ln" d="${line}"/><path class="tr" d="${fit}"/></svg>
+    <div class="zoom-hint">${m.period[0]} · CLICK CHART TO ENLARGE · ${m.period[1]}</div>
     <table class="rm-tab">
       <tr><td>Per decade</td><td>${f(c.trend_mm_per_decade)} mm</td></tr>
       <tr><td>95% range</td><td>${f(c.ci_mm_per_decade[0], 0)} .. ${f(c.ci_mm_per_decade[1], 0)} mm</td></tr>
       ${sig ? "<tr><td>Risk</td><td>Coastal flooding</td></tr>" : ""}
+      <tr><td>Grid cells</td><td>${c.cells} used · ${Math.round(c.nearest_cell_km)} km</td></tr>
     </table>
     <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
     ${st.more ? `<table class="rm-tab">
@@ -485,14 +580,49 @@ function cityCard(box) {
       <tr><td>MK p (unadj.)</td><td>${c.mk_p_unadjusted < 1e-3 ? "<.001" : c.mk_p_unadjusted.toFixed(3)}</td></tr>
       <tr><td>Ocean cells</td><td>${c.cells} · ${Math.round(c.nearest_cell_km)} km</td></tr></table>
       <div class="rm-note">${c.sentence} Adjusted p accounts for testing ${m.tests} coastal cities at once.${c.warnings.length ? " " + c.warnings.join(" ") : ""}</div>` : ""}
-    <div class="rm-note">${m.caveat}</div>
-    <div class="rm-note">NASA DATA · ${m.dataset}</div>`;
+    <div class="rm-note">${m.caveat} ${m.grid ? m.grid.note : ""}</div>
+    <div class="rm-note">NASA DATA · ${m.dataset}</div>
+    <button class="obtn" id="rm-case">INVESTIGATE AS A CASE ▸</button>`;
   box.querySelector("#rm-close").onclick = closeCard;
+  const zc = box.querySelector("#rm-zoom");
+  zc.onclick = () => cityChart(c);
+  zc.onkeydown = (e) => e.key === "Enter" && cityChart(c);
+  box.querySelector("#rm-case").onclick = () => {
+    sfx("chime");
+    desktop.startCase({ v: "ssl", r: c.case, y0: m.period[0], y1: m.period[1] });
+  };
   box.querySelector("#rm-more").onclick = () => {
     st.more = !st.more;
     sfx("select");
     card();
   };
+}
+function cityChart(c) {
+  const m = st.ssl, f = (v, d = 1) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d), p = (v) => v < 1e-3 ? "< 0.001" : v.toFixed(3);
+  sfx("select");
+  openChart({
+    title: `${c.name.toUpperCase()} · SEA LEVEL ${m.period[0]}-${m.period[1]}`,
+    sub: `${c.province.toUpperCase()} · ${c.region.toUpperCase()} · YEARLY AVERAGE, SEASONS REMOVED`,
+    unit: "mm vs average",
+    series: c.annual_anomaly_mm,
+    seriesLabel: "Yearly sea level vs the 1992-2017 average",
+    fit: c.line_mm.map((q) => [q[0], q[1]]),
+    fitLabel: `Trend ${f(c.trend_mm_per_decade)} mm per decade`,
+    band: c.line_mm.map((q) => [q[0], q[2], q[3]]),
+    bandLabel: "95% range of the trend line",
+    zero: true,
+    stats: [
+      ["TREND", `${f(c.trend_mm_per_year)} mm / year`],
+      ["95% RANGE", `${f(c.ci_mm_per_decade[0], 0)} to ${f(c.ci_mm_per_decade[1], 0)} mm / decade`],
+      ["OVER THE RECORD", `${f(c.trend_mm_per_year * (m.period[1] - m.period[0] + 1), 0)} mm in ${m.period[1] - m.period[0] + 1} years`],
+      ["SEN'S SLOPE", `${f(c.sen_mm_per_decade)} mm / decade`],
+      ["P (ADJUSTED)", `${p(c.p_adjusted)} · ${m.tests} cities tested`],
+      ["VERDICT", cityState(c) === "sig" ? "TREND DETECTED" : "NO CLEAR TREND YET"]
+    ],
+    notes: [c.sentence, `Built from ${c.cells} ECCO ocean cells (0.5°) within ${m.grid ? m.grid.radius_km : 120} km; the nearest is ${Math.round(c.nearest_cell_km)} km away.`, m.caveat],
+    source: m.dataset,
+    dp: 1
+  });
 }
 const FXTXT = { rain: () => "Heavier rain", storm: () => "Stronger storms", drought: (L) => L.k === "t2m" ? "Heat, drought" : "Drought" };
 function fxOf(r) {
@@ -547,12 +677,14 @@ function placeFx() {
     if (sp.length >= 6 || sp.some((q) => Math.hypot(q.ax - ax, q.ay - ay) < 15)) return;
     sp.push({ t: fxOf(r), ax, ay });
   });
+  const sel = st.city >= 0 && st.ssl ? st.ssl.cities[st.city] : null;
+  const inRing = (c) => sel && sel.grid && Math.hypot((c.lon - sel.lon) * Math.cos(sel.lat * Math.PI / 180), c.lat - sel.lat) * KM_DEG < st.ssl.grid.radius_km * 1.6;
   if (LAYERS[st.v].real && st.ssl) {
-    st.ssl.cities.map((c, i) => [c, i]).filter(([c, i]) => cityState(c) === "sig" && !W.querySelector(`.rm-city[data-i="${i}"]`).classList.contains("fade")).sort((a, b) => (b[1] === st.city) - (a[1] === st.city) || b[0].population - a[0].population).forEach(([c]) => {
+    st.ssl.cities.map((c, i) => [c, i]).filter(([c, i]) => i !== st.city && !inRing(c) && cityState(c) === "sig" && !W.querySelector(`.rm-city[data-i="${i}"]`).classList.contains("fade")).sort((a, b) => b[0].population - a[0].population).forEach(([c]) => {
       const [ax, ay] = toCell([c.lon, c.lat]);
       if (ax < 0 || ay < 0 || ax >= GW || ay >= GH) return;
-      if (sp.length >= 10 || sp.some((q) => Math.hypot(q.ax - ax, q.ay - ay) < 16)) return;
-      sp.push({ t: "flood", ax, ay: ay - 2 });
+      if (sp.length >= 8 || sp.some((q) => Math.abs(q.ax - ax) < 17 && Math.abs(q.ay - ay) < 20)) return;
+      sp.push({ t: "flood", ax, ay: ay - 3 });
     });
   }
   const g = cv.getContext("2d"), img = g.createImageData(GW, GH);
@@ -593,9 +725,11 @@ function toolbar() {
   $("#rm-bar").innerHTML = `<div class="rm-seg" role="group" aria-label="Layer">${LAYERS.map((L, i) => L.lock ? "" : `<button data-l="${i}" class="${i === st.v ? "on" : ""}" title="${L.name} · ${L.src}"><i style="background:${PAL[L.pal][4]}"></i>${L.short}</button>`).join("")}<button class="lk" data-lock title="${locked.map((L) => `${L.name}: locked until ${L.lock}`).join("\n")}">+${locked.length} LOCKED</button></div>
     ${LAYERS[st.v].real ? `<span class="rm-fixed" title="Trends are computed once over the full ECCO record by the Python core">FULL RECORD</span>` : `<div class="rm-range" id="rm-range" role="group" aria-label="Years"><div class="tr"></div><div class="fl"></div><button class="hd" data-h="0" aria-label="Start year"></button><button class="hd" data-h="1" aria-label="End year"></button></div>`}
     <span class="rm-yrs" id="rm-yrs">${LAYERS[st.v].real ? `${st.span[0]}-${st.span[1]}` : ""}</span>
-    <div class="rm-search"><input id="rm-q" type="search" placeholder="Search city…" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox" hidden></div></div>
+    <div class="rm-dd" id="rm-dd"><button class="rm-ddb${st.city >= 0 ? " on" : ""}" id="rm-ddb" aria-haspopup="listbox" aria-expanded="false"><i class="pin"></i><span>${st.city >= 0 && st.ssl ? st.ssl.cities[st.city].name.toUpperCase() : "CITIES"}</span><b>▾</b></button>
+      <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
     <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
-    <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">FX ${st.fx ? "ON" : "OFF"}</button>`;
+    <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">FX ${st.fx ? "ON" : "OFF"}</button>
+    <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
     st.yr = null;
@@ -619,36 +753,79 @@ function toolbar() {
     e.currentTarget.textContent = `FX ${st.fx ? "ON" : "OFF"}`;
     placeFx();
   };
+  W.querySelector("[data-sat]").onclick = (e) => {
+    st.sat = !st.sat;
+    sfx("select");
+    e.currentTarget.classList.toggle("on", st.sat);
+    e.currentTarget.classList.remove("bad");
+    e.currentTarget.textContent = `SAT ${st.sat ? "ON" : "OFF"}`;
+    satRefresh();
+  };
   if (!LAYERS[st.v].real) bindRange(lo, hi);
   bindSearch();
 }
 function bindSearch() {
-  const q = $("#rm-q"), res = $("#rm-res");
+  const q = $("#rm-q"), res = $("#rm-res"), btn = $("#rm-ddb"), pnl = $("#rm-ddp");
   let items = [], hi = 0;
   const norm = (x) => x.toLowerCase().normalize("NFD").replace(/[^a-z0-9 ]/g, "");
+  const val = (c) => {
+    const k = cityState(c);
+    if (k === "inland") return ["inland", "#0b1534"];
+    const v = `${c.trend_mm_per_year >= 0 ? "+" : "−"}${Math.abs(c.trend_mm_per_year).toFixed(1)} mm/yr`;
+    return [k === "sig" ? v : v + " ·?", k === "sig" ? PAL.s[sslBin(c.trend_mm_per_decade)] : GREY];
+  };
+  const row = (x, k) => {
+    if (x.t === "h") return `<div class="grp">${x.name.toUpperCase()} <small>${x.n}</small></div>`;
+    if (x.t === "p") return `<button role="option" data-k="${k}"><span><i class="sw prov"></i>${x.name}</span><small>province</small></button>`;
+    const c = st.ssl.cities[x.i], [v, col] = val(c);
+    return `<button role="option" data-k="${k}" class="${x.i === st.city ? "cur" : ""}" title="${c.province}"><span><i class="sw" style="background:${col}"></i>${c.name}</span><small>${v}</small></button>`;
+  };
   const render = () => {
+    if (!st.ssl) return;
     const v = norm(q.value.trim());
     st.q = q.value;
-    if (!v || !st.ssl) {
-      res.hidden = true;
-      return;
+    const all = st.ssl.cities.map((c, i) => ({ t: "c", i, n: norm(c.name), reg: c.region || c.province, pop: c.population }));
+    let list;
+    if (!v) {
+      const by = {};
+      all.forEach((x) => (by[x.reg] = by[x.reg] || []).push(x));
+      list = Object.keys(by).flatMap((p) => [{ t: "h", name: p, n: by[p].length }, ...by[p]]);
+    } else {
+      const ps = st.prov ? Object.keys(st.prov.provinces).map((name) => ({ t: "p", name, n: norm(name), pop: 0 })) : [];
+      const score = (x) => x.n.startsWith(v) ? 0 : x.n.split(" ").some((w) => w.startsWith(v)) ? 1 : x.n.includes(v) ? 2 : 9;
+      list = all.concat(ps).map((x) => [score(x), x]).filter((a) => a[0] < 9).sort((a, b) => a[0] - b[0] || b[1].pop - a[1].pop).slice(0, 12).map((a) => a[1]);
     }
-    const cs = st.ssl.cities.map((c, i) => ({ t: "c", i, name: c.name, sub: c.province, n: norm(c.name), pop: c.population }));
-    const ps = st.prov ? Object.keys(st.prov.provinces).map((name) => ({ t: "p", name, sub: "Province", n: norm(name), pop: 0 })) : [];
-    const score = (x) => x.n.startsWith(v) ? 0 : x.n.split(" ").some((w) => w.startsWith(v)) ? 1 : x.n.includes(v) ? 2 : 9;
-    items = cs.concat(ps).map((x) => [score(x), x]).filter((a) => a[0] < 9).sort((a, b) => a[0] - b[0] || b[1].pop - a[1].pop).slice(0, 8).map((a) => a[1]);
-    hi = 0;
-    res.innerHTML = items.length ? items.map((x, k) => `<button role="option" data-k="${k}" class="${k === hi ? "hi" : ""}"><span>${x.name}</span><small>${x.sub}</small></button>`).join("") : '<div class="none">No city found</div>';
-    res.hidden = false;
+    items = list;
+    const picks = list.map((x, k) => x.t === "h" ? -1 : k).filter((k) => k >= 0);
+    hi = v ? picks[0] ?? -1 : -1;
+    res.innerHTML = list.length ? list.map(row).join("") : '<div class="none">No city found</div>';
+    mark();
     res.querySelectorAll("[data-k]").forEach((b) => b.onmousedown = (e) => {
       e.preventDefault();
       go(items[+b.dataset.k]);
     });
   };
+  const mark = () => {
+    res.querySelectorAll("[data-k]").forEach((b) => b.classList.toggle("hi", +b.dataset.k === hi));
+    const h = res.querySelector(".hi");
+    if (h) h.scrollIntoView({ block: "nearest" });
+  };
+  const show = (on) => {
+    st.dd = on;
+    pnl.hidden = !on;
+    btn.setAttribute("aria-expanded", on);
+    btn.classList.toggle("open", on);
+    if (on) {
+      render();
+      q.focus();
+      const cur = res.querySelector(".cur");
+      if (cur && !q.value) cur.scrollIntoView({ block: "center" });
+    }
+  };
   const go = (x) => {
-    if (!x) return;
-    res.hidden = true;
-    q.blur();
+    if (!x || x.t === "h") return;
+    q.value = st.q = "";
+    show(false);
     if (x.t === "c") pickCity(x.i, true);
     else {
       sfx("select");
@@ -657,20 +834,38 @@ function bindSearch() {
       paint(false);
     }
   };
+  btn.onclick = () => {
+    sfx("select");
+    show(pnl.hidden);
+  };
   q.oninput = render;
-  q.onfocus = render;
-  q.onblur = () => setTimeout(() => res.hidden = true, 120);
   q.onkeydown = (e) => {
+    const ks = items.map((x, k) => x.t === "h" ? -1 : k).filter((k) => k >= 0);
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      hi = Math.max(0, Math.min(items.length - 1, hi + (e.key === "ArrowDown" ? 1 : -1)));
-      res.querySelectorAll("[data-k]").forEach((b) => b.classList.toggle("hi", +b.dataset.k === hi));
+      const at = ks.indexOf(hi);
+      hi = ks[Math.max(0, Math.min(ks.length - 1, at < 0 ? 0 : at + (e.key === "ArrowDown" ? 1 : -1)))];
+      mark();
     } else if (e.key === "Enter") go(items[hi]);
     else if (e.key === "Escape") {
-      q.value = "";
-      render();
+      if (q.value) {
+        q.value = "";
+        render();
+      } else show(false);
     }
   };
+  if (!bindSearch.doc) {
+    bindSearch.doc = true;
+    document.addEventListener("pointerdown", (e) => {
+      const dd = W && W.querySelector("#rm-dd");
+      if (st.dd && dd && !dd.contains(e.target)) {
+        st.dd = false;
+        dd.querySelector("#rm-ddp").hidden = true;
+        dd.querySelector("#rm-ddb").classList.remove("open");
+      }
+    });
+  }
+  if (st.dd) show(true);
 }
 function bindRange(lo, hi) {
   const box = $("#rm-range"), hs = box.querySelectorAll(".hd"), fl = box.querySelector(".fl"), lab = $("#rm-yrs");
@@ -763,7 +958,7 @@ function card() {
     <div class="sub">${L.name.toUpperCase()} · ${r.y0}-${r.y1}${r.real ? "" : " · SAMPLE DATA"}</div>
     <div class="big"><b id="rm-count">${f(0)}</b><span>${L.ud.replace("/dec", " / decade")}</span></div>
     <span class="rm-verd" style="background:${det ? "var(--grn)" : sus ? "var(--red)" : "var(--mus)"};color:${sus ? "#fff" : "var(--ink)"}">${verdict}</span>
-    <svg class="rm-spark" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none">
+    <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart">
       ${[0.33, 0.66].map((q) => `<path d="M4 ${(Hd * q).toFixed(0)}H${Wd - 4}" stroke="#1a2f6e" stroke-dasharray="2 2"/>`).join("")}${gap}
       <path class="ln" d="${line}"/>
       <path class="tr" d="M${X(r.xs[0])} ${Y(r.a + r.b * r.xs[0])}L${X(r.xs[r.N - 1])} ${Y(r.a + r.b * r.xs[r.N - 1])}"/></svg>
@@ -778,7 +973,9 @@ function card() {
       <tr><td>p / adj. p</td><td>${r.p < 1e-3 ? "<.001" : r.p.toFixed(3)} / ${r.padj < 1e-3 ? "<.001" : r.padj.toFixed(3)}</td></tr>
       <tr><td>Years needed</td><td>${need > r.N ? "≈" : ""}${need} (have ${r.N})</td></tr></table>
       <div class="rm-note">${note}</div>` : ""}
-    <button class="obtn" id="rm-open">OPEN AS CASE ▸</button>`;
+    <div class="zoom-hint">${r.y0} · CLICK CHART TO ENLARGE · ${r.y1}</div>
+    <div class="rm-note">SAMPLE DATA, made up to show how the map works. Real NASA records live in the Indonesia sea level layer and in CASES.</div>
+    ${analysis.DATASETS[L.k] ? `<button class="obtn" id="rm-open">OPEN THE REAL ${L.k === "t2m" ? "TEMPERATURE" : "RAINFALL"} CASE ▸</button>` : ""}`;
   box.querySelector("#rm-close").onclick = closeCard;
   box.querySelector("#rm-more").onclick = () => {
     st.more = !st.more;
@@ -801,7 +998,28 @@ function card() {
     if (k < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
-  box.querySelector("#rm-open").onclick = () => openCase(r);
+  const ob = box.querySelector("#rm-open");
+  if (ob) ob.onclick = () => {
+    const ds = analysis.DATASETS[L.k];
+    sfx("chime");
+    desktop.startCase({ v: L.k, r: "idn", y0: ds.start, y1: ds.end });
+  };
+  const zs = box.querySelector("#rm-zoom");
+  zs.onclick = () => {
+    sfx("select");
+    openChart({
+      title: `${r.n.toUpperCase()} · ${L.name.toUpperCase()} · SAMPLE DATA`,
+      sub: `${r.y0}-${r.y1} · YEARLY · NOT NASA DATA`,
+      unit: L.unit,
+      series: r.xs.map((x, i) => [x, r.ys[i]]),
+      seriesLabel: "Yearly value (sample)",
+      fit: [[r.xs[0], r.a + r.b * r.xs[0]], [r.xs[r.N - 1], r.a + r.b * r.xs[r.N - 1]]],
+      fitLabel: `Trend ${f(r.b10)} ${L.ud}`,
+      stats: [["TREND", `${f(r.b10)} ${L.ud}`], ["95% RANGE", `${f(r.b10 - 1.96 * r.se10)} .. ${f(r.b10 + 1.96 * r.se10)}`], ["VERDICT", verdict]],
+      notes: ["Sample data, generated to demonstrate the map. Use the Indonesia sea level layer or CASES for real NASA records."],
+      dp
+    });
+  };
 }
 function closeCard() {
   st.c = -1;
@@ -809,26 +1027,6 @@ function closeCard() {
   cities();
   sfx("close");
   card();
-}
-function openCase(r) {
-  const L = LAYERS[st.v], D = analysis.DATASETS;
-  if (!D[L.k]) D[L.k] = { label: L.name, unit: L.unit, source: L.src, start: span(st.v)[0], end: span(st.v)[1], regions: {} };
-  const rk = Object.keys(D[L.k].regions).find((k) => D[L.k].regions[k].name === r.n) || "m_" + r.n.replace(/\W/g, "").toLowerCase();
-  if (r.real) D[L.k].source = L.src;
-  if (L.k === "tws" && !D.tws.gap) D.tws.gap = [2017.5, 2018.42];
-  D[L.k].regions[rk] = Object.assign(D[L.k].regions[rk] || {}, { name: r.n });
-  const t = [], v = [];
-  r.mo.m.forEach((x, i) => {
-    if (x != null) {
-      t.push(r.mo.y0 + (i + 0.5) / 12);
-      v.push(x);
-    }
-  });
-  analysis.SERIES[L.k + "|" + rk] = { t, v };
-  D[L.k].start = Math.min(D[L.k].start, Math.floor(t[0]));
-  D[L.k].end = Math.max(D[L.k].end, Math.floor(t[t.length - 1]));
-  sfx("chime");
-  desktop.startCase({ v: L.k, r: rk, y0: r.y0, y1: r.y1 });
 }
 function tip(e, ci) {
   const t = $("#rm-tip");
@@ -907,7 +1105,10 @@ function setVB(vb, anim) {
   if (!anim) {
     W.querySelector("#rm-fxc").style.display = "none";
     clearTimeout(setVB.t);
-    setVB.t = setTimeout(placeFx, 140);
+    setVB.t = setTimeout(() => {
+      placeFx();
+      satRefresh();
+    }, 140);
   }
 }
 function clampVB(vb) {
@@ -1002,6 +1203,7 @@ function zoom(to) {
         cities();
         placeFx();
       }
+      satRefresh();
     }
   };
   requestAnimationFrame(step);
@@ -1019,15 +1221,6 @@ async function load() {
   if (!st.prov) st.prov = await opt("data/indonesia_provinces.json");
   if (!st.ssl) st.ssl = await opt("data/indonesia_sea_level.json");
   if (!st.ssl && LAYERS[0].real) LAYERS.shift();
-  if (st.data === null) {
-    try {
-      const r = await fetch("data/sea_data.json");
-      st.data = r.ok ? await r.json() : false;
-    } catch (e) {
-      st.data = false;
-    }
-  }
-  if (st.data === false) st.data = null, st.noData = true;
 }
 async function open(win, helpers) {
   H = helpers;
@@ -1057,11 +1250,13 @@ async function open(win, helpers) {
   st.view = "world";
   st.c = -1;
   st.city = -1;
+  st.dd = false;
   if (!open.ro) {
     open.ro = new ResizeObserver(() => placeFx());
   }
   open.ro.observe($("#rm-mapc"));
   buildSvg();
+  satRefresh();
   bindNav();
   W.querySelectorAll(".rm-tog button").forEach((b) => {
     b.classList.toggle("on", b.dataset.v === "world");

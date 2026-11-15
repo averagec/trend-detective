@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trend Detective</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <canvas id="scene"></canvas>
@@ -33,13 +30,17 @@
     </div>
     <div class="btns">
       <button class="mbtn play" id="play" disabled><span class="arrow">▸</span>PLAY</button>
-      <button class="mbtn" id="b-how"><span class="arrow">▸</span>HOW IT WORKS</button>
+      <button class="mbtn" id="b-how"><span class="arrow">▸</span>ABOUT</button>
       <button class="mbtn" id="b-snd"><span class="arrow">▸</span>SOUND: ON</button>
     </div>
     <div class="load"><div class="load-track"><div id="load-fill"></div></div><span id="load-pct">LOADING 0%</span></div>
   </div>
-  <div class="panel" id="p-how"><h2>How a case works</h2><ol><li>Pick the variable, the region and the years.</li><li>Lock in your guess before you see anything.</li><li>Plot the time series and judge it yourself.</li><li>Test it against 1,000 trend-free fakes.</li><li>Get a verdict: Detected, Not Yet Detectable, or Suspect.</li></ol></div>
-  <div class="credit">Room model by nickheitzman, CC BY 4.0 (modified)</div>
+  <div class="panel" id="p-how"><h2>About the case files</h2>
+    <p><b>Mission:</b> answer one honest question with NASA data. Is it really changing, where, by how much, and can we prove it?</p>
+    <p>You play a detective at an Earth system desk. Sea level next to 31 Indonesian cities comes from NASA's ECCO ocean model; temperature and rain come from NASA MERRA-2. Lock in a guess, look at the record, then test it against 1,000 trend-free fakes.</p>
+    <p class="small">Data: ECCO V4r4 (NASA PO.DAAC) · MERRA-2 (NASA GES DISC) · NASA GIBS · Natural Earth. Full references in ABOUT.TXT on the desk.</p>
+    <p class="team">CREATED BY TEAM: SANSONG</p></div>
+  <div class="credit">Team SanSong · NASA Space Apps 2026 · Room model by nickheitzman, CC BY 4.0 (modified)</div>
 </section>
 
 <div id="hud">
@@ -86,7 +87,7 @@
     <div id="desk">
       <div class="mbar"><span class="logo4"><i style="background:var(--red)"></i><i style="background:var(--mus)"></i><i style="background:var(--grn)"></i><i style="background:var(--sky)"></i></span><b style="font-weight:400">TD-OS</b><span>FILE</span><span>VIEW</span><span>HELP</span><span class="sp"></span><span id="who">DETECTIVE</span><span id="clock">23:48</span></div>
       <div class="dtop" id="wins"><div class="icons" id="icons"></div></div>
-      <div class="fkeys"><button class="fk" data-k="help">F1 HELP</button><button class="fk" data-k="cases">F2 CASES</button><button class="fk" data-k="log">F3 LOG</button><button class="fk" data-k="leave">F10 LEAVE DESK</button></div>
+      <div class="fkeys"><button class="fk" data-k="help">F1 ABOUT</button><button class="fk" data-k="cases">F2 CASES</button><button class="fk" data-k="log">F3 LOG</button><button class="fk" data-k="leave">F10 LEAVE DESK</button></div>
     </div>
     <div class="fringe"></div><div class="scan"></div><div class="roll"></div><div class="glass"></div>
   </div>

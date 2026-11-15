@@ -34,3 +34,16 @@ def test_city_series_is_millimetres_and_keeps_gaps():
 def test_inland_cities_are_not_coastal():
     assert not city(0, 0, coast_km=oc.COAST_KM + 1).coastal
     assert city(0, 0, coast_km=oc.COAST_KM).coastal
+
+
+def test_grid_around_keeps_land_and_used_cells_are_a_subset():
+    lats = np.array([-1.0, -0.5, 0.0, 0.5])
+    lons = np.array([100.0, 100.5, 101.0, 101.5])
+    ocean = np.ones((4, 4), bool)
+    ocean[2, 1] = False
+    c = city(0.0, 100.5)
+    grid = oc.grid_around(c, lats, lons, ocean)
+    assert (2, 1, 0.0, False) in grid
+    assert all(d <= oc.MAX_KM for _, _, d, _ in grid)
+    ring = {(i, j) for i, j, _, _ in grid}
+    assert {(i, j) for i, j, _ in oc.nearest_cells(c, lats, lons, ocean)} <= ring

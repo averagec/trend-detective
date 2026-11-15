@@ -1,37 +1,26 @@
-const DATASETS = {
-  t2m: {
-    label: "Air temperature (2 m)",
-    unit: "°C",
-    source: "NASA MERRA-2",
-    start: 1980,
-    end: 2025,
-    regions: {
-      sg: { name: "Singapore", base: 27.6, amp: 0.8, trend: 0.024, phi: 0.55, sd: 0.28 },
-      my: { name: "Peninsular Malaysia", base: 26.9, amp: 0.6, trend: 0.019, phi: 0.55, sd: 0.3 },
-      nin: { name: "Northern India", base: 24.5, amp: 9, trend: 0.016, phi: 0.45, sd: 0.75 }
+const DATASETS = {};
+const SERIES = {};
+async function load(url = "data/cases_data.json") {
+  if (load.done) return true;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("cases_data.json missing");
+  const d = await r.json();
+  for (const [k, ds] of Object.entries(d.datasets)) {
+    DATASETS[k] = { label: ds.label, unit: ds.unit, source: ds.source, start: ds.start, end: ds.end, regions: {} };
+    for (const [rk, reg] of Object.entries(ds.regions)) {
+      DATASETS[k].regions[rk] = { name: reg.name, long: reg.long, core: reg.core };
+      const t = [], v = [];
+      reg.monthly.forEach((x, i) => {
+        if (x == null) return;
+        t.push(reg.y0 + Math.floor(i / 12) + (i % 12 + 0.5) / 12);
+        v.push(x);
+      });
+      SERIES[k + "|" + rk] = { t, v };
     }
-  },
-  precip: {
-    label: "Precipitation",
-    unit: "mm/month",
-    source: "NASA GPM IMERG",
-    start: 2001,
-    end: 2024,
-    regions: {
-      sg: { name: "Singapore", base: 210, amp: 90, trend: 0.25, phi: 0.15, sd: 75 },
-      my: { name: "Peninsular Malaysia", base: 230, amp: 80, trend: 0.4, phi: 0.15, sd: 70 }
-    }
-  },
-  tws: {
-    label: "Terrestrial water storage",
-    unit: "cm",
-    source: "NASA GRACE / GRACE-FO",
-    start: 2002,
-    end: 2024,
-    gap: [2017.5, 2018.42],
-    regions: { nin: { name: "Northern India", base: 0, amp: 7, trend: -1.4, phi: 0.6, sd: 1.6, step: 1.8 } }
   }
-};
+  load.done = true;
+  return true;
+}
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return () => {
@@ -53,23 +42,10 @@ function hash(str) {
   }
   return h >>> 0;
 }
-const SERIES = {};
 function makeSeries(vk, rk) {
   const ext = SERIES[vk + "|" + rk];
   if (ext) return { t: ext.t.slice(), v: ext.v.slice() };
-  const D = DATASETS[vk], R = D.regions[rk], r = rng(hash(vk + rk));
-  const t = [], v = [];
-  let e = 0;
-  for (let y = D.start; y <= D.end; y++) for (let m = 0; m < 12; m++) {
-    const ty = y + (m + 0.5) / 12;
-    e = R.phi * e + gauss(r) * R.sd * Math.sqrt(1 - R.phi * R.phi);
-    if (D.gap && ty >= D.gap[0] && ty < D.gap[1]) continue;
-    let val = R.base + R.amp * Math.sin((m - 3) / 12 * 2 * Math.PI) + R.trend * (ty - D.start) + e;
-    if (R.step && ty >= D.gap[1]) val += R.step;
-    t.push(ty);
-    v.push(val);
-  }
-  return { t, v };
+  throw new Error(`no data for ${vk}/${rk}`);
 }
 function slice(s, y0, y1) {
   const t = [], v = [];
@@ -188,7 +164,7 @@ function analyse(setup, onProgress) {
   }
   return { D, raw, an, fit, slope, ci, mk: m, r1, sims, beat, obs: fit.b, checks, verdict, needed, years, shifts, worst };
 }
-const analysis = { DATASETS, SERIES, makeSeries, slice, deseason, analyse, stats: { ols, sen, lag1, mk, rng, gauss } };
+const analysis = { DATASETS, SERIES, load, makeSeries, slice, deseason, analyse, stats: { ols, sen, lag1, mk, rng, gauss } };
 export {
   analysis
 };
