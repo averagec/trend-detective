@@ -47,6 +47,10 @@ KELVIN = 273.15
 CUBES = {
     "t2m": ("merra2_idn.npz", "t2m", "°C", lambda v: v - KELVIN, "NASA MERRA-2 (GES DISC)"),
     "precip": ("merra2_idn.npz", "precip", "mm/day", lambda v: v, "NASA MERRA-2 (GES DISC)"),
+    "qv2m": ("merra2_idn.npz", "qv2m", "g/kg", lambda v: v, "NASA MERRA-2 (GES DISC)"),
+    "vpd": ("merra2_idn.npz", "vpd", "kPa", lambda v: v, "NASA MERRA-2 (GES DISC)"),
+    "evap": ("merra2_idn.npz", "evap", "mm/day", lambda v: v, "NASA MERRA-2 (GES DISC)"),
+    "tsurf": ("merra2_idn.npz", "tsurf", "°C", lambda v: v - KELVIN, "NASA MERRA-2 (GES DISC)"),
     "tws": ("grace_idn.npz", "grace_lwe", "cm", lambda v: v, "NASA GRACE / GRACE-FO"),
 }
 

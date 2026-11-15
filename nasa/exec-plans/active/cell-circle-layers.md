@@ -27,6 +27,8 @@ Drawing a CIRCLE on MAP.EXE gives a real answer for every layer that has grid da
 - 2026-11-15 — RCA: `indonesia_cells.json` was exported when the cube was not found, so only SEA LVL had grid data. Re-export done (SEA LVL, TEMP, RAIN); toast updated; build, 12 web tests and check.sh pass; browser check shows the new message on SOIL 0-10. Next: step 2 (GRACE cube) and step 3 (extra layers).
 - 2026-11-15 — Repo state changed under this session (branch switched to main, stash created, cubes moved to `data/processed/cells-backup-20261115/`). Cubes restored by copy from the backup; backup folder left in place.
 
+- 2026-11-15 — Added HUMID, VPD, EVAP and LAND T to `CUBES` (tsurf has 1,437 cells, the others 3,003). Removed the layers with no grid cells from the website (HOT DAYS, GPCP, GLDAS RAIN, WATER, four SOIL, SST/NDVI/AOD placeholders), case 005 and their web data. Generators still emit them, so regenerating re-adds them until export_regional.py / regional_map.py / export_indonesia.py are updated. Next: step 2 (GRACE).
+
 ## Decisions & surprises
 - The cube folder `data/processed/cells/` was missing once during this session. Restored from `origin/main` and then from the backup folder by copy. Check it is present before re-exporting.
 - The export only knows three layers, so the new map layers (humidity, VPD, evaporation, land temperature, GPCP, GLDAS) still have no CIRCLE grid. Step 3 covers them.
