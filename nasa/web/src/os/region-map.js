@@ -31,11 +31,14 @@ const LAYERS = [
     y0: 1992,
     y1: 2017,
     pal: "s",
-    real: true
+    real: true,
+    noun: "sea level",
+    upV: "rising",
+    downV: "falling"
   },
-  { k: "t2m", short: "TEMP", name: "Air temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2m", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer", down: "Cooler" },
-  { k: "precip", short: "RAIN", name: "Rainfall", src: "MERRA-2 · NASA GES DISC", box: "merra2:precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier" },
-  { k: "tws", short: "WATER", name: "Water stored on land", src: "GRACE / GRACE-FO · NASA JPL", box: "grace:grace_lwe", unit: "cm", ud: "cm/dec", pal: "w", dp: 1, fxUp: "rain", fxDown: "drought", up: "More water stored", down: "Less water stored" },
+  { k: "t2m", short: "TEMP", name: "Air temperature (2 m)", src: "MERRA-2 · NASA GES DISC", box: "merra2:t2m", unit: "°C", ud: "°C/dec", pal: "t", dp: 2, fxUp: "heat", fxDown: null, up: "Warmer", down: "Cooler", noun: "temperature", upV: "warming", downV: "cooling" },
+  { k: "precip", short: "RAIN", name: "Rainfall", src: "MERRA-2 · NASA GES DISC", box: "merra2:precip", unit: "mm/day", ud: "mm/day per dec", pal: "w", dp: 2, fxUp: "rain", fxDown: "drought", up: "Wetter", down: "Drier", noun: "rainfall", upV: "getting wetter", downV: "getting drier" },
+  { k: "tws", short: "WATER", name: "Water stored on land", src: "GRACE / GRACE-FO · NASA JPL", box: "grace:grace_lwe", unit: "cm", ud: "cm/dec", pal: "w", dp: 1, fxUp: "rain", fxDown: "drought", up: "More water stored", down: "Less water stored", noun: "water storage", upV: "gaining water", downV: "losing water" },
   { k: "sst", name: "Sea surface temperature", src: "MUR SST · PO.DAAC", y0: 2003, y1: 2024, lock: "a sea surface temperature series (not in the Python pipeline yet)" },
   { k: "ndvi", name: "Vegetation (NDVI)", src: "MODIS Terra", y0: 2001, y1: 2024, lock: "a vegetation series (not in the Python pipeline yet)" },
   { k: "aod", name: "Aerosols (AOD)", src: "MERRA-2", y0: 1981, y1: 2024, lock: "an aerosol series (not in the Python pipeline yet)" }
@@ -815,13 +818,14 @@ function toolbar() {
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
-    if (LAYERS[st.v].box) talk(["This one is a single box over the whole region. Indonesia, Malaysia, the Philippines.", "One honest number for the box. Not city by city. The grid is too coarse for that."], "box");
+    if (LAYERS[st.v].box && !st.circ) talk(["This one is a single box over the whole region. Indonesia, Malaysia, the Philippines.", "One honest number for the box. Not city by city. The grid is too coarse for that."], "box");
     st.yr = null;
     st.bx = false;
     if (!LAYERS[st.v].real) st.city = -1;
     st.c = -1;
     sfx("select");
     paint(true);
+    if (st.circ && st.circ.r) circleResult();
   });
   W.querySelector("[data-lock]").onclick = () => sfx("err");
   W.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => {
@@ -1012,7 +1016,7 @@ function bindRange(lo, hi) {
 function card() {
   const box = $("#rm-pv"), L = LAYERS[st.v];
   W.querySelector("#rm-selg").innerHTML = "";
-  if (st.circ && st.circ.res) {
+  if (st.circ && st.circ.res && st.circ.res.layer === L.k && cellLayer()) {
     circleCard(box);
     return;
   }
@@ -1392,18 +1396,23 @@ async function loadCells() {
   if (st.cells) return;
   try {
     const r = await fetch("data/indonesia_cells.json");
-    if (!r.ok) return;
-    const d = await r.json(), list = [];
-    let k = 0;
-    d.lat.forEach((la) => d.lon.forEach((lo) => {
-      if (d.slope_mm_per_decade[k] != null) list.push({ k, lat: la, lon: lo });
-      k++;
-    }));
-    d.list = list;
-    st.cells = d;
+    if (r.ok) st.cells = await r.json();
   } catch (e) {
     st.cells = null;
   }
+}
+function cellLayer() {
+  const D = st.cells && st.cells.layers && st.cells.layers[LAYERS[st.v].k];
+  if (!D) return null;
+  if (!D.list) {
+    D.list = [];
+    let k = 0;
+    D.lat.forEach((la) => D.lon.forEach((lo) => {
+      if (D.slope_per_decade[k] != null) D.list.push({ k, lat: la, lon: lo });
+      k++;
+    }));
+  }
+  return D;
 }
 function kmBetween(la1, lo1, la2, lo2) {
   const r = Math.PI / 180, a = Math.sin((la2 - la1) * r / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin((lo2 - lo1) * r / 2) ** 2;
@@ -1471,7 +1480,7 @@ function circleUp() {
   circleResult();
 }
 function circleLimits() {
-  return st.cells ? st.cells.radius_km : [75, 250];
+  return st.cells && st.cells.radius_km ? st.cells.radius_km : [75, 250];
 }
 function circleDraw() {
   const g = W && W.querySelector("#rm-circg");
@@ -1496,89 +1505,105 @@ function circleDraw() {
   });
 }
 function circleResult() {
-  const c = st.circ, D = st.cells, [lo, hi] = circleLimits(), R = Math.round(c.r);
+  const c = st.circ, L = LAYERS[st.v], D = cellLayer(), [lo, hi] = circleLimits(), R = Math.round(c.r), need = st.cells ? st.cells.min_cells : 4;
   c.res = null;
-  if (!D) {
-    toast("The cell file (indonesia_cells.json) is missing, so the circle cannot be read.", true);
+  if (!st.cells) {
+    toast("<b>NO CELL FILE</b> indonesia_cells.json is missing, so the circle cannot be read.", true);
     circleDraw();
+    card();
     return;
   }
   if (c.r < lo) {
     sfx("err");
-    toast(`<b>CIRCLE TOO SMALL</b> ${R} km. Draw at least ${lo} km from the centre. NASA's ocean grid cells are about 55 km wide, so a smaller circle holds too few of them to say anything.`, true);
+    toast(`<b>CIRCLE TOO SMALL</b> ${R} km. Draw at least ${lo} km from the centre. NASA's grid cells are about 55 km wide, so a smaller circle holds too few of them to say anything.`, true);
     circleDraw();
+    card();
     return;
   }
   if (c.r > hi) {
     sfx("err");
-    toast(`<b>CIRCLE TOO BIG</b> ${R} km. Keep it under ${hi} km. A bigger circle mixes very different seas into one answer.`, true);
+    toast(`<b>CIRCLE TOO BIG</b> ${R} km. Keep it under ${hi} km. A bigger circle mixes very different places into one answer.`, true);
     circleDraw();
+    card();
+    return;
+  }
+  if (!D) {
+    sfx("err");
+    toast(`<b>NO GRID DATA FOR ${L.short} YET</b> ${L.noun[0].toUpperCase() + L.noun.slice(1)} is only in the app as one value for the whole region box, so a circle cannot pick out part of it. Switch to a layer with grid data, or click the box.`, true);
+    circleDraw();
+    card();
     return;
   }
   const cells = D.list.filter((q) => kmBetween(c.lat, c.lon, q.lat, q.lon) <= c.r);
-  if (cells.length < D.min_cells) {
+  if (cells.length < need) {
     sfx("err");
     const inBox = c.lon >= D.lon[0] - 1 && c.lon <= D.lon[D.lon.length - 1] + 1 && c.lat >= D.lat[0] - 1 && c.lat <= D.lat[D.lat.length - 1] + 1;
-    toast(inBox ? `<b>NOT ENOUGH SEA DATA</b> Only ${cells.length} ocean cell${cells.length === 1 ? "" : "s"} inside (need ${D.min_cells}). Sea level is measured at sea: draw the circle over the coast or the water.` : "<b>OUTSIDE OUR DATA AREA</b> Draw the circle over Indonesia.", true);
+    const why = L.real ? "Sea level only exists at sea: draw the circle over the coast or the water." : "Draw the circle over Indonesia.";
+    toast(inBox ? `<b>NOT ENOUGH DATA</b> Only ${cells.length} grid cell${cells.length === 1 ? "" : "s"} with ${L.noun} data inside (need ${need}). ${why}` : "<b>OUTSIDE OUR DATA AREA</b> Draw the circle over Indonesia.", true);
     circleDraw();
+    card();
     return;
   }
-  const S = D.slope_mm_per_decade, PA = D.p_adjusted;
+  const S = D.slope_per_decade, PA = D.p_adjusted;
   const sig = cells.filter((q) => PA[q.k] < 0.05), up = sig.filter((q) => S[q.k] > 0).length, down = sig.length - up;
   const sl = cells.map((q) => S[q.k]).sort((a, b) => a - b), med = sl[Math.floor(sl.length / 2)];
-  const years = D.yearly_anomaly_tenth_mm[cells[0].k].length, yrs = [];
+  const years = D.yearly_anomaly[cells[0].k].length, yrs = [];
   for (let y = 0; y < years; y++) {
     let sw = 0, sv = 0;
     cells.forEach((q) => {
-      const v = D.yearly_anomaly_tenth_mm[q.k][y], w = Math.cos(q.lat * Math.PI / 180);
+      const v = D.yearly_anomaly[q.k][y], w = Math.cos(q.lat * Math.PI / 180);
       if (v != null) {
-        sv += v / 10 * w;
+        sv += v * w;
         sw += w;
       }
     });
-    yrs.push([D.period[0] + y + 0.5, sw ? sv / sw : null]);
+    if (sw) yrs.push([D.period[0] + y + 0.5, sv / sw]);
   }
   const cities = st.ssl ? st.ssl.cities.map((ct, i) => [ct, i]).filter(([ct]) => kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) : [];
-  c.res = { n: cells.length, up, down, flat: cells.length - sig.length, min: sl[0], max: sl[sl.length - 1], med, yrs, cities };
+  const tt = $("#rm-toast");
+  if (tt) tt.classList.remove("on");
+  c.res = { layer: L.k, n: cells.length, up, down, flat: cells.length - sig.length, min: sl[0], max: sl[sl.length - 1], med, yrs, cities };
   sfx("chime");
   st.city = -1;
   st.bx = false;
   circleDraw();
   card();
   placeFx();
-  if (!st.seen.circle) {
-    st.seen.circle = 1;
-    say([`${c.res.n} ocean cells inside. ${up} of them rising clearly.`, cities.length ? `${cities.length} of my cities sit inside it. Their numbers are on the card.` : "None of my cities sit inside this one. The sea still tells its own story."]);
+  if (!st.seen["circle" + L.k]) {
+    st.seen["circle" + L.k] = 1;
+    const word = up >= down ? L.upV : L.downV;
+    say([`${L.name}. ${c.res.n} grid cells inside, ${Math.max(up, down)} of them ${word} clearly.`, "Switch the layer and the same circle tells a different story."]);
   }
 }
 function circleCard(box) {
-  const c = st.circ, r = c.res, D = st.cells, L = LAYERS[st.v], f = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(0), ll = (v, a, b) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? a : b}`;
-  const Wd = 250, Hd = 70, vals = r.yrs.filter((q) => q[1] != null), lo = Math.min(...vals.map((q) => q[1])), hi = Math.max(...vals.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
+  const c = st.circ, r = c.res, L = LAYERS[st.v], D = cellLayer(), dp = L.real ? 0 : L.dp, ud = L.real ? "mm/dec" : L.ud;
+  const f = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(dp), ll = (v, a, b) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? a : b}`;
+  const upW = L.upV, downW = L.downV;
+  const Wd = 250, Hd = 70, vals = r.yrs, lo = Math.min(...vals.map((q) => q[1])), hi = Math.max(...vals.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
   const X = (x) => 8 + (x - vals[0][0]) / (vals[vals.length - 1][0] - vals[0][0]) * (Wd - 16), Y = (y) => Hd - 8 - (y - lo + pad) / (hi - lo + 2 * pad) * (Hd - 16);
-  const line = vals.map((q, i) => `${i ? "L" : "M"}${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("");
-  const mixed = r.up && r.down;
-  const verdict = r.up > r.n / 2 ? "MOSTLY RISING CLEARLY" : r.up ? "PARTLY RISING CLEARLY" : r.down ? "FALLING IN PLACES" : "NO CLEAR TREND";
+  const line = vals.map((q, i) => `${i && q[0] - vals[i - 1][0] > 1.5 ? "M" : i ? "L" : "M"}${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("");
+  const main = r.down > r.up ? r.down : r.up, mainW = r.down > r.up ? downW : upW;
+  const verdict = main > r.n / 2 ? `MOSTLY ${mainW.toUpperCase()} CLEARLY` : main ? `PARTLY ${mainW.toUpperCase()} CLEARLY` : "NO CLEAR TREND";
   const cityRows = r.cities.length ? r.cities.map(([ct, i]) => {
-    const k = cityState(ct), v = k === "inland" ? "inland" : `${ct.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(ct.trend_mm_per_decade).toFixed(0)} mm/dec${k === "sig" ? "" : " · not clear yet"}`;
+    const k = cityState(ct), v = !L.real ? "open city" : k === "inland" ? "inland" : `${ct.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(ct.trend_mm_per_decade).toFixed(0)} mm/dec${k === "sig" ? "" : " · not clear yet"}`;
     return `<button class="rm-cc" data-ci="${i}"><span>${ct.name}</span><small>${v}</small></button>`;
   }).join("") : '<div class="rm-note" style="margin:2px 0">No study city inside this circle.</div>';
   box.hidden = false;
   box.innerHTML = `<div class="hd"><h3>CIRCLE · ${Math.round(c.r)} KM</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
-    <div class="sub">CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · SEA LEVEL ${D.period[0]}-${D.period[1]}</div>
-    <div class="big"><b>${r.up}</b><span>of ${r.n} ocean cells rising clearly</span></div>
-    <span class="rm-verd" style="background:${r.up > r.n / 2 ? "var(--grn)" : "var(--mus)"}">${verdict}</span>
+    <div class="sub">${L.name.toUpperCase()} · ${D.period[0]}-${D.period[1]} · CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")}</div>
+    <div class="big"><b>${main}</b><span>of ${r.n} grid cells ${mainW} clearly</span></div>
+    <span class="rm-verd" style="background:${main > r.n / 2 ? "var(--grn)" : "var(--mus)"}">${verdict}</span>
     <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart"><path class="ln" d="${line}"/></svg>
     <div class="zoom-hint">${D.period[0]} · AVERAGE OF THE CELLS · CLICK TO ENLARGE · ${D.period[1]}</div>
     <table class="rm-tab">
-      <tr><td>Cell trends</td><td>${f(r.min)} to ${f(r.max)} mm/dec</td></tr>
-      <tr><td>Middle cell</td><td>${f(r.med)} mm/dec</td></tr>
-      <tr><td>Not clear / falling</td><td>${r.flat} / ${r.down}</td></tr>
+      <tr><td>Cell trends</td><td>${f(r.min)} to ${f(r.max)} ${ud}</td></tr>
+      <tr><td>Middle cell</td><td>${f(r.med)} ${ud}</td></tr>
+      <tr><td>Clearly up / down / not clear</td><td>${r.up} / ${r.down} / ${r.flat}</td></tr>
     </table>
-    ${mixed ? '<div class="rm-note" style="color:var(--red)">Cells disagree: some rise and some fall clearly. Look at them separately before trusting one number.</div>' : ""}
+    ${r.up && r.down ? '<div class="rm-note" style="color:var(--red)">Cells disagree: some go up and some go down clearly. Look at them separately before trusting one number.</div>' : ""}
     <div class="rm-sec">CITIES INSIDE (${r.cities.length})</div>
     <div class="rm-ccs">${cityRows}</div>
-    ${L.box ? `<div class="rm-note">${L.name}: this layer only has one value for the whole Maritime SE Asia box, not per circle. Click the box for it.</div>` : ""}
-    <div class="rm-note">${D.method}</div>
+    <div class="rm-note">${st.cells.method}</div>
     <div class="rm-note">NASA DATA · ${D.dataset}</div>
     <button class="obtn" id="rm-redraw">DRAW ANOTHER CIRCLE ▸</button>`;
   box.querySelector("#rm-close").onclick = closeCard;
@@ -1591,15 +1616,15 @@ function circleCard(box) {
   const zs = box.querySelector("#rm-zoom"), open1 = () => {
     sfx("select");
     openChart({
-      title: `CIRCLE · ${Math.round(c.r)} KM · SEA LEVEL`,
-      sub: `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · AVERAGE OF ${r.n} OCEAN CELLS · YEARLY, VS EACH CELL'S OWN AVERAGE`,
-      unit: "mm vs average",
+      title: `CIRCLE · ${Math.round(c.r)} KM · ${L.name.toUpperCase()}`,
+      sub: `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · AVERAGE OF ${r.n} GRID CELLS · YEARLY, SEASONS REMOVED`,
+      unit: `${D.unit} vs normal`,
       series: vals,
-      seriesLabel: `Average of the ${r.n} cells inside the circle`,
+      seriesLabel: `Average of the ${r.n} grid cells inside the circle`,
       zero: true,
-      dp: 1,
-      stats: [["CELLS INSIDE", `${r.n}`], ["RISING CLEARLY", `${r.up}`], ["NO CLEAR TREND", `${r.flat}`], ["FALLING CLEARLY", `${r.down}`], ["CELL TRENDS", `${f(r.min)} to ${f(r.max)} mm/dec`], ["MIDDLE CELL", `${f(r.med)} mm/dec`]],
-      notes: ["The line is the cells' yearly average, drawn for reading. The trend numbers come from each cell's own test in the Python core, not from this line.", D.method],
+      dp: L.real ? 1 : 2,
+      stats: [["GRID CELLS INSIDE", `${r.n}`], [`${upW.toUpperCase()} CLEARLY`, `${r.up}`], [`${downW.toUpperCase()} CLEARLY`, `${r.down}`], ["NO CLEAR TREND", `${r.flat}`], ["CELL TRENDS", `${f(r.min)} to ${f(r.max)} ${ud}`], ["MIDDLE CELL", `${f(r.med)} ${ud}`]],
+      notes: ["The line is the cells' yearly average, drawn for reading. The trend numbers come from each cell's own test in the Python core, not from this line.", st.cells.method],
       source: D.dataset
     });
   };

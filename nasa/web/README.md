@@ -103,11 +103,17 @@ Pick a city from the CITIES dropdown (grouped by region, with search) or click a
 zoom to it. Inland cities (more than 20 km from the sea) show no sea level.
 
 **CIRCLE** works like Earthdata Search: press CIRCLE, then press on the map and drag to draw. The
-card shows the ECCO ocean cells whose centres are inside (`indonesia_cells.json`, made by
-`python scripts/export_cells.py`: one core trend per cell, Benjamini-Hochberg across all 2,478
-cells), how many rise clearly, the spread of cell trends, the cities inside, and the cells'
-yearly average. A circle under 75 km or over 250 km, or with fewer than 4 ocean cells, gets a
-pop-up instead (limits from ADR 0005). Esc cancels. Works offline.
+answer follows the selected layer: switch SEA LVL / TEMP / RAIN / WATER and the same circle is
+read again for that variable. The card shows the grid cells whose centres are inside, how many go
+up or down clearly, the spread of cell trends, the cities inside, and the cells' yearly average.
+Numbers come from `indonesia_cells.json` (`python scripts/export_cells.py`: one core trend per
+grid cell per layer, Benjamini-Hochberg across that layer's cells). A circle under 75 km or over
+250 km, or with fewer than 4 cells with data, gets a pop-up (ADR 0005 limits). Esc cancels.
+
+Grid data per layer: SEA LVL from the ECCO files in the repo (works now). TEMP and RAIN need
+`data/processed/cells/merra2_idn.npz` (built by `process/cell_cube.py` from the raw MERRA-2
+files); commit it and re-run `scripts/export_cells.py`. WATER needs a GRACE cube
+(`grace_idn.npz`), not built yet. Until then those layers show "no grid data yet".
 SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 
