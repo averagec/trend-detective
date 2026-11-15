@@ -140,14 +140,6 @@ def main() -> None:
     ocean = np.isfinite(ssh).all(axis=0)
     years = ssh.shape[0] // 12
     step = float(abs(lats[1] - lats[0]))
-    cell_trend: dict[tuple[int, int], float | None] = {}
-
-    def trend_of(i: int, j: int):
-        if (i, j) not in cell_trend:
-            one = summarise(ssh[:, i, j] * 1000.0, "mm", "cell")
-            cell_trend[(i, j)] = r(one.ols_per_decade, 1)
-        return cell_trend[(i, j)]
-
     rows = []
     case_regions: dict[str, dict] = {}
     for city in oc.read_cities():
@@ -173,24 +165,10 @@ def main() -> None:
                 "core": core_stats(s),
             }
             anom = deseasonalize(series)
-            used = {(c[0], c[1]) for c in cells}
-            grid = [
-                {
-                    "lat": r(lats[i], 2),
-                    "lon": r(lons[j], 2),
-                    "km": r(d, 1),
-                    "ocean": sea,
-                    "inside": inside,
-                    "used": (i, j) in used,
-                    "trend_mm_per_decade": trend_of(i, j) if sea else None,
-                }
-                for i, j, d, sea, inside in oc.grid_around(city, lats, lons, ocean)
-            ]
             row.update(
                 {
                     "case": slug(city.name),
                     "cells": len(cells),
-                    "grid": grid,
                     "nearest_cell_km": r(cells[0][2], 1),
                     "trend_mm_per_decade": r(s.ols_per_decade, 2),
                     "trend_mm_per_year": r(s.ols_per_decade / 10, 2),
@@ -263,9 +241,8 @@ def main() -> None:
                         r(float(lats.max()) + step / 2, 2),
                     ],
                     "note": (
-                        "Cell trends are each cell on its own (OLS, not adjusted for "
-                        "multiple tests). The city trend averages every ocean cell whose "
-                        "centre is inside the circle (outlined in yellow)."
+                        "The city trend averages every ocean cell whose centre is within "
+                        "120 km of the city (0.5 degree ECCO cells)."
                     ),
                 },
                 "tests": len(tested),

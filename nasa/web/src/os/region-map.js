@@ -44,7 +44,7 @@ const SSL_BINS = [30, 36, 42, 48];
 const BOX_KEY = "se_asia_maritime", BOX = [95, -10, 141, 10];
 const PAL = { s: ["#d8e6ee", "#9fd0e8", "#5aa6dd", "#2f6fc0", "#1c3d8c"], t: ["#1f4fa0", "#7fa8e8", "#c9c2b2", "#e9a93a", "#d94a36"], w: ["#8a5a2b", "#c9a46a", "#c9c2b2", "#7fc4a0", "#2f8f7a"] };
 const GREY = "#56628a", VB = { world: [-4, -14, 368, 206], sea: [268, 58, 58, 52], idn: [273, 78, 50, 28] };
-const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, circ: { on: false, lat: null, lon: null, r: 150, v: "merra2:t2m", cells: null, out: null, msg: "" } };
+const st = { v: 0, city: -1, q: "", sat: false, dd: false, yr: null, more: false, f: 0, fx: true, c: -1, view: "world", map: null, data: null, rows: null, seen: {}, legend: -1, tool: false, drawing: null, circ: null, cells: null };
 let W = null, H = null;
 const $ = (s) => W.querySelector(s);
 const ns = "http://www.w3.org/2000/svg";
@@ -189,40 +189,18 @@ function el(tag, attrs, parent) {
   if (parent) parent.appendChild(e);
   return e;
 }
-const PIN = [
-  "...######...",
-  "..#RRRRRD#..",
-  ".#RR####RD#.",
-  "#RR#WWWW#RD#",
-  "#R#WWWWWW#D#",
-  "#R#WWWWWW#D#",
-  "#R#WWWWWW#D#",
-  "#RR#WWWW#RD#",
-  ".#RR####RD#.",
-  ".#RRRRRRRD#.",
-  "..#RRRRRD#..",
-  "..#RRRRDD#..",
-  "...#RRRD#...",
-  "....#RD#....",
-  ".....##....."
-];
-const PIN_D = {};
-PIN.forEach((row, y) => [...row].forEach((c, x) => {
-  if (c !== ".") PIN_D[c] = (PIN_D[c] || "") + `M${x} ${y}h1v1h-1z`;
-}));
-function pinScale() {
+function dotScale() {
   const vb = st.vb || VB.sea, mc = W.querySelector("#rm-mapc"), px = mc ? mc.clientWidth || 1000 : 1000;
-  return vb[2] / px * 1.9;
+  return vb[2] / px;
 }
-function placePins() {
+function placeDots() {
   if (!st.ssl) return;
-  const u = pinScale();
-  st.ssl.cities.forEach((c, i) => {
-    const g = W.querySelector(`.rm-city[data-i="${i}"]`);
-    if (!g) return;
-    const k = (i === st.city ? 1.3 : c.capital ? 1.05 : 0.9) * u, [x, y] = P(c.lon, c.lat);
-    g.setAttribute("transform", `translate(${(x - 6 * k).toFixed(4)} ${(y - 15 * k).toFixed(4)}) scale(${k.toFixed(5)})`);
+  const u = dotScale();
+  W.querySelectorAll(".rm-city").forEach((d) => {
+    const i = +d.dataset.i, r = (i === st.city ? 7 : d.classList.contains("cap") ? 5.5 : 4.5) * u;
+    d.setAttribute("r", r.toFixed(4));
   });
+  W.querySelectorAll(".rm-hit").forEach((d) => d.setAttribute("r", (12 * u).toFixed(4)));
 }
 function buildSvg() {
   const svg = $("#rm-svg");
@@ -272,7 +250,6 @@ function buildSvg() {
     for (const [n, d] of Object.entries(st.prov.provinces)) el("path", { d, class: "rm-prv", "data-n": n, "vector-effect": "non-scaling-stroke" }, pg);
   }
   el("g", { id: "rm-boxg" }, svg);
-  el("g", { id: "rm-gridg" }, svg);
   el("g", { id: "rm-circg", "pointer-events": "none" }, svg);
   const [sx, sy] = P(...LAB.Singapore);
   const sg = el("circle", { cx: sx, cy: sy, r: 0.5, class: "rm-c", "data-c": 7, stroke: "#ece6d6", "stroke-width": 2, "vector-effect": "non-scaling-stroke", fill: "#0b1534" }, svg);
@@ -291,12 +268,14 @@ function buildSvg() {
     const cl = el("g", { id: "rm-clabs" }, top);
     st.ssl.cities.forEach((c, i) => {
       const [x, y] = P(c.lon, c.lat);
-      const d = el("g", { class: "rm-city", "data-i": i, role: "button", "aria-label": c.name }, cg);
-      el("rect", { x: -3, y: -2, width: 18, height: 19, fill: "transparent", class: "pin-hit" }, d);
-      el("path", { d: PIN_D.W, class: "pin-in", "shape-rendering": "crispEdges" }, d);
-      el("path", { d: PIN_D.R, fill: "#f4f1ea", class: "pin-r", "shape-rendering": "crispEdges" }, d);
-      el("path", { d: PIN_D.D, fill: "#b9b3a6", class: "pin-d", "shape-rendering": "crispEdges" }, d);
-      el("path", { d: PIN_D["#"], fill: "#06090f", "shape-rendering": "crispEdges" }, d);
+      const d = el("circle", { cx: x, cy: y, r: 0.3, class: "rm-city", "data-i": i, "stroke-width": 1.5, "vector-effect": "non-scaling-stroke", role: "button", "aria-label": c.name }, cg);
+      const hit = el("circle", { cx: x, cy: y, r: 0.6, class: "rm-hit", "data-i": i, fill: "transparent" }, cg);
+      hit.onclick = (e) => {
+        e.stopPropagation();
+        if (!st.dragged && !st.tool) pickCity(i, true);
+      };
+      hit.onmousemove = (e) => cityTip(e, i);
+      hit.onmouseleave = () => tip(null);
       d.onclick = (e) => {
         e.stopPropagation();
         if (!st.dragged) pickCity(i, true);
@@ -366,54 +345,16 @@ function cities() {
     const d = W.querySelector(`.rm-city[data-i="${i}"]`), k = cityState(c);
     let fill = "#ece6d6";
     if (real) fill = k === "sig" ? PAL.s[sslBin(c.trend_mm_per_decade)] : k === "ns" ? GREY : "#0b1534";
-    d.querySelector(".pin-in").setAttribute("fill", fill);
-    d.classList.toggle("inl", real && k === "inland");
+    d.setAttribute("fill", fill);
+    d.setAttribute("stroke", real && k === "inland" ? "#8b93ad" : "#06090f");
     d.classList.toggle("cap", c.capital);
     d.classList.toggle("on", i === st.city);
   });
   cityFades();
   cityLabels();
-  placePins();
-  drawGrid();
+  placeDots();
 }
 const KM_DEG = 111.32;
-function drawGrid() {
-  const g = W.querySelector("#rm-gridg");
-  if (!g) return;
-  g.innerHTML = "";
-  const c = st.ssl && st.city >= 0 ? st.ssl.cities[st.city] : null;
-  if (!c || !c.grid || !LAYERS[st.v].real) return;
-  const G = st.ssl.grid, step = G.cell_deg, R = G.radius_km, h = step / 2;
-  c.grid.forEach((q) => {
-    const x = q.lon + 180 - h, y = 90 - q.lat - h, sea = q.ocean && q.trend_mm_per_decade != null;
-    const cls = "rm-cell" + (q.used ? " used" : "") + (sea ? "" : " land") + (q.inside === false ? " out" : "");
-    const r = el("rect", { x, y, width: step, height: step, fill: sea ? PAL.s[sslBin(q.trend_mm_per_decade)] : "url(#rmLand)", "fill-opacity": q.used ? 0.92 : sea ? 0.3 : 0.85, "pointer-events": "all", class: cls, "vector-effect": "non-scaling-stroke", "shape-rendering": "crispEdges" }, g);
-    r.onmousemove = (e) => cellTip(e, c, q);
-    r.onmouseleave = () => tip(null);
-    const t = el("text", { x: x + h, y: y + h + step * 0.08, class: "rm-cellv" + (q.used ? " used" : "") + (sea ? "" : " land"), "font-size": (step * (sea ? 0.24 : 0.16)).toFixed(3) }, g);
-    t.textContent = sea ? (q.trend_mm_per_decade >= 0 ? "+" : "−") + Math.abs(q.trend_mm_per_decade).toFixed(0) : "LAND";
-  });
-  const [cx, cy] = P(c.lon, c.lat), ry = R / KM_DEG, rx = ry / Math.cos(c.lat * Math.PI / 180);
-  el("ellipse", { cx, cy, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
-  const used = c.grid.filter((q) => q.used).length, land = c.grid.filter((q) => q.inside !== false && !q.ocean).length;
-  const dom = G.domain, cut = dom && (c.lon - rx < dom[0] || c.lon + rx > dom[2] || c.lat - ry < dom[1] || c.lat + ry > dom[3]);
-  const cap = el("text", { x: cx, y: cy + ry + 0.22, class: "rm-gridcap", "font-size": 0.17 }, g);
-  cap.textContent = `${used} OCEAN CELLS USED · ${land} LAND · CENTRES WITHIN ${R} KM`;
-  if (cut) {
-    const c2 = el("text", { x: cx, y: cy + ry + 0.42, class: "rm-gridcap", "font-size": 0.14 }, g);
-    c2.textContent = "PART OF THE CIRCLE IS OUTSIDE THE DOWNLOADED ECCO AREA";
-  }
-}
-function cellTip(e, c, q) {
-  const t = $("#rm-tip"), box = $("#rm-mapc").getBoundingClientRect(), ll = (v, p, n) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? p : n}`;
-  const val = q.ocean && q.trend_mm_per_decade != null ? `<b style="font-weight:400">${q.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(q.trend_mm_per_decade).toFixed(1)} mm/dec</b>` : '<span class="dim">land · no sea data</span>';
-  const why = q.used ? `used for ${c.name}` : q.inside === false ? "centre outside the circle" : q.ocean ? "not used" : "the 0.5° model grid counts this as land";
-  t.innerHTML = `CELL ${ll(q.lat, "N", "S")} ${ll(q.lon, "E", "W")} ${val} <span class="dim">· ${Math.round(q.km)} km · ${why}</span>`;
-  t.style.display = "block";
-  const z = uiScale;
-  t.style.left = Math.min((e.clientX - box.left) / z + 14, box.width / z - t.offsetWidth - 6) + "px";
-  t.style.top = (e.clientY - box.top) / z + 16 + "px";
-}
 const GIBS = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi";
 const SAT_LAYERS = ["BlueMarble_NextGeneration", "BlueMarble_ShadedRelief_Bathymetry"];
 const SAT_BASE = [88, -16, 148, 32];
@@ -485,9 +426,9 @@ function cityLabels() {
     if (show) {
       t.setAttribute("font-size", (0.85 * ls).toFixed(3));
       t.setAttribute("stroke-width", (0.24 * ls).toFixed(3));
-      const u = pinScale();
-      t.setAttribute("x", (c.lon + 180 + 7.5 * u).toFixed(3));
-      t.setAttribute("y", (90 - c.lat - 8 * u).toFixed(3));
+      const u = dotScale();
+      t.setAttribute("x", (c.lon + 180 + 8 * u).toFixed(3));
+      t.setAttribute("y", (90 - c.lat - 6 * u).toFixed(3));
     }
   });
 }
@@ -502,6 +443,11 @@ function cityTip(e, i) {
 }
 function pickCity(i, fly) {
   const c = st.ssl.cities[i];
+  if (st.circ) {
+    st.circ = null;
+    circleDraw();
+    placeFx();
+  }
   if (!LAYERS[st.v].real) {
     st.v = LAYERS.findIndex((L) => L.real);
     st.yr = null;
@@ -510,14 +456,14 @@ function pickCity(i, fly) {
   st.c = -1;
   const k = cityState(c);
   sfx(k === "inland" ? "err" : "select");
-  if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "The yellow squares are the ocean cells I averaged. Nothing hidden."], "sig");
+  if (k === "sig") talk([`${c.name}. Up ${c.trend_mm_per_year.toFixed(1)} mm a year since ${st.ssl.period[0]}. That adds up.`, "Want a bigger picture? Press CIRCLE and drag over the sea around it."], "sig");
   else if (k === "ns") talk([`${c.name}. The sea climbs fast here too.`, "But it swings so much from year to year that I can’t prove it yet. That’s a different answer from no."], "ns");
   else talk(["Inland. The ocean data can’t speak for this one.", "I’m not inventing a number to fill the gap."], "inland");
   if (fly) flyTo(cityBox(c));
   paint(false);
 }
 function cityBox(c) {
-  const w = c.grid ? 5.6 : 9, h = w * VB.idn[3] / VB.idn[2], x = c.lon + 180, y = 90 - c.lat;
+  const w = 7, h = w * VB.idn[3] / VB.idn[2], x = c.lon + 180, y = 90 - c.lat;
   return [x - w * 0.42, y - h / 2, w, h];
 }
 function boxOf(d) {
@@ -539,7 +485,7 @@ function cityCard(box) {
   const c = st.ssl.cities[st.city], k = cityState(c), m = st.ssl;
   const selg = W.querySelector("#rm-selg");
   const [px, py] = P(c.lon, c.lat);
-  if (!c.grid) el("circle", { cx: px, cy: py, r: (0.9 * Math.min(1, (st.vb || VB.sea)[2] / VB.sea[2])).toFixed(3), class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
+  el("circle", { cx: px, cy: py, r: (0.9 * Math.min(1, (st.vb || VB.sea)[2] / VB.sea[2])).toFixed(3), class: "rm-pulse", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, selg);
   const head = `<div class="hd"><h3>${c.name.toUpperCase()}</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
     <div class="sub">${c.province.toUpperCase()} · SEA LEVEL · ${m.period[0]}-${m.period[1]}</div>`;
   if (k === "inland") {
@@ -643,6 +589,7 @@ function drawBox() {
   const r = el("rect", { x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: col, "fill-opacity": st.bx ? 0.32 : 0.2, stroke: col, "stroke-width": 3, "stroke-dasharray": "8 5", "vector-effect": "non-scaling-stroke", class: "rm-box" }, g);
   r.onclick = (e) => {
     e.stopPropagation();
+    if (st.dragged || st.tool) return;
     sfx("select");
     st.bx = true;
     st.city = -1;
@@ -807,13 +754,13 @@ function placeFx() {
     });
   }
   const sel = st.city >= 0 && st.ssl ? st.ssl.cities[st.city] : null;
-  const inRing = (c) => sel && sel.grid && Math.hypot((c.lon - sel.lon) * Math.cos(sel.lat * Math.PI / 180), c.lat - sel.lat) * KM_DEG < st.ssl.grid.radius_km * 1.6;
-  if (LAYERS[st.v].real && st.ssl) {
+  const inRing = (c) => sel && Math.hypot((c.lon - sel.lon) * Math.cos(sel.lat * Math.PI / 180), c.lat - sel.lat) * KM_DEG < 60;
+  if (LAYERS[st.v].real && st.ssl && !st.tool && !st.circ) {
     st.ssl.cities.map((c, i) => [c, i]).filter(([c, i]) => i !== st.city && !inRing(c) && cityState(c) === "sig" && !W.querySelector(`.rm-city[data-i="${i}"]`).classList.contains("fade")).sort((a, b) => b[0].population - a[0].population).forEach(([c]) => {
       const [ax, ay] = toCell([c.lon, c.lat]);
       if (ax < 0 || ay < 0 || ax >= GW || ay >= GH) return;
       if (sp.length >= 8 || sp.some((q) => Math.abs(q.ax - ax) < 17 && Math.abs(q.ay - ay) < 20)) return;
-      sp.push({ t: "flood", ax: ax + 12, ay: ay + 2 });
+      sp.push({ t: "flood", ax: ax + 9, ay: ay + 1 });
     });
   }
   const g = cv.getContext("2d"), img = g.createImageData(GW, GH);
@@ -864,7 +811,7 @@ function toolbar() {
       <div class="rm-ddp" id="rm-ddp" hidden><input id="rm-q" type="search" placeholder="Type a city or province" autocomplete="off" aria-label="Search a city or province" value="${st.q.replace(/"/g, "&quot;")}"><div class="rm-res" id="rm-res" role="listbox"></div></div></div>
     <div class="rm-seg" role="group" aria-label="Show">${["ALL", "TREND", "NONE"].map((t, i) => `<button data-f="${i}" class="${i === st.f ? "ink" : ""}">${t}</button>`).join("")}</div>
     <button class="rm-chip${st.fx ? " on" : ""}" data-fx title="Weather effects">FX ${st.fx ? "ON" : "OFF"}</button>
-    ${st.api ? `<button class="rm-chip${st.circ.on ? " on" : ""}" data-circ title="Draw a circle of grid cells and test it (Python analysis server)">CIRCLE ${st.circ.on ? "ON" : "OFF"}</button>` : ""}
+    <button class="rm-chip rm-circb${st.tool ? " on" : ""}" data-circ title="Draw a circle: press on the map and drag" aria-pressed="${st.tool}"><i class="ci"></i>CIRCLE</button>
     <button class="rm-chip${st.sat ? " on" : ""}" data-sat title="NASA GIBS Blue Marble imagery">SAT ${st.sat ? "ON" : "OFF"}</button>`;
   W.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => {
     st.v = +b.dataset.l;
@@ -899,8 +846,7 @@ function toolbar() {
     e.currentTarget.textContent = `SAT ${st.sat ? "ON" : "OFF"}`;
     satRefresh();
   };
-  const cb = W.querySelector("[data-circ]");
-  if (cb) cb.onclick = () => circleToggle(!st.circ.on);
+  W.querySelector("[data-circ]").onclick = () => circleTool(!st.tool);
   if (!fixed) bindRange(lo, hi);
   bindSearch();
 }
@@ -1066,6 +1012,10 @@ function bindRange(lo, hi) {
 function card() {
   const box = $("#rm-pv"), L = LAYERS[st.v];
   W.querySelector("#rm-selg").innerHTML = "";
+  if (st.circ && st.circ.res) {
+    circleCard(box);
+    return;
+  }
   if (L.real) {
     box.hidden = st.city < 0;
     if (st.city >= 0) cityCard(box);
@@ -1169,6 +1119,11 @@ function card() {
 function closeCard() {
   st.c = -1;
   st.bx = false;
+  if (st.circ) {
+    st.circ = null;
+    circleDraw();
+    placeFx();
+  }
   st.city = -1;
   cities();
   sfx("close");
@@ -1243,7 +1198,8 @@ function setVB(vb, anim) {
     t.setAttribute("font-size", (+t.dataset.fs * ls).toFixed(3));
     t.setAttribute("stroke-width", (0.28 * ls).toFixed(3));
   });
-  placePins();
+  placeDots();
+  circleDraw();
   cityLabels();
   const cg = W.querySelector("#rm-cities");
   if (cg && !LAYERS[st.v].real) cg.classList.toggle("off", !zoomedIn());
@@ -1297,21 +1253,15 @@ function bindNav() {
     const u = toUnits(e);
     zoomAt(e.deltaY < 0 ? 1 / 1.2 : 1.2, u.x, u.y);
   }, { passive: false });
-  // In circle mode a map click places the circle centre, and the country and city clicks are skipped.
-  mc.addEventListener("click", (e) => {
-    if (!st.circ.on || st.dragged || e.target.closest("#rm-circ,.rm-nav,.rm-float,.rm-zoom,.rm-seg,button")) return;
-    e.stopPropagation();
-    e.preventDefault();
-    const p = toUnits(e);
-    circleCentre(p.x - 180, 90 - p.y);
-  }, true);
-  let drag = null;
+    let drag = null;
   mc.addEventListener("pointerdown", (e) => {
+    if (st.tool) return circleDown(e);
     if (st.view === "world" || e.button !== 0 || e.target.closest("button,.rm-tip,.rm-float")) return;
     drag = { x: e.clientX, y: e.clientY, vb: (st.vb || VB.sea).slice(), k: $("#rm-svg").getScreenCTM().a, moved: false };
     st.dragged = false;
   });
   mc.addEventListener("pointermove", (e) => {
+    if (st.drawing) return circleMove(e);
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!drag.moved && Math.hypot(dx, dy) < 5) return;
@@ -1322,7 +1272,8 @@ function bindNav() {
     tip(null);
     setVB(clampVB([drag.vb[0] - dx / drag.k, drag.vb[1] - dy / drag.k, drag.vb[2], drag.vb[3]]));
   });
-  mc.addEventListener("pointerup", () => {
+  mc.addEventListener("pointerup", (e) => {
+    if (st.drawing) return circleUp(e);
     if (!drag) return;
     mc.classList.remove("grab");
     drag = null;
@@ -1361,21 +1312,6 @@ function zoom(to) {
   };
   requestAnimationFrame(step);
 }
-async function probeApi() {
-  if (st.api != null) return;
-  if (!import.meta.env.DEV) {
-    st.api = false;
-    return;
-  }
-  try {
-    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 1500);
-    const r = await fetch("api/variables", { signal: ctl.signal });
-    clearTimeout(t);
-    st.api = r.ok && (r.headers.get("content-type") || "").includes("json");
-  } catch (e) {
-    st.api = false;
-  }
-}
 async function loadReg() {
   if (st.reg) return;
   try {
@@ -1398,7 +1334,7 @@ async function load() {
   if (!st.prov) st.prov = await opt("data/indonesia_provinces.json");
   if (!st.ssl) st.ssl = await opt("data/indonesia_sea_level.json");
   if (!st.ssl && LAYERS[0].real) LAYERS.shift();
-  await Promise.all([loadReg(), probeApi()]);
+  await Promise.all([loadReg(), loadCells()]);
   if (!st.reg) LAYERS.forEach((L) => L.box && !L.lock && (L.lock = "regional_data.json (run scripts/export_regional.py)"));
 }
 async function open(win, helpers) {
@@ -1446,186 +1382,241 @@ async function open(win, helpers) {
   });
   setTimeout(() => paint(true), 350);
   setTimeout(() => zoom("idn"), 1700);
-  if (st.ssl) setTimeout(() => talk([`${st.ssl.cities.length} cities. ${st.ssl.tests} of them on the coast.`, "Pick one from CITIES. I’ll show you exactly which ocean cells the number comes from."], "map"), 2900);
+  if (st.ssl) setTimeout(() => talk([`${st.ssl.cities.length} cities. ${st.ssl.tests} of them on the coast.`, "Click a city dot. Or press CIRCLE and drag on the map to draw your own area."], "map"), 2900);
   H.log && H.log(st.ssl ? `MAP: ECCO SEA LEVEL FOR ${st.ssl.tests} COASTAL CITIES LOADED.` : "MAP: SAMPLE DATA.");
 }
-// CIRCLE mode: click the map for the centre, pick a radius (75 to 250 km) and a variable, RUN.
-// The page draws cells and text only. Every number comes from POST api/analyse (Python core).
-const CIRC_VARS = [
-  ["merra2:t2m", "Air temperature (MERRA-2)"],
-  ["merra2:precip", "Rainfall (MERRA-2)"],
-  ["merra2:evap", "Evaporation (MERRA-2)"],
-  ["merra2:vpd", "Vapour pressure deficit (MERRA-2)"],
-  ["merra2:qv2m", "Humidity (MERRA-2)"],
-  ["merra2:tsurf", "Land surface temperature (MERRA-2)"],
-  ["gpcp:gpcp_precip", "Rainfall (GPCP)"],
-];
-const CIRC_COL = { rise: "#d94a36", fall: "#1f4fa0", none: "#c9c2b2" };
-const signed = (v) => (v == null ? "n/a" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`);
-function circleToggle(on) {
-  const c = st.circ;
-  c.on = on;
-  c.msg = on ? "Click the map to place the circle." : "";
-  if (!on) {
-    c.lat = c.lon = null;
-    c.cells = null;
-    c.out = null;
+// CIRCLE tool (like Earthdata Search): press the CIRCLE button, then press on the map and drag
+// to draw. Every number shown comes from scripts/export_cells.py (core statistics per ECCO cell,
+// Benjamini-Hochberg across all cells). The page only counts, lists and averages for the chart.
+async function loadCells() {
+  if (st.cells) return;
+  try {
+    const r = await fetch("data/indonesia_cells.json");
+    if (!r.ok) return;
+    const d = await r.json(), list = [];
+    let k = 0;
+    d.lat.forEach((la) => d.lon.forEach((lo) => {
+      if (d.slope_mm_per_decade[k] != null) list.push({ k, lat: la, lon: lo });
+      k++;
+    }));
+    d.list = list;
+    st.cells = d;
+  } catch (e) {
+    st.cells = null;
   }
-  sfx("select");
-  circleDraw();
-  circlePanel();
-  toolbar();
 }
-function circleCentre(lon, lat) {
-  const c = st.circ;
-  c.lon = lon;
-  c.lat = lat;
-  c.cells = null;
-  c.out = null;
-  c.msg = "Centre set. Press RUN.";
+function kmBetween(la1, lo1, la2, lo2) {
+  const r = Math.PI / 180, a = Math.sin((la2 - la1) * r / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin((lo2 - lo1) * r / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+function toast(msg, bad) {
+  const mc = $("#rm-mapc");
+  let t = $("#rm-toast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "rm-toast";
+    t.setAttribute("role", "alert");
+    mc.appendChild(t);
+  }
+  t.className = "rm-toast" + (bad ? " bad" : "") + " on";
+  t.innerHTML = msg;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove("on"), bad ? 6000 : 4000);
+}
+function circleTool(on) {
+  st.tool = on;
+  st.drawing = null;
+  sfx("select");
+  placeFx();
+  $("#rm-mapc").classList.toggle("drawing", on);
+  if (on) {
+    if (st.view === "world") zoom("idn");
+    toast("<b>DRAW A CIRCLE</b> Press on the map and drag outwards. 75 to 250 km. Esc to cancel.");
+  } else {
+    const t = $("#rm-toast");
+    if (t) t.classList.remove("on");
+  }
+  const b = W.querySelector("[data-circ]");
+  if (b) {
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on);
+  }
+}
+function circleDown(e) {
+  if (e.button !== 0 || e.target.closest("button,.rm-float,.rm-card,.rm-zoom")) return;
+  e.preventDefault();
+  const p = toUnits(e);
+  st.drawing = { lon: p.x - 180, lat: 90 - p.y };
+  st.circ = { lon: st.drawing.lon, lat: st.drawing.lat, r: 0 };
+  $("#rm-mapc").setPointerCapture(e.pointerId);
+  tip(null);
   circleDraw();
-  circlePanel();
+}
+function circleMove(e) {
+  const p = toUnits(e), d = st.drawing;
+  st.circ = { lon: d.lon, lat: d.lat, r: kmBetween(d.lat, d.lon, 90 - p.y, p.x - 180) };
+  circleDraw();
+}
+function circleUp() {
+  st.drawing = null;
+  st.dragged = true;
+  setTimeout(() => st.dragged = false, 0);
+  if (!st.circ || st.circ.r < 8) {
+    st.circ = null;
+    circleDraw();
+    toast("Press and <b>drag</b> to set the size of the circle.", true);
+    return;
+  }
+  circleTool(false);
+  circleResult();
+}
+function circleLimits() {
+  return st.cells ? st.cells.radius_km : [75, 250];
 }
 function circleDraw() {
-  const g = W.querySelector("#rm-circg");
+  const g = W && W.querySelector("#rm-circg");
   if (!g) return;
   g.innerHTML = "";
+  W.querySelectorAll(".rm-city.in").forEach((d) => d.classList.remove("in"));
   const c = st.circ;
-  if (!c.on || c.lat == null) return;
-  (c.cells || []).forEach((q) => {
-    const h = q.height_km / KM_DEG, w = q.width_km / (KM_DEG * Math.cos((q.lat * Math.PI) / 180));
-    const kind = q.significant ? (q.slope_per_decade > 0 ? "rise" : "fall") : "none";
-    el("rect", { x: q.lon + 180 - w / 2, y: 90 - q.lat - h / 2, width: w, height: h, fill: CIRC_COL[kind], "fill-opacity": 0.7, stroke: "#06090f", "stroke-width": 0.04, "vector-effect": "non-scaling-stroke" }, g);
+  if (!c) return;
+  const [lo, hi] = circleLimits(), bad = c.r < lo || c.r > hi, ry = c.r / KM_DEG, rx = ry / Math.cos(c.lat * Math.PI / 180), [cx, cy] = P(c.lon, c.lat), u = dotScale();
+  el("ellipse", { cx, cy, rx, ry, class: "rm-circ" + (bad ? " bad" : ""), "vector-effect": "non-scaling-stroke" }, g);
+  el("circle", { cx, cy, r: 3 * u, class: "rm-circc" }, g);
+  if (c.r > 0) {
+    el("line", { x1: cx, y1: cy, x2: cx + rx, y2: cy, class: "rm-circr", "vector-effect": "non-scaling-stroke" }, g);
+    const t = el("text", { x: cx + rx / 2, y: cy - 5 * u, class: "rm-circt" + (bad ? " bad" : ""), "font-size": (15 * u).toFixed(4), "stroke-width": (3 * u).toFixed(4) }, g);
+    t.textContent = `${Math.round(c.r)} KM`;
+  }
+  if (st.ssl) st.ssl.cities.forEach((ct, i) => {
+    if (kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) {
+      const d = W.querySelector(`.rm-city[data-i="${i}"]`);
+      if (d) d.classList.add("in");
+    }
   });
-  const ry = c.r / KM_DEG, rx = ry / Math.cos((c.lat * Math.PI) / 180);
-  el("ellipse", { cx: c.lon + 180, cy: 90 - c.lat, rx, ry, class: "rm-radius", "vector-effect": "non-scaling-stroke" }, g);
 }
-function circlePanel() {
-  const c = st.circ;
-  let p = $("#rm-circ");
-  if (!c.on) {
-    if (p) p.remove();
-    return;
-  }
-  if (!p) {
-    p = document.createElement("div");
-    p.id = "rm-circ";
-    p.className = "rm-float rm-card";
-    p.style.cssText = "left:12px;bottom:12px;right:auto;top:auto;width:300px";
-    p.innerHTML = `<div class="hd"><h3>CIRCLE</h3><button class="x" id="rm-cx" aria-label="Close circle">×</button></div>
-      <div style="display:grid;gap:6px;margin-top:6px">
-        <label>Variable <select id="rm-cv">${CIRC_VARS.map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select></label>
-        <label>Radius <b id="rm-cr-v">${c.r}</b> km <input id="rm-cr" type="range" min="75" max="250" step="5" value="${c.r}"></label>
-        <div><button id="rm-crun" class="obtn">RUN</button></div>
-      </div>
-      <div id="rm-cchart" style="margin-top:6px"></div>
-      <div id="rm-cmsg" class="sub"></div><div id="rm-cout" style="font-size:14px;line-height:1.4;margin-top:6px"></div>`;
-    $("#rm-mapc").appendChild(p);
-    $("#rm-cx").onclick = () => circleToggle(false);
-    $("#rm-cv").value = c.v;
-    $("#rm-cv").onchange = (e) => {
-      c.v = e.target.value;
-      c.cells = null;
-      c.out = null;
-      circleDraw();
-      circlePanel();
-    };
-    $("#rm-cr").oninput = (e) => {
-      c.r = +e.target.value;
-      c.cells = null;
-      c.out = null;
-      $("#rm-cr-v").textContent = c.r;
-      circleDraw();
-    };
-    $("#rm-crun").onclick = circleRun;
-  }
-  $("#rm-cmsg").textContent = c.msg;
-  const box = $("#rm-cout");
-  box.replaceChildren(...(c.out || []).map((t) => {
-    const d = document.createElement("div");
-    d.textContent = t;
-    return d;
-  }));
-  circleChart();
-}
-// Monthly average of the cells inside the circle, as returned by /api/analyse. Only in-circle cells
-// are averaged, and the line is drawn from that average. Raw monthly values (seasonal cycle included).
-function circleChart() {
-  const box = $("#rm-cchart"), c = st.circ;
-  if (!box) return;
-  box.replaceChildren();
-  if (!c.cells || !c.avg) return;
-  const { periods, series, valid, unit } = c.avg;
-  const pts = series.map((v, i) => [i, v]).filter(([, v]) => v != null);
-  if (pts.length < 2) return;
-  const W = 280, H = 130, L = 34, R = 270, T = 8, B = 112;
-  const lo = Math.min(...pts.map((p) => p[1])), hi = Math.max(...pts.map((p) => p[1]));
-  const span = hi - lo || 1;
-  const x = (i) => L + (i / (series.length - 1)) * (R - L);
-  const y = (v) => B - ((v - lo) / span) * (B - T);
-  const cap = document.createElement("div");
-  cap.style.fontSize = "12px";
-  cap.textContent = `Average of the ${c.cells.length} cells inside the circle, monthly (${unit}). Cells with data each month: ${Math.min(...valid)} to ${Math.max(...valid)}.`;
-  box.appendChild(cap);
-  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Monthly average of the cells inside the circle" }, box);
-  el("line", { x1: L, y1: B, x2: R, y2: B, stroke: "#56628a", "stroke-width": 1 }, svg);
-  el("line", { x1: L, y1: T, x2: L, y2: B, stroke: "#56628a", "stroke-width": 1 }, svg);
-  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
-  el("path", { d, fill: "none", stroke: "#1b2440", "stroke-width": 1.2 }, svg);
-  const label = (txt, x0, y0) => {
-    const t = el("text", { x: x0, y: y0, "font-size": 10, fill: "#1b2440" }, svg);
-    t.textContent = txt;
-  };
-  label(hi.toFixed(2), 2, T + 6);
-  label(lo.toFixed(2), 2, B);
-  label(periods[0].slice(0, 4), L, H - 2);
-  label(periods[periods.length - 1].slice(0, 4), R - 20, H - 2);
-}
-async function circleRun() {
-  const c = st.circ;
-  if (c.lat == null) {
-    c.msg = "Click the map first to place the circle.";
-    circlePanel();
-    return;
-  }
-  c.msg = "Working...";
-  c.out = null;
-  circlePanel();
-  let res;
-  try {
-    res = await fetch("api/analyse", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "circle", lat: c.lat, lon: c.lon, radius_km: c.r, variables: [c.v] }),
-    });
-  } catch {
-    c.msg = "The analysis server is not running, so no numbers can be shown.";
-    circlePanel();
-    return;
-  }
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    c.msg = body.error || `The server said ${res.status}.`;
-    c.cells = null;
+function circleResult() {
+  const c = st.circ, D = st.cells, [lo, hi] = circleLimits(), R = Math.round(c.r);
+  c.res = null;
+  if (!D) {
+    toast("The cell file (indonesia_cells.json) is missing, so the circle cannot be read.", true);
     circleDraw();
-    circlePanel();
     return;
   }
-  const r = body.results[0], a = r.agreement;
-  c.cells = r.cells;
-  c.avg = { periods: r.average.periods, series: r.average.series, valid: r.average.valid_per_month, unit: r.unit };
-  c.msg = "";
-  c.out = [
-    `${r.label}, circle of ${c.r} km`,
-    `${r.cells_used} of ${r.cells_in_circle} cells used (centres inside the circle).`,
-    `Significant rises: ${a.rising}. Significant falls: ${a.falling}. Not significant: ${a.not_significant}.`,
-    `Cell slopes range from ${signed(a.slope_min)} to ${signed(a.slope_max)} per decade.`,
-    r.average.summary.sentence,
-    ...r.warnings.map((w) => `Note: ${w}`),
-  ];
+  if (c.r < lo) {
+    sfx("err");
+    toast(`<b>CIRCLE TOO SMALL</b> ${R} km. Draw at least ${lo} km from the centre. NASA's ocean grid cells are about 55 km wide, so a smaller circle holds too few of them to say anything.`, true);
+    circleDraw();
+    return;
+  }
+  if (c.r > hi) {
+    sfx("err");
+    toast(`<b>CIRCLE TOO BIG</b> ${R} km. Keep it under ${hi} km. A bigger circle mixes very different seas into one answer.`, true);
+    circleDraw();
+    return;
+  }
+  const cells = D.list.filter((q) => kmBetween(c.lat, c.lon, q.lat, q.lon) <= c.r);
+  if (cells.length < D.min_cells) {
+    sfx("err");
+    const inBox = c.lon >= D.lon[0] - 1 && c.lon <= D.lon[D.lon.length - 1] + 1 && c.lat >= D.lat[0] - 1 && c.lat <= D.lat[D.lat.length - 1] + 1;
+    toast(inBox ? `<b>NOT ENOUGH SEA DATA</b> Only ${cells.length} ocean cell${cells.length === 1 ? "" : "s"} inside (need ${D.min_cells}). Sea level is measured at sea: draw the circle over the coast or the water.` : "<b>OUTSIDE OUR DATA AREA</b> Draw the circle over Indonesia.", true);
+    circleDraw();
+    return;
+  }
+  const S = D.slope_mm_per_decade, PA = D.p_adjusted;
+  const sig = cells.filter((q) => PA[q.k] < 0.05), up = sig.filter((q) => S[q.k] > 0).length, down = sig.length - up;
+  const sl = cells.map((q) => S[q.k]).sort((a, b) => a - b), med = sl[Math.floor(sl.length / 2)];
+  const years = D.yearly_anomaly_tenth_mm[cells[0].k].length, yrs = [];
+  for (let y = 0; y < years; y++) {
+    let sw = 0, sv = 0;
+    cells.forEach((q) => {
+      const v = D.yearly_anomaly_tenth_mm[q.k][y], w = Math.cos(q.lat * Math.PI / 180);
+      if (v != null) {
+        sv += v / 10 * w;
+        sw += w;
+      }
+    });
+    yrs.push([D.period[0] + y + 0.5, sw ? sv / sw : null]);
+  }
+  const cities = st.ssl ? st.ssl.cities.map((ct, i) => [ct, i]).filter(([ct]) => kmBetween(c.lat, c.lon, ct.lat, ct.lon) <= c.r) : [];
+  c.res = { n: cells.length, up, down, flat: cells.length - sig.length, min: sl[0], max: sl[sl.length - 1], med, yrs, cities };
+  sfx("chime");
+  st.city = -1;
+  st.bx = false;
   circleDraw();
-  circlePanel();
+  card();
+  placeFx();
+  if (!st.seen.circle) {
+    st.seen.circle = 1;
+    say([`${c.res.n} ocean cells inside. ${up} of them rising clearly.`, cities.length ? `${cities.length} of my cities sit inside it. Their numbers are on the card.` : "None of my cities sit inside this one. The sea still tells its own story."]);
+  }
 }
+function circleCard(box) {
+  const c = st.circ, r = c.res, D = st.cells, L = LAYERS[st.v], f = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(0), ll = (v, a, b) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? a : b}`;
+  const Wd = 250, Hd = 70, vals = r.yrs.filter((q) => q[1] != null), lo = Math.min(...vals.map((q) => q[1])), hi = Math.max(...vals.map((q) => q[1])), pad = (hi - lo) * 0.15 || 1;
+  const X = (x) => 8 + (x - vals[0][0]) / (vals[vals.length - 1][0] - vals[0][0]) * (Wd - 16), Y = (y) => Hd - 8 - (y - lo + pad) / (hi - lo + 2 * pad) * (Hd - 16);
+  const line = vals.map((q, i) => `${i ? "L" : "M"}${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("");
+  const mixed = r.up && r.down;
+  const verdict = r.up > r.n / 2 ? "MOSTLY RISING CLEARLY" : r.up ? "PARTLY RISING CLEARLY" : r.down ? "FALLING IN PLACES" : "NO CLEAR TREND";
+  const cityRows = r.cities.length ? r.cities.map(([ct, i]) => {
+    const k = cityState(ct), v = k === "inland" ? "inland" : `${ct.trend_mm_per_decade >= 0 ? "+" : "−"}${Math.abs(ct.trend_mm_per_decade).toFixed(0)} mm/dec${k === "sig" ? "" : " · not clear yet"}`;
+    return `<button class="rm-cc" data-ci="${i}"><span>${ct.name}</span><small>${v}</small></button>`;
+  }).join("") : '<div class="rm-note" style="margin:2px 0">No study city inside this circle.</div>';
+  box.hidden = false;
+  box.innerHTML = `<div class="hd"><h3>CIRCLE · ${Math.round(c.r)} KM</h3><button class="x" id="rm-close" aria-label="Close">×</button></div>
+    <div class="sub">CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · SEA LEVEL ${D.period[0]}-${D.period[1]}</div>
+    <div class="big"><b>${r.up}</b><span>of ${r.n} ocean cells rising clearly</span></div>
+    <span class="rm-verd" style="background:${r.up > r.n / 2 ? "var(--grn)" : "var(--mus)"}">${verdict}</span>
+    <svg class="rm-spark zoomable" id="rm-zoom" viewBox="0 0 ${Wd} ${Hd}" preserveAspectRatio="none" role="button" tabindex="0" aria-label="Open the full chart"><path class="ln" d="${line}"/></svg>
+    <div class="zoom-hint">${D.period[0]} · AVERAGE OF THE CELLS · CLICK TO ENLARGE · ${D.period[1]}</div>
+    <table class="rm-tab">
+      <tr><td>Cell trends</td><td>${f(r.min)} to ${f(r.max)} mm/dec</td></tr>
+      <tr><td>Middle cell</td><td>${f(r.med)} mm/dec</td></tr>
+      <tr><td>Not clear / falling</td><td>${r.flat} / ${r.down}</td></tr>
+    </table>
+    ${mixed ? '<div class="rm-note" style="color:var(--red)">Cells disagree: some rise and some fall clearly. Look at them separately before trusting one number.</div>' : ""}
+    <div class="rm-sec">CITIES INSIDE (${r.cities.length})</div>
+    <div class="rm-ccs">${cityRows}</div>
+    ${L.box ? `<div class="rm-note">${L.name}: this layer only has one value for the whole Maritime SE Asia box, not per circle. Click the box for it.</div>` : ""}
+    <div class="rm-note">${D.method}</div>
+    <div class="rm-note">NASA DATA · ${D.dataset}</div>
+    <button class="obtn" id="rm-redraw">DRAW ANOTHER CIRCLE ▸</button>`;
+  box.querySelector("#rm-close").onclick = closeCard;
+  box.querySelector("#rm-redraw").onclick = () => circleTool(true);
+  box.querySelectorAll(".rm-cc").forEach((b) => b.onclick = () => {
+    st.circ = null;
+    circleDraw();
+    pickCity(+b.dataset.ci, true);
+  });
+  const zs = box.querySelector("#rm-zoom"), open1 = () => {
+    sfx("select");
+    openChart({
+      title: `CIRCLE · ${Math.round(c.r)} KM · SEA LEVEL`,
+      sub: `CENTRE ${ll(c.lat, "N", "S")} ${ll(c.lon, "E", "W")} · AVERAGE OF ${r.n} OCEAN CELLS · YEARLY, VS EACH CELL'S OWN AVERAGE`,
+      unit: "mm vs average",
+      series: vals,
+      seriesLabel: `Average of the ${r.n} cells inside the circle`,
+      zero: true,
+      dp: 1,
+      stats: [["CELLS INSIDE", `${r.n}`], ["RISING CLEARLY", `${r.up}`], ["NO CLEAR TREND", `${r.flat}`], ["FALLING CLEARLY", `${r.down}`], ["CELL TRENDS", `${f(r.min)} to ${f(r.max)} mm/dec`], ["MIDDLE CELL", `${f(r.med)} mm/dec`]],
+      notes: ["The line is the cells' yearly average, drawn for reading. The trend numbers come from each cell's own test in the Python core, not from this line.", D.method],
+      source: D.dataset
+    });
+  };
+  zs.onclick = open1;
+  zs.onkeydown = (e) => e.key === "Enter" && open1();
+}
+addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || !W || !W.isConnected || !st.tool) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  if (st.drawing) {
+    st.drawing = null;
+    st.circ = null;
+    circleDraw();
+  }
+  circleTool(false);
+}, true);
 const regionMap = { open };
 export {
   regionMap

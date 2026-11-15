@@ -227,6 +227,10 @@ of the 18 trends significant at 5%; for 1990-2019 it turns one (East China air t
   Manado) rise fastest but are not yet significant: ENSO makes their records noisy. Cross-check:
   the whole Southeast Asia box rises +38.8 mm per decade (95% CI +7.6 to +69.9) with the same
   code, inside the city range.
+- Map CIRCLE tool: `scripts/export_cells.py` runs `core.summary.summarise` on every ECCO ocean
+  cell in the Indonesia box (94-142°E, 12°S-7°N; 2,478 cells), then Benjamini-Hochberg across all
+  of them, so "rising clearly" means the same wherever a circle is drawn (1,408 cells clear).
+  The page only counts cells whose centre is inside the circle and lists their results.
 - The CASES workflow uses the same monthly city series (`web/public/data/cases_data.json`) plus
   the MERRA-2 Maritime Southeast Asia temperature and rain series. Its lineup runs in the
   browser (Sen's slope, autocorrelation-adjusted Mann-Kendall, 1,000 AR(1) fakes) and always
