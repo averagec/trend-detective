@@ -310,6 +310,28 @@
    "value": 281.618
   }
  ],
+ "significance": {
+  "expected_by_chance": null,
+  "family": {
+   "alpha": 0.05,
+   "method": null,
+   "n_tests": null,
+   "name": "none"
+  },
+  "mk_p_ar1": 9.281599291342048e-05,
+  "mk_q": 9.281599291342048e-05,
+  "ols_p": 3.541400419555189e-07,
+  "ols_q": 3.541400419555189e-07,
+  "sentence": "Station rose by 0.27 K per decade (95% CI +0.22 to +0.33), statistically significant at 95%.",
+  "significant": true,
+  "verdict": "rise",
+  "warnings": [
+   {
+    "code": "short_record",
+    "text": "Only 3.9 years of data; trends under 10 years are not reliable."
+   }
+  ]
+ },
  "statistics": {
   "mk_ar1_significant": true,
   "mk_p": 7.923504767429185e-14,

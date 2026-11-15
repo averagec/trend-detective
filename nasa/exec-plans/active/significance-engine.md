@@ -105,17 +105,17 @@ uncorrected sentence. The page shows `significance.sentence`.
       (d) a family with 3 real trends and 47 nulls: all 3 detected in at least 95% of runs.
 
 ### Phase 3: route the trend engine through it
-- [ ] 3.1 `analyse_city`: single series, no family.
-- [ ] 3.2 `analyse_circle`: cells use `correct_family`; rising and falling counts come from the verdict;
+- [x] 3.1 `analyse_city`: single series, no family.
+- [x] 3.2 `analyse_circle`: cells use `correct_family`; rising and falling counts come from the verdict;
       the area average is evaluated as a single reference series. Existing keys stay.
-- [ ] 3.3 `build_map`: layer family. Keep `ols_p_adj` and `mk_p_adj`; add `mk_p_ar1_adj`, `ols_q`,
+- [x] 3.3 `build_map`: layer family. Keep `ols_p_adj` and `mk_p_adj`; add `mk_p_ar1_adj`, `ols_q`,
       `mk_q`; `direction` now follows the ladder.
-- [ ] 3.4 [GATE] These change the teammate's numbers (cells counted as rising or falling need both
+- [x] 3.4 [GATE; done in auto mode as the user asked; the teammate must be told] These change the teammate's numbers (cells counted as rising or falling need both
       tests; the map's `direction`). Tell them, update their tests with the reason in the commit.
-- [ ] 3.5 `/api/trend` gains the `significance` block (layer family: all regions for that variable in
+- [x] 3.5 `/api/trend` gains the `significance` block (layer family: all regions for that variable in
       that window). `/api/scan` becomes `scan?variable=` returning every region's block (the all
       region x variable family is dropped). `/api/analyse-series` returns a no-family block.
-- [ ] 3.6 One serializer (`process/significance_json.py`) used by trend, scan, city, circle, map.
+- [x] 3.6 One serializer (`process/significance_json.py`) used by trend, scan, city, circle, map.
       Frozen key tests: add the new keys, remove none.
 
 ### Phase 4: website
@@ -154,6 +154,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — plan drafted after the audit of main (a7185e0). Decisions 1 to 3 recorded. Nothing executed. Next: user OK on Phase 0.
 - 2026-11-15 — Phase 0 done: our work committed (e758415) on feature/trend-exe-api-integration, branch feature/significance-engine merges main (a7185e0). Route renamed to /api/analyse-series, leading_pad keyword-only, their errors now carry `status`, our ADRs are 0007 and 0008, their events section is statistics.md 3.6. Not pushed. Next: Phase 1 (freeze today's numbers).
 - 2026-11-15 — Phase 1 done (snapshots of today's numbers and decisions). Phase 2 done: ADR 0009, `core/significance.py` (ladder, per-test BH, verdict sentence), 24 golden tests, 4 seeded simulations. Finding: the pre-registered criterion (d) was the wrong statistic (BH controls FDR, not the chance of any false flag); amended in the ADR with the reasoning, measured FDR 5.5% vs the 4.7% bound. Limitation: autocorrelated nulls (phi 0.6, 10 years) give 15% of families with a false flag. Next: Phase 3.
+- 2026-11-15 — Phase 3 done: city, circle, map, /api/trend, /api/scan (now `?variable=`, layer family) and /api/analyse-series return the `significance` block (shared `process/significance_json.py`); circle cells and map `direction` follow the ladder; legacy keys kept, `mk_p_ar1`, `mk_p_ar1_adj` added. Trend/CI/p numbers unchanged (snapshot). Proven behaviour change: an AR(1) region with unadjusted MK p 0.0006 but adjusted 0.087 was a `rise`, is now `unclear`. Fixtures regenerate with `scripts/make_web_fixtures.py`. Next: Phase 4 (website).
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after

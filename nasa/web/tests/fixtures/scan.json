@@ -1,40 +1,13 @@
 {
  "alpha": 0.05,
+ "family": "layer",
  "from": 2000,
  "method": "benjamini-hochberg",
  "n_significant_p": 2,
  "n_significant_q": 2,
- "n_tests": 4,
- "note": "4 trends were tested at once. The q-value is the p-value adjusted for that (Benjamini-Hochberg, false discovery rate). A trend counts as significant here only if q is below 0.05.",
+ "n_tests": 3,
+ "note": "3 regions were tested together for this variable (Benjamini-Hochberg across regions, false discovery rate). A trend counts as significant only when the OLS test and the autocorrelation-adjusted Mann-Kendall test both have q below 0.05 and agree in sign.",
  "results": [
-  {
-   "first_month": "2000-01",
-   "label": "Precipitation",
-   "last_month": "2007-12",
-   "mk_p": 0.6125478997206617,
-   "mk_p_ar1": 0.6125478997206617,
-   "n_eff": 96.0,
-   "n_months": 96,
-   "n_years": 8.0,
-   "ols_ci_per_decade": [
-    -0.2860875899063682,
-    0.17806805653685054
-   ],
-   "ols_p": 0.6450943159605322,
-   "ols_per_decade": -0.054009766684758806,
-   "ols_q": 0.7618612201756972,
-   "ols_significant": false,
-   "region": "east_asia_land",
-   "region_name": "Eastern China and Korea",
-   "sen_per_decade": -0.0771743697477566,
-   "significant_q": false,
-   "tests_agree": true,
-   "unit": "mm day-1",
-   "variable": "precip",
-   "warnings": [
-    "Only 8.0 years of data; trends under 10 years are not reliable."
-   ]
-  },
   {
    "first_month": "2000-01",
    "label": "Mean 2 m air temperature",
@@ -50,11 +23,33 @@
    ],
    "ols_p": 0.010826113761833983,
    "ols_per_decade": 0.2884102007596316,
-   "ols_q": 0.028681636563177987,
+   "ols_q": 0.02151122742238349,
    "ols_significant": true,
    "region": "east_asia_land",
    "region_name": "Eastern China and Korea",
    "sen_per_decade": 0.30115384615433305,
+   "significance": {
+    "expected_by_chance": 0.07500000000000001,
+    "family": {
+     "alpha": 0.05,
+     "method": "benjamini-hochberg",
+     "n_tests": 3,
+     "name": "layer"
+    },
+    "mk_p_ar1": 0.007125585727194684,
+    "mk_q": 0.021376757181584053,
+    "ols_p": 0.010826113761833983,
+    "ols_q": 0.02151122742238349,
+    "sentence": "Mean 2 m air temperature in Eastern China and Korea rose by 0.29 K per decade (95% CI +0.07 to +0.51), statistically significant at 95% after correcting for 3 tests at once.",
+    "significant": true,
+    "verdict": "rise",
+    "warnings": [
+     {
+      "code": "short_record",
+      "text": "Only 8.0 years of data; trends under 10 years are not reliable."
+     }
+    ]
+   },
    "significant_q": true,
    "tests_agree": true,
    "unit": "K",
@@ -65,28 +60,50 @@
   },
   {
    "first_month": "2000-01",
-   "label": "Precipitation",
+   "label": "Mean 2 m air temperature",
    "last_month": "2007-12",
-   "mk_p": 0.8049918817459067,
-   "mk_p_ar1": 0.8049918817459067,
-   "n_eff": 96.0,
+   "mk_p": 0.8246454482703478,
+   "mk_p_ar1": 0.8344743026413705,
+   "n_eff": 85.37875167466191,
    "n_months": 96,
    "n_years": 8.0,
    "ols_ci_per_decade": [
-    -0.27589900594431427,
-    0.20264887029592202
+    -0.2680333774082966,
+    0.2160746145217213
    ],
-   "ols_p": 0.7618612201756972,
-   "ols_per_decade": -0.03662506782419614,
-   "ols_q": 0.7618612201756972,
+   "ols_p": 0.8314904737063489,
+   "ols_per_decade": -0.025979381443287645,
+   "ols_q": 0.8314904737063489,
    "ols_significant": false,
-   "region": "se_asia_maritime",
-   "region_name": "Maritime Southeast Asia (Indonesia, Malaysia, Philippines)",
-   "sen_per_decade": -0.03873303167424699,
+   "region": "north_asia_siberia",
+   "region_name": "Southern Siberia and Mongolia",
+   "sen_per_decade": -0.028931515535831124,
+   "significance": {
+    "expected_by_chance": 0.07500000000000001,
+    "family": {
+     "alpha": 0.05,
+     "method": "benjamini-hochberg",
+     "n_tests": 3,
+     "name": "layer"
+    },
+    "mk_p_ar1": 0.8344743026413705,
+    "mk_q": 0.8344743026413705,
+    "ols_p": 0.8314904737063489,
+    "ols_q": 0.8314904737063489,
+    "sentence": "Mean 2 m air temperature in Southern Siberia and Mongolia: no significant trend detected (yet). The estimated change is -0.03 K per decade.",
+    "significant": false,
+    "verdict": "none",
+    "warnings": [
+     {
+      "code": "short_record",
+      "text": "Only 8.0 years of data; trends under 10 years are not reliable."
+     }
+    ]
+   },
    "significant_q": false,
    "tests_agree": true,
-   "unit": "mm day-1",
-   "variable": "precip",
+   "unit": "K",
+   "variable": "t2m",
    "warnings": [
     "Only 8.0 years of data; trends under 10 years are not reliable."
    ]
@@ -106,11 +123,33 @@
    ],
    "ols_p": 0.014340818281588993,
    "ols_per_decade": -0.3444709712425533,
-   "ols_q": 0.028681636563177987,
+   "ols_q": 0.02151122742238349,
    "ols_significant": true,
    "region": "se_asia_maritime",
    "region_name": "Maritime Southeast Asia (Indonesia, Malaysia, Philippines)",
    "sen_per_decade": -0.2837837837838022,
+   "significance": {
+    "expected_by_chance": 0.07500000000000001,
+    "family": {
+     "alpha": 0.05,
+     "method": "benjamini-hochberg",
+     "n_tests": 3,
+     "name": "layer"
+    },
+    "mk_p_ar1": 0.022853269586874666,
+    "mk_q": 0.034279904380312,
+    "ols_p": 0.014340818281588993,
+    "ols_q": 0.02151122742238349,
+    "sentence": "Mean 2 m air temperature in Maritime Southeast Asia (Indonesia, Malaysia, Philippines) fell by 0.34 K per decade (95% CI -0.62 to -0.07), statistically significant at 95% after correcting for 3 tests at once.",
+    "significant": true,
+    "verdict": "fall",
+    "warnings": [
+     {
+      "code": "short_record",
+      "text": "Only 8.0 years of data; trends under 10 years are not reliable."
+     }
+    ]
+   },
    "significant_q": true,
    "tests_agree": true,
    "unit": "K",
@@ -120,5 +159,6 @@
    ]
   }
  ],
- "to": 2007
+ "to": 2007,
+ "variable": "t2m"
 }

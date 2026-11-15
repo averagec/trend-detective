@@ -34,7 +34,13 @@ sys.path.insert(0, str(ROOT / "src"))  # lets the script run without `pip instal
 from trend_detective.app.event_api import register_event_routes  # noqa: E402
 from trend_detective.catalog.regions import REGIONS  # noqa: E402
 from trend_detective.catalog.variables import VARIABLES  # noqa: E402
-from trend_detective.process.analyse_trends import build, build_custom, load, scan  # noqa: E402
+from trend_detective.process.analyse_trends import (  # noqa: E402
+    build,
+    build_custom,
+    layer_assessments,
+    load,
+    scan,
+)
 from trend_detective.process.cell_cube import load as load_cube  # noqa: E402
 from trend_detective.process.cities import load_cities  # noqa: E402
 from trend_detective.process.regional_map import build_map  # noqa: E402
@@ -46,6 +52,7 @@ from trend_detective.process.selection import (  # noqa: E402
     analyse_city,
     city_cell,
 )
+from trend_detective.process.significance_json import significance_json  # noqa: E402
 
 DEFAULT_INPUT = ROOT / "data" / "processed" / "merra2" / "monthly_regional.csv"
 DEFAULT_IMAGES = ROOT / "data" / "demo" / "images"  # made by scripts/render_demo_images.py
@@ -58,6 +65,7 @@ OCEAN_IMAGES = ("ocean_ssh_mean.png", "sar_browse_scenes.png")
 SUMMARY_KEYS = (
     "n_months", "n_years", "ols_per_decade", "ols_ci_per_decade", "ols_p", "ols_significant",
     "sen_per_decade", "mk_p", "mk_significant", "tests_agree", "warnings", "sentence",
+    "n_eff", "r1", "mk_p_ar1", "mk_ar1_significant",
 )
 
 # Limits for POST /api/analyse-series (documented in docs/api.md)
@@ -369,18 +377,25 @@ def create_app(
         entry = series.get((region, variable))
         if entry is None:
             abort(404, description=f"no data for {variable} in {region}")
+        # This variable across its regions is one family (ADR 0009): the verdict allows for that.
+        family = layer_assessments(series, variable, first, last)
         try:
-            result = build(region, variable, entry, first, last)
+            result = build(region, variable, entry, first, last, assessment=family.get(region))
         except ValueError as err:
             abort(400, description=str(err))
         return jsonify(result)
 
     @app.get("/api/scan")
-    def scan_all():
-        """Every region x variable in the data, with the multiple-testing correction."""
+    def scan_layer():
+        """One variable in every region, judged together (the "layer" family)."""
+        variable = request.args.get("variable", "")
+        if not variable:
+            abort(400, description="variable is required")
         first, last = year_window()
         try:
-            result = scan(store.series(), first, last)
+            result = scan(store.series(), variable, first, last)
+        except KeyError:
+            abort(404, description=f"no data for {variable}")
         except ValueError as err:
             abort(400, description=str(err))
         return jsonify(result)
@@ -519,6 +534,7 @@ def create_app(
                         "periods": iso_periods(res.periods),
                         "series": jsonable(res.series),
                         "summary": summary_json(res.summary),
+                        "significance": significance_json(res.assessment),
                         "warnings": list(res.warnings),
                     }
                 )
@@ -554,6 +570,7 @@ def create_app(
                                 "slope_per_decade": jsonable(c.slope),
                                 "significant": c.significant,
                                 "p_adjusted": jsonable(c.p_adj),
+                                "significance": significance_json(c.assessment),
                             }
                             for c in res.cells
                         ],
@@ -562,6 +579,7 @@ def create_app(
                             "series": jsonable(res.average_series),
                             "valid_per_month": jsonable(res.valid_per_month),
                             "summary": summary_json(res.average),
+                            "significance": significance_json(res.average_assessment),
                         },
                         "warnings": list(res.warnings),
                     }

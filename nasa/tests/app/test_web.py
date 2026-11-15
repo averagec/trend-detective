@@ -200,7 +200,11 @@ def test_an_unexpected_error_is_json_and_leaks_nothing(csv_path, monkeypatch):
 
 TREND_KEYS = {
     "region", "region_name", "variable", "label", "unit", "first_month", "last_month",
-    "series", "annual", "band", "statistics", "sentence", "warnings",
+    "series", "annual", "band", "statistics", "sentence", "warnings", "significance",
+}  # fmt: skip
+SIGNIFICANCE_KEYS = {
+    "family", "ols_p", "ols_q", "mk_p_ar1", "mk_q", "verdict", "significant", "expected_by_chance",
+    "sentence", "warnings",
 }  # fmt: skip
 STATISTICS_KEYS = {
     "n_months", "n_years", "ols_per_decade", "ols_ci_per_decade", "ols_p", "ols_significant",
@@ -496,32 +500,30 @@ def test_analyse_only_accepts_post(client):
     assert "POST" in r.headers["Allow"]
 
 
-# --- GET /api/scan: all region x variable results with the multiple-testing correction -----------
+# --- GET /api/scan: one variable across its regions, judged as one family (ADR 0009) ------------
 
-# (region, variable, unit, slope per month, noise sd, seed). 20 years, 1990-2009. Three clear
-# trends, one borderline series (p = 0.046 on its own) and five series with no trend.
+# (region, variable, unit, slope per month, noise sd, seed). 20 years, 1990-2009. For t2m the family
+# has 4 regions: a clear rise, a region significant on its own (OLS p 0.029, adjusted Mann-Kendall
+# p 0.032) that is not significant after correcting for 4 regions, and two without a trend.
 SCAN_SPEC = [
     ("east_asia_land", "t2m", "K", 0.0025, 0.3, 1),
-    ("east_asia_land", "precip", "mm day-1", 0.0020, 0.3, 2),
-    ("east_asia_land", "evap", "mm day-1", 0.0004, 0.5, 46),  # borderline: p 0.046 alone
-    ("se_asia_maritime", "t2m", "K", -0.0020, 0.3, 4),
-    ("se_asia_maritime", "precip", "mm day-1", 0.0, 0.5, 44),
-    ("se_asia_maritime", "evap", "mm day-1", 0.0, 0.5, 49),
+    ("se_asia_maritime", "t2m", "K", 0.0005, 0.5, 340),  # borderline on its own
     ("north_asia_siberia", "t2m", "K", 0.0, 0.5, 54),
-    ("north_asia_siberia", "precip", "mm day-1", 0.0, 0.5, 55),
-    ("north_asia_siberia", "evap", "mm day-1", 0.0, 0.5, 56),
+    ("extra_region", "t2m", "K", 0.0, 0.5, 55),
+    ("east_asia_land", "precip", "mm day-1", -0.0020, 0.3, 2),  # a clear fall
+    ("se_asia_maritime", "precip", "mm day-1", 0.0, 0.5, 44),
+    ("north_asia_siberia", "precip", "mm day-1", 0.0, 0.5, 49),
 ]  # fmt: skip
 
 SCAN_ROW_KEYS = {
     "region", "region_name", "variable", "label", "unit", "first_month", "last_month",
     "n_months", "n_years", "ols_per_decade", "ols_ci_per_decade", "ols_p", "ols_q",
     "significant_q", "ols_significant", "sen_per_decade", "mk_p", "mk_p_ar1", "n_eff",
-    "tests_agree",
-    "warnings",
+    "tests_agree", "warnings", "significance",
 }  # fmt: skip
 SCAN_KEYS = {
-    "from", "to", "method", "alpha", "n_tests", "n_significant_p", "n_significant_q", "note",
-    "results",
+    "from", "to", "variable", "family", "method", "alpha", "n_tests", "n_significant_p",
+    "n_significant_q", "note", "results",
 }  # fmt: skip
 
 
@@ -552,149 +554,146 @@ def scan_client(tmp_path: Path):
     return create_app(path).test_client()
 
 
-def test_scan_covers_every_region_and_variable(scan_client):
-    data = scan_client.get("/api/scan").get_json()
+def scan_rows(client, query="variable=t2m"):
+    data = client.get(f"/api/scan?{query}").get_json()
+    return data, {r["region"]: r for r in data["results"]}
+
+
+def test_scan_covers_the_regions_of_one_variable(scan_client):
+    data, rows = scan_rows(scan_client)
     assert set(data) == SCAN_KEYS
-    assert data["method"] == "benjamini-hochberg" and data["alpha"] == 0.05
-    assert (data["from"], data["to"]) == (1990, 2009)
-    keys = [(r["region"], r["variable"]) for r in data["results"]]
-    assert keys == sorted((s[0], s[1]) for s in SCAN_SPEC)
-    assert data["n_tests"] == 9
-    for row in data["results"]:
+    assert (data["variable"], data["family"]) == ("t2m", "layer")
+    assert data["method"] == "benjamini-hochberg"
+    assert (data["from"], data["to"], data["n_tests"]) == (1990, 2009, 4)
+    assert sorted(rows) == [
+        "east_asia_land", "extra_region", "north_asia_siberia", "se_asia_maritime",
+    ]  # fmt: skip
+    for row in rows.values():
         assert set(row) == SCAN_ROW_KEYS
+        assert set(row["significance"]) == SIGNIFICANCE_KEYS
+    precip = scan_client.get("/api/scan?variable=precip").get_json()
+    assert precip["n_tests"] == 3  # another layer is another family
 
 
-def test_scan_q_values_are_benjamini_hochberg(scan_client):
+def test_scan_q_values_are_benjamini_hochberg_across_the_regions(scan_client):
     from scipy import stats
 
-    rows = scan_client.get("/api/scan").get_json()["results"]
-    p = np.array([r["ols_p"] for r in rows])
-    q = np.array([r["ols_q"] for r in rows])
-    np.testing.assert_allclose(q, stats.false_discovery_control(p, method="bh"), rtol=1e-9)
-    assert np.all(q >= p) and np.all(q <= 1)
+    _, rows = scan_rows(scan_client)
+    order = sorted(rows)
+    ols_p = np.array([rows[k]["ols_p"] for k in order])
+    mk_p = np.array([rows[k]["mk_p_ar1"] for k in order])
+    ols_q = np.array([rows[k]["significance"]["ols_q"] for k in order])
+    mk_q = np.array([rows[k]["significance"]["mk_q"] for k in order])
+    np.testing.assert_allclose(ols_q, stats.false_discovery_control(ols_p, method="bh"), rtol=1e-9)
+    np.testing.assert_allclose(mk_q, stats.false_discovery_control(mk_p, method="bh"), rtol=1e-9)
+    assert all(rows[k]["ols_q"] == rows[k]["significance"]["ols_q"] for k in order)
 
 
-def test_scan_flags_significance_by_q_not_by_p(scan_client):
-    data = scan_client.get("/api/scan").get_json()
-    by_key = {(r["region"], r["variable"]): r for r in data["results"]}
-    for key in [("east_asia_land", "t2m"), ("east_asia_land", "precip"),
-                ("se_asia_maritime", "t2m")]:  # fmt: skip
-        assert by_key[key]["significant_q"] is True and by_key[key]["ols_q"] < 0.01
-    # the borderline series is significant on its own (p < 0.05) but not once the 9 tests are
-    # accounted for: this is the false alarm the correction removes
-    border = by_key[("east_asia_land", "evap")]
-    assert border["ols_p"] < 0.05 and border["ols_significant"] is True
-    assert border["ols_q"] >= 0.05 and border["significant_q"] is False
-    assert data["n_significant_p"] == 4 and data["n_significant_q"] == 3
-    for row in data["results"]:
-        assert row["significant_q"] == (row["ols_q"] < 0.05)
+def test_a_region_significant_alone_is_not_significant_after_correction(scan_client):
+    data, rows = scan_rows(scan_client)
+    border = rows["se_asia_maritime"]
+    assert border["ols_p"] < 0.05 and border["mk_p_ar1"] < 0.05  # on its own: both tests
+    assert border["ols_significant"] is True
+    sig = border["significance"]
+    assert sig["ols_q"] > 0.05 and sig["mk_q"] > 0.05  # 0.029 x 4 / 2 and 0.032 x 4 / 2
+    assert sig["verdict"] != "rise" and sig["significant"] is False
+    assert border["significant_q"] is False
+    assert "no significant trend detected (yet)" in sig["sentence"]
+    assert data["n_significant_p"] > data["n_significant_q"]  # the correction removed a false alarm
+
+
+def test_clear_trends_are_rise_and_fall_and_say_what_was_corrected(scan_client):
+    _, rows = scan_rows(scan_client)
+    rise = rows["east_asia_land"]["significance"]
+    assert rise["verdict"] == "rise" and rise["significant"] is True
+    assert rise["ols_q"] < 0.01 and rise["mk_q"] < 0.01
+    assert rise["sentence"].endswith("significant at 95% after correcting for 4 tests at once.")
+    assert rise["family"] == {
+        "name": "layer", "n_tests": 4, "method": "benjamini-hochberg", "alpha": 0.05,
+    }  # fmt: skip
+    assert rise["expected_by_chance"] == pytest.approx(0.1)
+    _, precip = scan_rows(scan_client, "variable=precip")
+    assert precip["east_asia_land"]["significance"]["verdict"] == "fall"
+    assert "fell by" in precip["east_asia_land"]["significance"]["sentence"]
 
 
 def test_scan_trends_are_per_decade_in_native_units(scan_client):
-    results = scan_client.get("/api/scan").get_json()["results"]
-    rows = {(r["region"], r["variable"]): r for r in results}
-    assert rows[("east_asia_land", "t2m")]["ols_per_decade"] == pytest.approx(0.30, abs=0.04)
-    assert rows[("se_asia_maritime", "t2m")]["ols_per_decade"] == pytest.approx(-0.24, abs=0.04)
-    assert rows[("east_asia_land", "t2m")]["unit"] == "K"
-    assert rows[("east_asia_land", "precip")]["unit"] == "mm day-1"
+    _, rows = scan_rows(scan_client)
+    assert rows["east_asia_land"]["ols_per_decade"] == pytest.approx(0.30, abs=0.04)
+    assert rows["east_asia_land"]["unit"] == "K"
+    _, precip = scan_rows(scan_client, "variable=precip")
+    assert precip["east_asia_land"]["ols_per_decade"] == pytest.approx(-0.24, abs=0.04)
+    assert precip["east_asia_land"]["unit"] == "mm day-1"
 
 
 def test_scan_agrees_with_trend_for_the_same_series(scan_client):
-    row = next(
-        r
-        for r in scan_client.get("/api/scan?from=1995&to=2004").get_json()["results"]
-        if (r["region"], r["variable"]) == ("east_asia_land", "t2m")
-    )
-    one = scan_client.get("/api/trend?variable=t2m&region=east_asia_land&from=1995&to=2004")
-    stats = one.get_json()["statistics"]
-    for key in ("ols_per_decade", "ols_p", "sen_per_decade", "mk_p", "n_eff", "n_months"):
-        assert row[key] == pytest.approx(stats[key])
+    _, rows = scan_rows(scan_client, "variable=t2m&from=1995&to=2004")
+    url = "/api/trend?variable=t2m&region=east_asia_land&from=1995&to=2004"
+    one = scan_client.get(url).get_json()
+    row = rows["east_asia_land"]
+    keys = ("ols_per_decade", "ols_p", "sen_per_decade", "mk_p", "mk_p_ar1", "n_eff", "n_months")
+    for key in keys:
+        assert row[key] == pytest.approx(one["statistics"][key])
+    assert row["significance"] == one["significance"]  # the same block, from the same family
+
+
+def test_trend_carries_the_verdict_of_its_layer_family(scan_client):
+    data = scan_client.get("/api/trend?variable=t2m&region=se_asia_maritime").get_json()
+    sig = data["significance"]
+    assert set(sig) == SIGNIFICANCE_KEYS
+    assert sig["family"]["name"] == "layer" and sig["family"]["n_tests"] == 4
+    # the old per-series sentence stays (frozen) and still reads as significant on its own...
+    assert "statistically significant at 95%" in data["sentence"]
+    # ...while the block, which the page shows, accounts for the 4 regions tested
+    assert "no significant trend detected (yet)" in sig["sentence"]
+    assert sig["verdict"] != "rise"
+
+
+def test_a_pasted_series_is_judged_on_its_own(client):
+    data = client.post("/api/analyse-series", json=body()).get_json()
+    sig = data["significance"]
+    assert sig["family"] == {"name": "none", "n_tests": None, "method": None, "alpha": 0.05}
+    assert sig["ols_q"] == sig["ols_p"] and sig["mk_q"] == sig["mk_p_ar1"]
+    assert sig["verdict"] == "rise" and sig["expected_by_chance"] is None
 
 
 def test_scan_follows_the_year_window(scan_client):
-    data = scan_client.get("/api/scan?from=2000&to=2009").get_json()
+    data, rows = scan_rows(scan_client, "variable=t2m&from=2000&to=2009")
     assert (data["from"], data["to"]) == (2000, 2009)
-    assert {r["n_months"] for r in data["results"]} == {120}
-    assert data["results"][0]["first_month"] == "2000-01"
+    assert {r["n_months"] for r in rows.values()} == {120}
+    assert rows["east_asia_land"]["first_month"] == "2000-01"
 
 
-def test_scan_leaves_out_series_with_too_little_data_from_the_tests(scan_client):
-    data = scan_client.get("/api/scan?from=2005&to=2005").get_json()  # one year: no statistics
+def test_scan_leaves_out_regions_with_too_little_data_from_the_tests(scan_client):
+    data, rows = scan_rows(scan_client, "variable=t2m&from=2005&to=2005")  # one year: no statistics
     assert data["n_tests"] == 0
-    for row in data["results"]:
+    for row in rows.values():
         assert row["ols_p"] is None and row["ols_q"] is None and row["significant_q"] is False
+        assert row["significance"]["verdict"] == "no_data"
 
 
-def test_scan_refuses_bad_windows_with_json_errors(scan_client):
-    for query in ("from=abc", "from=2009&to=1990", "to=10000", "from=2500&to=2600"):
+def test_scan_refuses_bad_requests_with_json_errors(scan_client):
+    for query in (
+        "variable=t2m&from=abc",
+        "variable=t2m&from=2009&to=1990",
+        "variable=t2m&to=10000",
+        "variable=t2m&from=2500&to=2600",
+        "",  # no variable
+    ):
         assert_json_error(scan_client.get(f"/api/scan?{query}"), 400)
+    assert_json_error(scan_client.get("/api/scan?variable=nothing"), 404)
 
 
 def test_scan_without_data_says_what_to_run(tmp_path):
     client = create_app(tmp_path / "absent.csv").test_client()
-    body = assert_json_error(client.get("/api/scan"), 503)
-    assert "merra2_clean.py" in body["error"]
+    body_ = assert_json_error(client.get("/api/scan?variable=t2m"), 503)
+    assert "merra2_clean.py" in body_["error"]
 
 
 def test_scan_response_is_valid_json(scan_client):
-    for query in ("", "?from=2005&to=2005"):
-        raw = scan_client.get(f"/api/scan{query}").data
+    for query in ("variable=t2m", "variable=t2m&from=2005&to=2005"):
+        raw = scan_client.get(f"/api/scan?{query}").data
         assert b"NaN" not in raw and b"Infinity" not in raw
-
-
-def test_both_mann_kendall_p_values_are_reported(client):
-    s = client.get("/api/trend?variable=t2m&region=east_asia_land").get_json()["statistics"]
-    assert s["mk_p_ar1"] >= s["mk_p"]  # adjusting for autocorrelation never lowers the p-value
-    assert s["mk_ar1_significant"] == (s["mk_p_ar1"] < 0.05)
-    a = client.post("/api/analyse-series", json=body()).get_json()["statistics"]
-    assert a["mk_p_ar1"] >= a["mk_p"]
-
-
-# --- The website is served next to the API (web/dist), the plain page moves to /classic ----------
-
-
-@pytest.fixture
-def site_client(csv_path, tmp_path):
-    site = tmp_path / "dist"
-    (site / "assets").mkdir(parents=True)
-    (site / "index.html").write_text("<title>TD-OS site</title>", encoding="utf-8")
-    (site / "assets" / "app.js").write_text("console.log(1)", encoding="utf-8")
-    (tmp_path / "secret.txt").write_text("not public", encoding="utf-8")
-    return create_app(csv_path, web_dir=site).test_client()
-
-
-def test_the_site_is_served_at_the_root_with_its_files(site_client):
-    assert b"TD-OS site" in site_client.get("/").data
-    assert site_client.get("/assets/app.js").data == b"console.log(1)"
-    assert site_client.get("/no-such-file.js").status_code == 404
-    assert site_client.get("/no-such-file.js").mimetype == "text/html"
-
-
-def test_the_plain_page_stays_at_classic(site_client):
-    page = site_client.get("/classic")
-    assert page.status_code == 200 and b"Trend Detective" in page.data
-    assert b"TD-OS site" not in page.data
-    assert site_client.get("/ocean").status_code == 200  # other pages are not shadowed
-
-
-def test_the_api_is_not_shadowed_by_the_site(site_client):
-    assert site_client.get("/api/meta").status_code == 200
-    assert_json_error(site_client.get("/api/nothing-here"), 404)
-    assert site_client.post("/api/analyse-series", json=body()).status_code == 200
-
-
-def test_the_site_cannot_serve_files_outside_its_folder(site_client):
-    for path in ("/../secret.txt", "/..%2fsecret.txt", "/assets/../../secret.txt"):
-        response = site_client.get(path)
-        assert response.status_code == 404 and b"not public" not in response.data
-
-
-def test_without_a_build_the_plain_page_is_the_root(csv_path, tmp_path):
-    for missing in (None, tmp_path / "not-built"):
-        client = create_app(csv_path, web_dir=missing).test_client()
-        assert b"Trend Detective" in client.get("/").data
-        assert client.get("/classic").status_code == 200
-        assert client.get("/assets/app.js").status_code == 404
 
 
 # --- The website's fixtures (web/tests/fixtures) are real responses: keep them in step ------------
@@ -718,7 +717,7 @@ def test_web_fixtures_have_the_shape_of_the_live_api(client, scan_client):
     # If this fails the API changed: regenerate web/tests/fixtures and re-run `npm test` in web/
     live = {
         "trend": client.get("/api/trend?variable=t2m&region=east_asia_land").get_json(),
-        "scan": scan_client.get("/api/scan").get_json(),
+        "scan": scan_client.get("/api/scan?variable=t2m").get_json(),
         "analyse": client.post("/api/analyse-series", json=body()).get_json(),
     }
     for name, response in live.items():

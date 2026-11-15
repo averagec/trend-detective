@@ -22,8 +22,9 @@ from dataclasses import dataclass, replace
 
 import numpy as np
 
+from trend_detective.core.significance import Assessment, Item, assess_family, assess_single
 from trend_detective.core.summary import Summary, summarise
-from trend_detective.core.trend import area_weighted_mean, benjamini_hochberg
+from trend_detective.core.trend import area_weighted_mean
 
 RADIUS_MIN_KM = 75.0
 RADIUS_MAX_KM = 250.0
@@ -154,6 +155,8 @@ class CellTrend:
     lon: float
     summary: Summary
     p_adj: float = float("nan")  # OLS p-value after Benjamini-Hochberg across the circle's cells
+    # The verdict from core/significance.py: both tests, after correction across the circle's cells.
+    assessment: Assessment | None = None
 
     @property
     def slope(self) -> float:
@@ -161,14 +164,20 @@ class CellTrend:
 
     @property
     def significant(self) -> bool:
+        if self.assessment is not None:
+            return self.assessment.significant
         return bool(self.p_adj < 0.05)  # NaN compares False
 
     @property
     def rising(self) -> bool:
+        if self.assessment is not None:
+            return self.assessment.verdict == "rise"
         return bool(self.significant and self.slope > 0)
 
     @property
     def falling(self) -> bool:
+        if self.assessment is not None:
+            return self.assessment.verdict == "fall"
         return bool(self.significant and self.slope < 0)
 
 
@@ -179,6 +188,7 @@ class CityResult:
     series: np.ndarray
     summary: Summary
     warnings: tuple[str, ...]
+    assessment: Assessment | None = None  # one series on its own: no correction
 
 
 @dataclass(frozen=True)
@@ -198,6 +208,7 @@ class CircleResult:
     average_series: np.ndarray
     valid_per_month: np.ndarray
     warnings: tuple[str, ...]
+    average_assessment: Assessment | None = None  # the average on its own, as a reference
 
 
 def analyse_city(
@@ -229,7 +240,8 @@ def analyse_city(
             f"The cell has land values in {land_share:.0%} of months (MERRA-2 land surface "
             "temperature), so the share of land or sea is only partly known.",
         )
-    return CityResult(cell, tl, full, summary, warn + summary.warnings)
+    assessment = assess_single(summary, label, unit)
+    return CityResult(cell, tl, full, summary, warn + summary.warnings, assessment)
 
 
 def analyse_circle(
@@ -262,10 +274,15 @@ def analyse_circle(
         CellTrend(c.lat, c.lon, summarise(full[:, k], unit, f"cell {c.lat:.2f}, {c.lon:.2f}"))
         for k, c in enumerate(used)
     )
-    # Many cells are tested at once: adjust each cell's p-value so that the count of significant
-    # cells is not inflated by chance (docs/stats_trend.md, Benjamini-Hochberg).
-    adjusted = benjamini_hochberg([t.summary.ols_p for t in per_cell])
-    per_cell = tuple(replace(t, p_adj=float(a)) for t, a in zip(per_cell, adjusted, strict=True))
+    # Many cells are tested at once: core/significance.py corrects the OLS and the Mann-Kendall
+    # p-values across the circle's cells (Benjamini-Hochberg) and calls a cell rising or falling
+    # only when both tests are significant after that and agree in sign (ADR 0009).
+    assessed = assess_family(
+        [Item(t.summary, f"cell {t.lat:.2f}, {t.lon:.2f}", unit) for t in per_cell], "circle"
+    )
+    per_cell = tuple(
+        replace(t, p_adj=a.ols_q, assessment=a) for t, a in zip(per_cell, assessed, strict=True)
+    )
     rising = sum(1 for t in per_cell if t.rising)
     falling = sum(1 for t in per_cell if t.falling)
     expected_per_sign = 0.025 * len(per_cell)  # two-sided 5% test, half the chance on each side
@@ -273,6 +290,7 @@ def analyse_circle(
     finite = slopes[np.isfinite(slopes)]
     avg, n_valid = area_average(full, np.array([c.lat for c in used]))
     average = summarise(avg, unit, label)
+    average_assessment = assess_single(average, label, unit)
 
     warnings: list[str] = []
     if len(cells) != len(used):
@@ -300,4 +318,5 @@ def analyse_circle(
         average_series=avg,
         valid_per_month=n_valid,
         warnings=tuple(warnings) + average.warnings,
+        average_assessment=average_assessment,
     )

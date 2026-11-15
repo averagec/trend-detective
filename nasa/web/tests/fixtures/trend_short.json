@@ -75,6 +75,28 @@
    "value": 278.7
   }
  ],
+ "significance": {
+  "expected_by_chance": 0.0,
+  "family": {
+   "alpha": 0.05,
+   "method": "benjamini-hochberg",
+   "n_tests": 0,
+   "name": "layer"
+  },
+  "mk_p_ar1": null,
+  "mk_q": null,
+  "ols_p": null,
+  "ols_q": null,
+  "sentence": "Mean 2 m air temperature in Eastern China and Korea: not enough data for a trend (need at least two years).",
+  "significant": false,
+  "verdict": "no_data",
+  "warnings": [
+   {
+    "code": "short_record",
+    "text": "Only 1.0 years of data; trends under 10 years are not reliable."
+   }
+  ]
+ },
  "statistics": {
   "mk_ar1_significant": false,
   "mk_p": null,
