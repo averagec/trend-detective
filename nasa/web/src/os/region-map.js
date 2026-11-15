@@ -5,6 +5,7 @@ import { pixelWeather } from "./pixel-weather.js";
 import { desktop } from "./desktop.js";
 import { uiScale } from "../ui/scale.js";
 import { openChart } from "../ui/chart-view.js";
+import { glossaryFor } from "../data/glossary.js";
 import { isSignificant, shortVerdict } from "../data/verdict-wording.js";
 const NAMES = ["Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam"];
 const LAB = {
@@ -407,6 +408,7 @@ function cityCard(box) {
       <tr><td>Grid cells</td><td>${c.cells} used · ${Math.round(c.nearest_cell_km)} km</td></tr>
     </table>
     <button class="rm-more" id="rm-more" aria-expanded="${st.more}">${st.more ? "▾ Fewer stats" : "▸ More stats"}</button>
+    ${st.more ? glossaryFor(["TREND", "95% RANGE", "OLS P", "MANN-KENDALL Q"]) : ""}
     ${st.more ? `<table class="rm-tab">
       <tr><td>p (OLS)</td><td>${c.p < 1e-3 ? "<.001" : c.p.toFixed(3)}</td></tr>
       <tr><td>p adjusted</td><td>${c.p_adjusted < 1e-3 ? "<.001" : c.p_adjusted.toFixed(3)}</td></tr>
