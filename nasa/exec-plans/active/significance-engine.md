@@ -91,12 +91,12 @@ uncorrected sentence. The page shows `significance.sentence`.
       run once the cell cube exists (skipped today).
 
 ### Phase 2: the engine, doc first
-- [ ] 2.1 ADR 0009: hand-off, three families, the ladder, which Mann-Kendall p enters it, the
+- [x] 2.1 ADR 0009: hand-off, three families, the ladder, which Mann-Kendall p enters it, the
       acceptance ranges below. Written before the code.
-- [ ] 2.2 `core/significance.py` with golden tests: a table of all ladder cases (both significant same
+- [x] 2.2 `core/significance.py` with golden tests: a table of all ladder cases (both significant same
       sign, opposite signs, one significant, none, NaN), BH reuse on a hand example, single-series
       equals plain p-values, `n_tests` ignores series without a p-value.
-- [ ] 2.3 Simulation tests (seeded, ranges fixed now, never loosened):
+- [x] 2.3 (criterion (d) was amended after the first run: ADR 0009 explains) Simulation tests (seeded, ranges fixed now, never loosened):
       (a) 50 independent null series in a family: share of runs with any `rise` or `fall` at most 8%
           over 300 runs (BH holds the global-null rate near 5%).
       (b) null circles of 50 cells: mixed-signal rate at most 8% (the teammate saw about 50% before
@@ -153,6 +153,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 <!-- Append one line per session: date — what changed — what's next. -->
 - 2026-11-15 — plan drafted after the audit of main (a7185e0). Decisions 1 to 3 recorded. Nothing executed. Next: user OK on Phase 0.
 - 2026-11-15 — Phase 0 done: our work committed (e758415) on feature/trend-exe-api-integration, branch feature/significance-engine merges main (a7185e0). Route renamed to /api/analyse-series, leading_pad keyword-only, their errors now carry `status`, our ADRs are 0007 and 0008, their events section is statistics.md 3.6. Not pushed. Next: Phase 1 (freeze today's numbers).
+- 2026-11-15 — Phase 1 done (snapshots of today's numbers and decisions). Phase 2 done: ADR 0009, `core/significance.py` (ladder, per-test BH, verdict sentence), 24 golden tests, 4 seeded simulations. Finding: the pre-registered criterion (d) was the wrong statistic (BH controls FDR, not the chance of any false flag); amended in the ADR with the reasoning, measured FDR 5.5% vs the 4.7% bound. Limitation: autocorrelated nulls (phi 0.6, 10 years) give 15% of families with a false flag. Next: Phase 3.
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after
