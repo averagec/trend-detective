@@ -55,25 +55,47 @@ function storm(f) {
   }
   return { w: W, h: 14, px };
 }
-const SEA = [31, 79, 160], SEA2 = [59, 125, 221], FOAM = [214, 236, 248], WALL = [150, 140, 120], WALL2 = [96, 88, 74];
-const ROOF = [217, 74, 54], ROOF2 = [150, 48, 36], WIN = [247, 214, 120];
+const SEA = [28, 92, 124], SEA2 = [74, 130, 196], LITE = [168, 210, 232], FOAM = [232, 246, 251];
+const WALL = [196, 180, 150], WALL2 = [150, 136, 110], ROOF = [217, 74, 54], ROOF2 = [150, 48, 36], WIN = [247, 214, 120];
+const FLOOD_COLS = [[2, 0], [4, 3], [7, 1], [11, 4], [13, 2]];
 function flood(f) {
-  const px = [], w = 11, h = 11, lvl = [0, 1, 1, 2, 2, 2, 1, 1][f % 8];
-  for (let y = 0; y < 4; y++) for (let x = 4 - y; x <= 6 + y; x++) {
-    const edge = x === 4 - y || x === 6 + y || y === 0;
-    px.push([x, y, edge ? INK : y % 2 ? ROOF : ROOF2]);
+  const px = [], w = 16, h = 19, put = (x, y, c) => px.push([x, y, c]);
+  const lvl = [0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0][f % 16], top = 15 - lvl;
+  CLOUD.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== ".") put(x + 1, y, CC[c]);
+  }));
+  for (let y = 9; y < 12; y++) for (let x = 7 - (y - 9); x <= 9 + (y - 9); x++) {
+    const edge = x === 7 - (y - 9) || x === 9 + (y - 9) || y === 9;
+    put(x, y, edge ? INK : y % 2 ? ROOF : ROOF2);
   }
-  for (let y = 4; y < 10; y++) for (let x = 1; x < w - 1; x++) {
-    const edge = x === 1 || x === w - 2;
-    const win = y >= 5 && y <= 6 && (x === 3 || x === 4 || x === 6 || x === 7);
-    px.push([x, y, edge ? INK : win ? WIN : (x + y) % 2 ? WALL : WALL2]);
+  for (let y = 12; y < top; y++) for (let x = 5; x <= 11; x++) {
+    const win = y === 13 && (x === 7 || x === 9);
+    put(x, y, x === 5 || x === 11 ? INK : win ? WIN : (x + y) % 2 ? WALL : WALL2);
   }
-  const top = 8 - lvl;
-  for (let y = top; y < h; y++) for (let x = -1; x <= w; x++) {
-    const c = y === top ? ((x + f) % 4 < 2 ? FOAM : SEA2) : (x + y) % 2 ? SEA : SEA2;
-    px.push([x, y, c]);
+  const splash = [];
+  FLOOD_COLS.forEach(([x, ph]) => {
+    const fall = top - 9, y = 9 + (f + ph) % (fall + 2);
+    if (x >= 5 && x <= 11 && y >= 9) return;
+    if (y < top - 1) {
+      put(x, y, DROP2);
+      put(x, y + 1, DROP);
+    } else splash.push(x);
+  });
+  for (let y = top; y < h; y++) for (let x = 0; x < w; x++) {
+    let c;
+    if (y === top) c = Math.sin((x + f) * 0.9) > 0.3 ? FOAM : LITE;
+    else {
+      const e = Math.sin(x * 1.3 + y * 0.7 + f * 0.5) + Math.sin(x * 0.6 - y * 1.1 - f * 0.35);
+      c = e > 1.35 ? LITE : e < -1.1 ? SEA : SEA2;
+    }
+    if (y === h - 1 && (x === 0 || x === w - 1)) continue;
+    put(x, y, c);
   }
-  px.push([((f * 2) % (w + 2)) - 1, top - 1, FOAM]);
+  splash.forEach((x) => {
+    put(x, top - 1, FOAM);
+    if (x > 0) put(x - 1, top, FOAM);
+    if (x < w - 1) put(x + 1, top, FOAM);
+  });
   return { w, h, px };
 }
 function paintSprite(img, W, H, s, ax, ay) {

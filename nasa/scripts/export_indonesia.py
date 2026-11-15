@@ -11,7 +11,12 @@ or the cities:
     python scripts/build_indonesia_geo.py --ne-dir /path/to/natural-earth   (only if cities change)
     python scripts/export_indonesia.py
 
-Output: web/public/data/indonesia_sea_level.json
+Outputs:
+    web/public/data/indonesia_sea_level.json  per-city trends, grids and charts for MAP.EXE
+    web/public/data/cases_data.json           monthly series for the CASES workflow: ECCO sea
+                                              level per coastal city, plus the MERRA-2 regional
+                                              temperature and rain over Maritime Southeast Asia
+                                              (from data/demo/json, made by build_processed.py)
 """
 
 from __future__ import annotations
@@ -31,6 +36,55 @@ from trend_detective.core.trend import benjamini_hochberg, deseasonalize  # noqa
 from trend_detective.process import ocean_cities as oc  # noqa: E402
 
 OUT = ROOT / "web" / "public" / "data" / "indonesia_sea_level.json"
+OUT_CASES = ROOT / "web" / "public" / "data" / "cases_data.json"
+MERRA_DIR = ROOT / "data" / "demo" / "json" / "se_asia_maritime"
+KELVIN = 273.15
+
+
+def slug(name: str) -> str:
+    return "".join(ch for ch in name.lower() if ch.isalnum())
+
+
+def core_stats(s) -> dict:
+    """The full-record result from core.summary, for the app to show next to its own lineup."""
+    return {
+        "per_decade": r(s.ols_per_decade, 3),
+        "ci_per_decade": [r(s.ols_ci_per_decade[0], 3), r(s.ols_ci_per_decade[1], 3)],
+        "p": r(s.ols_p, 6),
+        "significant": bool(s.ols_significant),
+        "sentence": s.sentence,
+    }
+
+
+def merra_dataset(var: str, label: str, unit: str, to_unit) -> dict:
+    """One MERRA-2 regional series from the processed demo JSON (stats already from core)."""
+    d = json.loads((MERRA_DIR / f"{var}.json").read_text())
+    st = d["statistics"]
+    full_years = [int(x["period"][:4]) for x in d["series"]]
+    end = max(y for y in set(full_years) if full_years.count(y) == 12)
+    return {
+        "label": label,
+        "unit": unit,
+        "source": "NASA MERRA-2 (GES DISC)",
+        "start": full_years[0],
+        "end": end,
+        "regions": {
+            "idn": {
+                "name": "Maritime Southeast Asia",
+                "long": d["region_name"],
+                "y0": full_years[0],
+                "monthly": [r(to_unit(x["value"]), 3) for x in d["series"]],
+                "core": {
+                    "per_decade": r(st["ols_per_decade"], 3),
+                    "ci_per_decade": [r(v, 3) for v in st["ols_ci_per_decade"]],
+                    "p": r(st["ols_p"], 6),
+                    "significant": bool(st["ols_significant"]),
+                    "sentence": d["sentence"],
+                    "period": [d["first_month"], d["last_month"]],
+                },
+            }
+        },
+    }
 
 
 def r(x, n=3):
@@ -41,10 +95,21 @@ def main() -> None:
     y0, lats, lons, ssh = oc.load_grid()
     ocean = np.isfinite(ssh).all(axis=0)
     years = ssh.shape[0] // 12
+    step = float(abs(lats[1] - lats[0]))
+    cell_trend: dict[tuple[int, int], float | None] = {}
+
+    def trend_of(i: int, j: int):
+        if (i, j) not in cell_trend:
+            one = summarise(ssh[:, i, j] * 1000.0, "mm", "cell")
+            cell_trend[(i, j)] = r(one.ols_per_decade, 1)
+        return cell_trend[(i, j)]
+
     rows = []
+    case_regions: dict[str, dict] = {}
     for city in oc.read_cities():
         row = {
             "name": city.name,
+            "region": city.region,
             "province": city.province,
             "lat": city.lat,
             "lon": city.lon,
@@ -57,10 +122,30 @@ def main() -> None:
         if city.coastal and cells:
             series = oc.city_series(city, lats, ssh, cells)
             s = summarise(series, "mm", f"Sea level near {city.name}")
+            case_regions[slug(city.name)] = {
+                "name": city.name,
+                "y0": y0,
+                "monthly": [r(v, 2) for v in series],
+                "core": core_stats(s),
+            }
             anom = deseasonalize(series)
+            used = {(c[0], c[1]) for c in cells}
+            grid = [
+                {
+                    "lat": r(lats[i], 2),
+                    "lon": r(lons[j], 2),
+                    "km": r(d, 1),
+                    "ocean": sea,
+                    "used": (i, j) in used,
+                    "trend_mm_per_decade": trend_of(i, j) if sea else None,
+                }
+                for i, j, d, sea in oc.grid_around(city, lats, lons, ocean)
+            ]
             row.update(
                 {
+                    "case": slug(city.name),
                     "cells": len(cells),
+                    "grid": grid,
                     "nearest_cell_km": r(cells[0][2], 1),
                     "trend_mm_per_decade": r(s.ols_per_decade, 2),
                     "trend_mm_per_year": r(s.ols_per_decade / 10, 2),
@@ -89,6 +174,17 @@ def main() -> None:
             row["note"] = f"Inland, {city.coast_km:.0f} km from the sea: sea level does not apply."
         rows.append(row)
 
+    for x in rows:
+        if not x["coastal"]:
+            near = min(
+                (y for y in rows if "p" in y),
+                key=lambda y: oc.km(x["lat"], x["lon"], y["lat"], y["lon"]),
+            )
+            x["nearest_coastal"] = {
+                "name": near["name"],
+                "km": r(oc.km(x["lat"], x["lon"], near["lat"], near["lon"]), 0),
+            }
+
     tested = [x for x in rows if "p" in x]
     adj = benjamini_hochberg([x["p"] for x in tested])
     for x, a in zip(tested, adj, strict=True):
@@ -112,6 +208,14 @@ def main() -> None:
                     "Ocean-model sea level next to the coast. It does not include land "
                     "sinking, which is a large part of flooding in Jakarta and Semarang."
                 ),
+                "grid": {
+                    "cell_deg": step,
+                    "radius_km": oc.MAX_KM,
+                    "note": (
+                        "Cell trends are each cell on its own (OLS, not adjusted for "
+                        "multiple tests); the city trend uses only the highlighted cells."
+                    ),
+                },
                 "tests": len(tested),
                 "built": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                 "cities": rows,
@@ -119,9 +223,32 @@ def main() -> None:
             separators=(",", ":"),
         )
     )
+    OUT_CASES.write_text(
+        json.dumps(
+            {
+                "note": "Made by scripts/export_indonesia.py from NASA data; do not edit.",
+                "datasets": {
+                    "ssl": {
+                        "label": "Sea level at the coast",
+                        "unit": "mm",
+                        "source": "NASA ECCO V4r4 (PO.DAAC)",
+                        "start": y0,
+                        "end": y0 + years - 1,
+                        "regions": case_regions,
+                    },
+                    "t2m": merra_dataset(
+                        "t2m", "Air temperature (2 m)", "°C", lambda k: k - KELVIN
+                    ),
+                    "precip": merra_dataset("precip", "Rainfall", "mm/day", lambda v: v),
+                },
+            },
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+    )
     sig = sum(x.get("significant", False) for x in rows)
     print(f"{len(rows)} cities, {len(tested)} coastal tested, {sig} with a clear trend")
-    print(f"-> {OUT.relative_to(ROOT)}")
+    print(f"-> {OUT.relative_to(ROOT)} and {OUT_CASES.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

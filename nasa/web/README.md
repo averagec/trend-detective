@@ -90,13 +90,22 @@ npm run build:map
 
 ## Indonesia sea level (real data)
 
-MAP.EXE opens on Indonesia with the **SEA LVL** layer: sea level next to 62 coastal cities, from
+MAP.EXE opens on Indonesia with the **SEA LVL** layer: sea level next to the 23 coastal cities
+of the team's 31 study cities, from
 ECCO V4r4 (1992-2017). Every number on it is computed by the Python core, not the browser:
 
 ```bash
 python scripts/build_indonesia_geo.py --ne-dir /path/to/natural-earth   # only if cities change
-python scripts/export_indonesia.py                                     # writes web/public/data/indonesia_sea_level.json
+python scripts/export_indonesia.py                                     # writes indonesia_sea_level.json and cases_data.json
 ```
 
-Search a city or province from the toolbar. Inland cities (more than 20 km from the sea) show
-no sea level. TEMP / RAIN / WATER / SEA are still synthetic and labelled SAMPLE DATA.
+Pick a city from the CITIES dropdown (grouped by region, with search). Clicking a coastal city
+zooms to its ECCO grid: every 0.5° cell within 120 km, the cells used (yellow), each cell's own
+trend, and the dashed 120 km radius. Inland cities (more than 20 km from the sea) show no sea
+level. SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
+offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
+
+CASES now runs only on real data from `cases_data.json`: sea level per coastal city (ECCO) and
+MERRA-2 temperature and rain over Maritime Southeast Asia. INVESTIGATE AS A CASE on a city card
+starts a case for that city. TEMP / RAIN / WATER / SEA map layers are still synthetic and
+labelled SAMPLE DATA; their cards link to the real regional case where one exists.

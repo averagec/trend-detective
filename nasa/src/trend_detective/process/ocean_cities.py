@@ -43,6 +43,7 @@ class City:
     population: int
     capital: bool
     coast_km: float
+    region: str = ""
 
     @property
     def coastal(self) -> bool:
@@ -60,6 +61,7 @@ def read_cities(path: Path = CITIES) -> list[City]:
                 int(r["population"]),
                 r["capital"] == "True",
                 float(r["coast_km"]),
+                r.get("region", ""),
             )
             for r in csv.DictReader(fh)
         ]
@@ -102,6 +104,17 @@ def nearest_cells(city: City, lats, lons, ocean: np.ndarray) -> list[tuple[int, 
                 if d <= MAX_KM:
                     cand.append((int(i), int(j), d))
     return sorted(cand, key=lambda c: c[2])[:MAX_CELLS]
+
+
+def grid_around(city: City, lats, lons, ocean: np.ndarray, radius_km: float = MAX_KM):
+    """Every grid cell (row, col, distance km, is_ocean) whose centre is within radius_km."""
+    out = []
+    for i in np.where(np.abs(lats - city.lat) <= 1.5)[0]:
+        for j in np.where(np.abs(lons - city.lon) <= 1.5)[0]:
+            d = km(city.lat, city.lon, lats[i], lons[j])
+            if d <= radius_km:
+                out.append((int(i), int(j), d, bool(ocean[i, j])))
+    return sorted(out, key=lambda c: c[2])
 
 
 def city_series(city: City, lats, ssh: np.ndarray, cells) -> np.ndarray:

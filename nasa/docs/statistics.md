@@ -152,13 +152,25 @@ OLS test is significant **and** its adjusted p < 0.05.
 ### 4.6 Sea level next to Indonesian cities (`process/ocean_cities.py`, `scripts/export_indonesia.py`)
 - Data: ECCO V4r4 dynamic sea surface height (`SSH`, inverse-barometer corrected), 0.5° monthly,
   1992-2017, from the processed `ocean_se_asia/*.npz` grids. V4r4b differs by < 0.02 mm.
-- Cities: Natural Earth populated places in Indonesia (104 after removing a duplicate).
-  A city further than 20 km from the coast is inland and gets no sea-level series.
+- Cities: the team's 31 study cities across 7 regions (list in `scripts/build_indonesia_geo.py`).
+  Positions from Natural Earth places; Batam and Prabumulih are missing there and come from the
+  2020 census via Wikipedia. Coast distance uses Natural Earth's 1:10m coastline (includes small
+  islands such as Ternate). A city further than 20 km from the coast is inland and gets no
+  sea-level series (8 of 31: Medan 23 km, Samarinda, Padangsidimpuan, Tasikmalaya, Jambi,
+  Prabumulih, Pekanbaru, Palangka Raya).
 - Series: cos(latitude)-weighted mean of up to 4 nearest ocean cells within 120 km, in mm.
+  The export also lists every 0.5° cell whose centre is within 120 km, which cells were used,
+  and each ocean cell's own OLS trend (not adjusted for multiple tests) for the map's grid view.
 - Statistics: `core.summary.summarise` per city, then Benjamini-Hochberg across all tested
-  cities. Result (2026-11-15 build): 62 coastal cities tested, 50 with a clear rise, trends
-  +32 to +52 mm per decade. Cross-check: the whole Southeast Asia box rises +38.8 mm per decade
-  (95% CI +7.6 to +69.9) with the same code, inside the city range.
+  cities. Result (2026-11-15 build): 23 coastal cities tested, 14 with a clear rise, trends
+  +32.7 to +50.4 mm per decade. The eastern cities (Ambon, Sorong, Ternate, Kendari,
+  Manado) rise fastest but are not yet significant: ENSO makes their records noisy. Cross-check:
+  the whole Southeast Asia box rises +38.8 mm per decade (95% CI +7.6 to +69.9) with the same
+  code, inside the city range.
+- The CASES workflow uses the same monthly city series (`web/public/data/cases_data.json`) plus
+  the MERRA-2 Maritime Southeast Asia temperature and rain series. Its lineup runs in the
+  browser (Sen's slope, autocorrelation-adjusted Mann-Kendall, 1,000 AR(1) fakes) and always
+  shows the core's full-record OLS result beside it, labelled PYTHON CORE.
 - Limitation: ocean-model sea level next to the coast. It does not include land subsidence,
   which dominates relative sea-level rise in Jakarta and Semarang.
 

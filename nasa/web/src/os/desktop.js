@@ -1,16 +1,18 @@
 import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
 import { analysis } from "../stats/trend-analysis.js";
+import { openChart } from "../ui/chart-view.js";
 import { regionMap } from "./region-map.js";
 import { leaveDesk } from "../scene/office.js";
 import { toLocal } from "../ui/scale.js";
 const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const CASES = [
-  { id: "001", name: "SINGAPORE_WARMING", q: "Is Singapore actually getting warmer?", preset: { v: "t2m", r: "sg", y0: 1980, y1: 2025 }, open: true },
-  { id: "002", name: "ONE_CAUSE_TWO_FX", q: "Why does CO2 warm one layer and cool another?", open: false },
-  { id: "003", name: "INDIAS_WATER", q: "Where is northern India's water going?", preset: { v: "tws", r: "nin", y0: 2002, y1: 2024 }, open: true },
-  { id: "004", name: "RAINFALL", q: "Is rainfall changing over Singapore and Malaysia?", preset: { v: "precip", r: "sg", y0: 2001, y1: 2024 }, open: true }
+  { id: "001", name: "JAKARTA_TIDE", q: "Is the sea rising at Jakarta?", preset: { v: "ssl", r: "jakarta", y0: 1992, y1: 2017 }, open: true },
+  { id: "002", name: "THE_EAST", q: "Ambon’s sea rose fastest. Can we prove it?", preset: { v: "ssl", r: "ambon", y0: 1992, y1: 2017 }, open: true },
+  { id: "003", name: "HOTTER_ISLANDS", q: "Are the islands getting hotter?", preset: { v: "t2m", r: "idn", y0: 1980, y1: 2025 }, open: true },
+  { id: "004", name: "MORE_RAIN", q: "Is more rain falling on the islands?", preset: { v: "precip", r: "idn", y0: 1980, y1: 2025 }, open: true },
+  { id: "005", name: "SINKING_CITY", q: "How fast is Jakarta’s ground sinking?", open: false, lock: "NEEDS LAND SUBSIDENCE DATA (INSAR, E.G. NASA-ISRO NISAR)" }
 ];
 let current = 0, z = 10, noiseTimer = null, booting = false;
 const LOG = [];
@@ -149,6 +151,13 @@ function plotHist(cv, sims, obs) {
   c.fillRect(xo - 1, 0, 3, H);
 }
 function openCases() {
+  if (!analysis.load.done) {
+    analysis.load().then(openCases, () => {
+      SFX.err();
+      log("CASE DATA MISSING: data/cases_data.json", "hi");
+    });
+    return;
+  }
   const w = win("w-cases", "CASES", CASES.map((c, i) => `<div class="row${i === current ? " sel" : ""}" data-i="${i}" tabindex="0" role="button"><img src="images/icons/${c.open ? "folder" : "lock"}.png" alt=""><span>CASE_${c.id}<br><span style="font-size:18px">${c.name}</span></span><span class="tag2 ${c.open ? "open" : "lock"}">${c.open ? "OPEN" : "LOCKED"}</span></div>`).join("") + '<div class="dim" style="margin-top:8px">DOUBLE-CLICK A FILE TO OPEN IT</div>', { left: "150px", top: "30px", width: "440px" });
   w.querySelectorAll(".row").forEach((r) => {
     r.onclick = () => {
@@ -166,8 +175,8 @@ function openBrief() {
   const c = CASES[current];
   if (!c.open) {
     SFX.err();
-    log(`CASE_${c.id}: LOCKED. NEEDS DATA BY ALTITUDE.`, "hi");
-    say(["Not that one. I don’t have the data for it yet."]);
+    log(`CASE_${c.id}: LOCKED. ${c.lock}.`, "hi");
+    say(["Not that one. Sea level from the ocean can’t see the ground sinking under the city.", "That needs satellite radar of the land. Not in my files yet."]);
     return;
   }
   const p = c.preset, ds = D()[p.v];
@@ -299,7 +308,7 @@ function openHyp() {
 function openPlot() {
   if (!S.setup || S.guess === null) {
     SFX.err();
-    say(["Not yet. I need to decide what I’m looking at, and write down a guess."]);
+    say(["Not yet. Which city, which years? And I write my guess down first."]);
     return;
   }
   closeId("w-hyp");
@@ -311,13 +320,27 @@ function openPlot() {
     "PLOT.PCX",
     `
     <div style="display:flex;justify-content:space-between;align-items:center"><span>${ds.label}, ${ds.regions[s.r].name} (${ds.unit})</span><label style="cursor:pointer"><input type="checkbox" id="ds"${S.deseason ? " checked" : ""}> REMOVE SEASONAL CYCLE</label></div>
-    <canvas class="cv" id="cv-plot" width="360" height="150"></canvas>
-    <div class="axis"><span>${s.y0}</span><span class="dim">MONTHLY · DEMO DATA, SHAPED LIKE ${ds.source}</span><span>${s.y1}</span></div>
+    <canvas class="cv zoomable" id="cv-plot" width="360" height="150" title="Click to enlarge"></canvas>
+    <div class="axis"><span>${s.y0}</span><span class="dim">MONTHLY · ${ds.source} · CLICK TO ENLARGE</span><span>${s.y1}</span></div>
     <div style="margin-top:10px">Look at it yourself first. Does it look like a trend?</div>
-    <div class="chips" style="margin-top:6px">${["GOING UP", "GOING DOWN", "CAN’T TELL"].map((t, i) => `<button class="chip${S.look === i ? " on" : ""}" data-l="${i}">${t}</button>`).join("")}</div>`,
+    <div class="chips" style="margin-top:6px">${["GOING UP", "GOING DOWN", "CAN’T TELL"].map((t, i) => `<button class="chip${S.look === i ? " on" : ""}" data-l="${i}">${t}</button>`).join("")}</div>
+    ${S.look !== null ? '<div style="text-align:right;margin-top:8px"><button class="obtn" id="go-lineup">RUN THE LINEUP ▸</button></div>' : ""}`,
     { left: "200px", top: "30px", width: "640px" }
   );
   plotLine(w.querySelector("#cv-plot"), ser.t, ser.v, { gap: ds.gap && s.y0 < ds.gap[0] && s.y1 + 1 > ds.gap[1] ? ds.gap : null });
+  w.querySelector("#cv-plot").onclick = () => openChart({
+    title: `${ds.regions[s.r].name.toUpperCase()} · ${ds.label.toUpperCase()}`,
+    sub: `${s.y0}-${s.y1} · MONTHLY${S.deseason ? " · SEASONAL CYCLE REMOVED" : ""} · NO TREND LINE UNTIL THE LINEUP`,
+    unit: ds.unit,
+    series: ser.t.map((t, i) => [t, ser.v[i]]),
+    seriesLabel: S.deseason ? "Monthly value minus that month’s average" : "Monthly value",
+    step: 1 / 12,
+    monthly: true,
+    zero: S.deseason,
+    dp: ds.unit === "mm" ? 0 : 2,
+    notes: [ds.regions[s.r].long ? `Region: ${ds.regions[s.r].long}.` : "", "Judge it by eye first. The trend line and the tests come after you make your call."].filter(Boolean),
+    source: ds.source
+  });
   w.querySelector("#ds").onchange = (e) => {
     S.deseason = e.target.checked;
     SFX.select();
@@ -332,6 +355,11 @@ function openPlot() {
     log(`EYEBALL CALL: ${["UP", "DOWN", "CAN’T TELL"][S.look]}`);
     say(["That’s my gut talking. It’s been wrong before.", "Time to check it properly. LINEUP."]);
   });
+  const gl = w.querySelector("#go-lineup");
+  if (gl) gl.onclick = () => {
+    SFX.click();
+    openTest();
+  };
 }
 function openTest() {
   if (!S.setup || S.look === null) {
@@ -359,7 +387,7 @@ function openTest() {
     }
     S.runs++;
     S.lastKey = setupKey(s);
-    const perDec = s.v === "tws" ? 1 : 10, unit = ds.unit + (s.v === "tws" ? " / year" : " / decade");
+    const perDec = 10, unit = ds.unit + " / decade", core = ds.regions[s.r].core, full = s.y0 === ds.start && s.y1 === ds.end;
     const V = { "DETECTED": ["#2c7a2a", "●"], "NOT YET DETECTABLE": ["#1f4fa0", "◌"], "SUSPECT": ["#d94a36", "▲"] }[R.verdict];
     const guessDir = ["UP", "DOWN", "NONE", null][S.guess], realDir = R.verdict === "DETECTED" ? R.slope > 0 ? "UP" : "DOWN" : "NONE";
     out.innerHTML = `
@@ -371,12 +399,13 @@ function openTest() {
         <span>95% RANGE</span><span>${fmt(R.ci[0] * perDec)} to ${fmt(R.ci[1] * perDec)}</span>
         <span>MANN-KENDALL</span><span>p = ${R.mk.p < 1e-4 ? "< 0.0001" : R.mk.p.toFixed(4)} (autocorrelation-adjusted)</span>
         <span>NOISE LINEUP</span><span>${R.beat} of 1,000 fakes as strong (${(R.beat / 10).toFixed(1)}%)</span>
+        ${core ? `<span>PYTHON CORE</span><span>${fmt(core.per_decade, 2)} ${unit} over the ${full ? "same" : "full"} record (OLS, ${core.significant ? "significant" : "not significant"})</span>` : ""}
         ${R.needed ? `<span>YEARS NEEDED</span><span>about ${R.needed} years of record for a change this size (you have ${R.years})</span>` : ""}
       </div>
       <div style="margin-top:8px">${R.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${c.k}</div>`).join("")}</div>
       <div class="dim" style="margin-top:8px">${R.verdict === "NOT YET DETECTABLE" ? "Not detecting a trend does not mean nothing is changing. The record is too short or too noisy to tell yet." : R.verdict === "SUSPECT" ? "Something in the checks above makes this result unsafe to trust as it stands." : "The trend survives every check."}</div>
       <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"}</div>
-      <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
+      <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-chart">VIEW FULL CHART ▸</button> <button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
     plotHist(out.querySelector("#cv-h"), R.sims, R.obs);
     SFX.stamp();
     const crt = document.querySelector(".crt");
@@ -384,25 +413,65 @@ function openTest() {
     void crt.offsetWidth;
     crt.classList.add("jolt");
     log(`VERDICT: ${R.verdict}${S.exploratory ? " (EXPLORATORY)" : ""}`, "hi");
+    const showChart = () => {
+      const an = R.an, tm = an.t.reduce((p, c) => p + c, 0) / an.t.length, vm = an.v.reduce((p, c) => p + c, 0) / an.v.length;
+      const yrs = [];
+      for (let y = s.y0; y <= s.y1; y++) {
+        const vs = an.v.filter((_, i) => Math.floor(an.t[i]) === y);
+        if (vs.length) yrs.push([y + 0.5, vs.reduce((p, c) => p + c, 0) / vs.length]);
+      }
+      const at = (x, b) => vm + b * (x - tm);
+      openChart({
+        title: `CASE · ${ds.regions[s.r].name.toUpperCase()} · ${ds.label.toUpperCase()}`,
+        sub: `${s.y0}-${s.y1} · YEARLY AVERAGE OF THE DESEASONALISED RECORD · VERDICT: ${R.verdict}`,
+        unit: ds.unit,
+        series: yrs,
+        seriesLabel: "Yearly average, seasons removed",
+        fit: [[s.y0 + 0.5, at(s.y0 + 0.5, R.slope)], [s.y1 + 0.5, at(s.y1 + 0.5, R.slope)]],
+        fitLabel: `Sen’s slope ${fmt(R.slope * perDec)} ${unit}`,
+        band: [s.y0 + 0.5, (s.y0 + s.y1 + 1) / 2, s.y1 + 0.5].map((x) => [x, Math.min(at(x, R.ci[0]), at(x, R.ci[1])), Math.max(at(x, R.ci[0]), at(x, R.ci[1]))]),
+        bandLabel: "Range of slopes inside the 95% interval",
+        zero: true,
+        dp: ds.unit === "mm" ? 1 : 2,
+        stats: [["TREND", `${fmt(R.slope * perDec)} ${unit}`], ["95% RANGE", `${fmt(R.ci[0] * perDec)} to ${fmt(R.ci[1] * perDec)}`], ["MANN-KENDALL P", R.mk.p < 1e-4 ? "< 0.0001" : R.mk.p.toFixed(4)], ["NOISE LINEUP", `${R.beat} / 1000 as strong`], ["AUTOCORRELATION", `r1 = ${R.r1.toFixed(2)}`], ["VERDICT", R.verdict]],
+        notes: [core ? `Python core, full record: ${core.sentence}` : "", ds.regions[s.r].long ? `Region: ${ds.regions[s.r].long}.` : ""].filter(Boolean),
+        source: ds.source
+      });
+    };
+    out.querySelector("#go-chart").onclick = showChart;
+    out.querySelector("#cv-h").classList.add("zoomable");
+    out.querySelector("#cv-h").onclick = showChart;
     out.querySelector("#go-again").onclick = () => {
       closeId("w-test");
       openSetup();
     };
-    const lines = { "DETECTED": ["It holds up. Every way I push on it.", "Not just a convincing line, then."], "NOT YET DETECTABLE": ["Can’t call it yet. Too few years, too much noise.", "That doesn’t mean nothing’s happening. It means I can’t prove it."], "SUSPECT": ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[R.verdict];
+    const lines = { "DETECTED": [`It holds up. ${ds.regions[s.r].name}, ${fmt(R.slope * perDec, ds.unit === "mm" ? 0 : 2)} ${unit}.`, "Every way I push on it, the same answer. That goes in the report."], "NOT YET DETECTABLE": ["Can’t call it yet. Too few years, too much wobble.", s.v === "ssl" ? "El Niño years shove the sea up and down out east. That noise hides the climb." : "That doesn’t mean nothing’s happening. It means I can’t prove it yet."], "SUSPECT": ["Looks strong. Something about it still bothers me.", "One of the checks failed. I’m not signing off on this."] }[R.verdict];
     setTimeout(() => say(lines), 600);
   };
 }
-const readme = () => win("w-readme", "README.TXT", `<div style="white-space:pre-wrap">HOW TO INVESTIGATE A TREND
-
-1. Pick the data variable.
-2. Pick the region.
-3. Pick the time period.
-4. Plot the time series. Does it
- look like a trend?
-5. Test whether it's significant.
-
-Open CASES to start. Double-click
-anything to open it. F10 leaves.</div>`, { left: "200px", top: "60px", width: "420px" });
+const ABOUT_HTML = `<div class="about">
+<h3>TREND DETECTIVE: CASE FILES</h3>
+<div class="dim">NASA SPACE APPS CHALLENGE 2026 · BE AN EARTH SYSTEM TREND DETECTIVE</div>
+<h4>MISSION</h4>
+<p>Help anyone in Indonesia, a student or a city planner, answer one honest question with NASA data: <b>is this really changing, where, by how much, and can we prove it?</b> No guessing from one scary graph. Every claim has to survive the tests.</p>
+<h4>WHAT IT IS</h4>
+<p>A detective game built on real satellite and model records. MAP.EXE shows sea level next to 31 Indonesian cities, from Banda Aceh to Jayapura, and the ocean grid cells each number comes from. CASES lets you lock in a guess, look at the record, and test it against 1,000 trend-free fakes before you get a verdict: Detected, Not Yet Detectable, or Suspect.</p>
+<h4>HOW A CASE WORKS</h4>
+<p>1. Pick a variable, a place and the years.<br>2. Lock in your guess before you see anything.<br>3. Look at the record yourself.<br>4. LINEUP: is it stronger than random noise?<br>5. Read the verdict and the checks behind it.</p>
+<h4>WHAT THE DATA CAN’T SAY</h4>
+<p>ECCO sea level is the ocean next to the coast. It does not include land sinking, which drives much of the flooding in Jakarta and Semarang. Inland cities have no sea level number. Map layers marked SAMPLE are demonstrations, not NASA data.</p>
+<h4>DATA AND REFERENCES</h4>
+<p>· ECCO Consortium, ECCO V4 Release 4 sea surface height, 0.5° monthly (ECCO_L4_SSH_05DEG_MONTHLY_V4R4), NASA PO.DAAC.<br>
+· Gelaro et al. (2017), MERRA-2, J. Climate 30, 5419-5454. Monthly 2 m temperature and rainfall, NASA GES DISC.<br>
+· NASA GIBS, Blue Marble imagery (SAT view).<br>
+· Natural Earth 1:10m provinces, places and coastline (public domain).<br>
+· Mann (1945), Kendall (1975): trend test. Sen (1968): slope.<br>
+· Benjamini and Hochberg (1995): false discovery rate across cities.<br>
+· Batam and Prabumulih positions and populations: Statistics Indonesia 2020 census, via Wikipedia.<br>
+· Room model by nickheitzman, CC BY 4.0 (modified).</p>
+<div class="team">CREATED BY TEAM: SANSONG</div>
+</div>`;
+const readme = () => win("w-readme", "ABOUT.TXT", ABOUT_HTML, { left: "190px", top: "24px", width: "640px", maxHeight: "92%" });
 const earth = () => win("w-earth", "EARTH.PCX", '<img class="pcx" src="images/earth.png" alt="Pixel art Earth from orbit"><div class="dim" style="margin-top:6px;font-size:18px">Wallpaper only. Case data comes from NASA records.</div>', { left: "640px", top: "60px", width: "360px" });
 const map = () => regionMap.open(win, { log, closeId });
 function startCase(setup) {
@@ -415,7 +484,13 @@ function startCase(setup) {
   log(`NEW CASE FROM MAP: ${D()[setup.v].label} / ${D()[setup.v].regions[setup.r].name}`, "hi");
   openSetup();
 }
-const data = () => win("w-data", "DATA.LNK", Object.values(D()).map((d) => `<div style="margin-bottom:8px"><span style="color:var(--blue)">${d.label}</span><br>${d.source} · ${d.start} to ${d.end} · ${d.unit}${d.gap ? '<br><span class="hi">Gap: GRACE ended 2017, GRACE-FO began 2018</span>' : ""}</div>`).join("") + '<div class="dim">MAP.EXE reads sea_data.json when it exists (npm run data:power). Without it, series are synthetic and labelled DEMO.</div>', { left: "520px", top: "90px", width: "460px" });
+const data = () => {
+  if (!analysis.load.done) {
+    analysis.load().then(data, () => SFX.err());
+    return;
+  }
+  win("w-data", "DATA.LNK", Object.values(D()).map((d) => `<div style="margin-bottom:8px"><span style="color:var(--blue)">${d.label}</span><br>${d.source} · ${d.start} to ${d.end} · ${d.unit} · ${Object.keys(d.regions).length === 1 ? Object.values(d.regions)[0].long || Object.values(d.regions)[0].name : Object.keys(d.regions).length + " coastal cities"}</div>`).join("") + '<div class="dim">All case data is real NASA data, processed by the Python core (scripts/export_indonesia.py). It works offline.</div>', { left: "520px", top: "90px", width: "480px" });
+};
 const logw = () => {
   win("w-log", "LOG.TXT", LOG.join(""), { left: "260px", bottom: "20px", width: "600px", height: "220px" });
 };
@@ -426,7 +501,7 @@ const trash = () => {
 };
 const ICONS = [
   ["cases", "folder", "CASES", openCases],
-  ["readme", "doc", "README.TXT", readme],
+  ["readme", "doc", "ABOUT.TXT", readme],
   ["data", "dish", "DATA.LNK", data],
   ["earth", "picture", "EARTH.PCX", earth],
   ["map", "globe", "MAP.EXE", map],
@@ -544,7 +619,7 @@ async function open() {
     log("CASE_001 FLAGGED: STATION RECORD SAYS WARMING.", "hi");
   }
   booting = false;
-  setTimeout(() => say(["Okay. I’m in.", "Case files should still be in the folder where I left them."]), 400);
+  setTimeout(() => say(["Okay. I’m in.", "Thirty-one cities across Indonesia. The tide keeps coming further in.", "Is the sea really rising, or does it just feel that way? MAP.EXE first, then the case files."]), 400);
 }
 async function shutdown() {
   closeSay();

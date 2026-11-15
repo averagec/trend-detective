@@ -3,16 +3,22 @@
 Inputs (download once, any folder):
     https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson
     https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places_simple.geojson
+    https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_coastline.geojson
 
 Outputs:
     web/public/data/indonesia_provinces.json  one SVG path per province (sea_map.json projection)
-    data/processed/indonesia/cities.csv         name, province, lat, lon, population, capital,
-                                                coast_km
+    data/processed/indonesia/cities.csv         name, region, province, lat, lon, population,
+                                                capital, coast_km
 Natural Earth is public domain.
+
+Only the team's 31 study cities (CITIES below) are kept. Two of them are not in Natural Earth's
+places file, so their position and 2020 census population come from EXTRA (Wikipedia infoboxes,
+which cite Statistics Indonesia).
 
 A city's province comes from point-in-polygon on the province outlines, not from the places file's
 own adm1name (that field is wrong for some cities, e.g. Bekasi). coast_km is the distance to the
-nearest Indonesian coastline (country outline in sea_map.json).
+nearest coastline in Natural Earth's 1:10m coastline file, which includes small islands such as
+Ternate (the coarse map outline does not).
 
 Examples:
     python scripts/build_indonesia_geo.py --ne-dir /path/to/natural-earth
@@ -24,20 +30,49 @@ import argparse
 import csv
 import json
 import math
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_PROV = ROOT / "web" / "public" / "data" / "indonesia_provinces.json"
 OUT_CITY = ROOT / "data" / "processed" / "indonesia" / "cities.csv"
-SEA_MAP = ROOT / "web" / "public" / "data" / "sea_map.json"
+
+# The study cities, grouped by the regions the team uses in the app.
+CITIES = {
+    "Sumatra": [
+        "Banda Aceh", "Medan", "Padangsidimpuan", "Padang", "Pekanbaru",
+        "Jambi", "Bengkulu", "Prabumulih", "Bandar Lampung",
+    ],
+    "Riau Islands and Bangka Belitung": ["Batam", "Pangkal Pinang"],
+    "Java": ["Jakarta", "Tasikmalaya", "Semarang", "Surabaya"],
+    "Bali and Nusa Tenggara": ["Denpasar", "Kupang"],
+    "Kalimantan": ["Pontianak", "Palangka Raya", "Banjarmasin", "Samarinda", "Tarakan"],
+    "Sulawesi": ["Manado", "Gorontalo", "Palu", "Makassar", "Kendari"],
+    "Maluku and Papua": ["Ambon", "Ternate", "Sorong", "Jayapura"],
+}  # fmt: skip
+# Natural Earth spelling -> the spelling used in the app.
+CITY_NAMES = {
+    "Bandjarmasin": "Banjarmasin",
+    "Padangsidempuan": "Padangsidimpuan",
+    "Pangkalpinang": "Pangkal Pinang",
+    "Palangkaraya": "Palangka Raya",
+}
+# Not in Natural Earth's places file: (lat, lon, population at the 2020 census).
+EXTRA = {
+    "Batam": (1.13000, 104.05306, 1196396),  # en.wikipedia.org/wiki/Batam
+    "Prabumulih": (-3.43278, 104.23556, 193196),  # en.wikipedia.org/wiki/Prabumulih
+}
+CAPITALS = {
+    "Banda Aceh", "Medan", "Padang", "Pekanbaru", "Jambi", "Bengkulu", "Bandar Lampung",
+    "Pangkal Pinang", "Jakarta", "Semarang", "Surabaya", "Denpasar", "Kupang", "Pontianak",
+    "Palangka Raya", "Banjarmasin", "Samarinda", "Manado", "Gorontalo", "Palu", "Makassar",
+    "Kendari", "Ambon", "Jayapura",
+}  # fmt: skip
 
 PROVINCE_NAMES = {
     "Jakarta Raya": "DKI Jakarta",
     "Yogyakarta": "DI Yogyakarta",
     "Bangka-Belitung": "Bangka Belitung",
 }
-CITY_NAMES = {"Bandjarmasin": "Banjarmasin", "Pakalongan": "Pekalongan"}
 # Cities on a province border where the 1:10m outlines put them on the wrong side.
 PROVINCE_FIX = {"Bekasi": "Jawa Barat"}
 MIN_RING_AREA = 0.002  # square degrees; drops islets too small to see on the map
@@ -81,13 +116,16 @@ def inside(geom, lon, lat):
     return False
 
 
-def coast_segments():
-    d = json.loads(SEA_MAP.read_text())["sea"]["Indonesia"]
+def coast_segments(path: Path):
+    """Coastline segments (lon, lat pairs) around Indonesia from the 1:10m coastline file."""
     segs = []
-    for ring in re.findall(r"M([^Z]+)Z", d):
-        pts = [tuple(float(v) for v in p.split()) for p in ring.split("L")]
-        pts = [(x - 180, 90 - y) for x, y in pts]
-        segs += list(zip(pts, pts[1:] + pts[:1], strict=True))
+    for f in json.loads(path.read_text())["features"]:
+        g = f["geometry"]
+        lines = g["coordinates"] if g["type"] == "MultiLineString" else [g["coordinates"]]
+        for ln in lines:
+            for p, q in zip(ln, ln[1:], strict=False):
+                if 90 <= p[0] <= 145 and -14 <= p[1] <= 10:
+                    segs.append((tuple(p), tuple(q)))
     return segs
 
 
@@ -95,6 +133,8 @@ def coast_km(lon, lat, segs):
     k = math.cos(math.radians(lat))
     best = float("inf")
     for (x1, y1), (x2, y2) in segs:
+        if abs(x1 - lon) > 3 or abs(y1 - lat) > 3:
+            continue
         ax, ay, bx, by = (x1 - lon) * k, y1 - lat, (x2 - lon) * k, y2 - lat
         dx, dy = bx - ax, by - ay
         t = max(0.0, min(1.0, -(ax * dx + ay * dy) / (dx * dx + dy * dy or 1)))
@@ -125,35 +165,44 @@ def main() -> None:
         )
     )
 
-    segs = coast_segments()
-    cities = {}
+    segs = coast_segments(a.ne_dir / "ne_10m_coastline.geojson")
+    found = {}
     for f in places["features"]:
         p = f["properties"]
         if p.get("adm0_a3") != "IDN":
             continue
-        lon, lat = float(p["longitude"]), float(p["latitude"])
         name = CITY_NAMES.get(p["name"], p["name"])
-        province = next((n for n, g in provinces.items() if inside(g, lon, lat)), None)
-        province = PROVINCE_FIX.get(name, province)
-        if province is None:
-            province = PROVINCE_NAMES.get(p["adm1name"], p["adm1name"])
-        row = {
-            "name": name,
-            "province": province,
-            "lat": round(lat, 4),
-            "lon": round(lon, 4),
-            "population": int(p["pop_max"]),
-            "capital": p["featurecla"] in ("Admin-0 capital", "Admin-1 capital"),
-            "coast_km": round(coast_km(lon, lat, segs), 1),
-        }
-        if name not in cities or row["population"] > cities[name]["population"]:
-            cities[name] = row
+        pos = (float(p["latitude"]), float(p["longitude"]), int(p["pop_max"]))
+        if name not in found or pos[2] > found[name][2]:
+            found[name] = pos
+    found.update(EXTRA)
+
+    cities = {}
+    for region, names in CITIES.items():
+        for name in names:
+            if name not in found:
+                raise SystemExit(f"no position for {name}")
+            lat, lon, pop = found[name]
+            province = next((n for n, g in provinces.items() if inside(g, lon, lat)), None)
+            province = PROVINCE_FIX.get(name, province)
+            if province is None:
+                raise SystemExit(f"{name} is outside every province outline")
+            cities[name] = {
+                "name": name,
+                "region": region,
+                "province": province,
+                "lat": round(lat, 4),
+                "lon": round(lon, 4),
+                "population": pop,
+                "capital": name in CAPITALS,
+                "coast_km": round(coast_km(lon, lat, segs), 1),
+            }
 
     OUT_CITY.parent.mkdir(parents=True, exist_ok=True)
     with OUT_CITY.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(next(iter(cities.values()))), lineterminator="\n")
         w.writeheader()
-        for row in sorted(cities.values(), key=lambda r: -r["population"]):
+        for row in cities.values():
             w.writerow(row)
     print(f"{len(provinces)} provinces -> {OUT_PROV.relative_to(ROOT)}")
     print(f"{len(cities)} cities -> {OUT_CITY.relative_to(ROOT)}")
