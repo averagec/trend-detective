@@ -198,8 +198,8 @@
   outline: 3px solid var(--mus);
 }
 .zoom-hint {
-  font-size: 14px;
-  color: #5b6b8f;
+  font-size: 15px;
+  color: #3d4c7c;
   letter-spacing: 1px;
   text-align: right;
 }
@@ -237,12 +237,31 @@
   background: var(--ink);
 }
 
-/* short definitions under significance stats */
+/* short definitions under significance stats: the app's pixel font, readable on cream and white */
 .gloss {
-  margin-top: 8px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--muted, #8c9bb8);
+  display: block;
+  margin-top: 10px;
+  font-family: "VT323", monospace;
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  text-indent: 0;
+  text-align: left;
+  color: #3d4c7c;
+  opacity: 1;
 }
-.gloss div { margin: 2px 0; }
-.gloss b { color: var(--cream, #e6ecf7); font-weight: 600; }
+.gloss div {
+  display: block;
+  margin: 4px 0;
+  padding: 0;
+  text-indent: 0;
+  text-align: left;
+  color: #3d4c7c;
+  opacity: 1;
+}
+.gloss .gloss-term {
+  display: inline;
+  color: #1f2a4a;
+  background: none;
+  opacity: 1;
+}

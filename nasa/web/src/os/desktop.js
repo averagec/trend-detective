@@ -465,10 +465,10 @@ function openTest() {
         ${has ? `<span>NOISE LINEUP</span><span>${l.beat} of ${l.n_sims} fakes as strong (${(l.share * 100).toFixed(1)}%)</span>` : ""}
         ${Number.isFinite(l.years_needed) ? `<span>YEARS NEEDED</span><span>about ${l.years_needed.toFixed(0)} years of record for a change this size (you have ${Math.round(l.years)})</span>` : ""}
       </div>
-      ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="margin-top:8px">${l.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${esc(c.text)}</div>`).join("")}</div>
       <div class="dim" style="margin-top:8px">${esc(l.explanation)}</div>
       <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"} <span class="dim">(judged on the monthly view)</span></div>
+      ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-chart">VIEW FULL CHART ▸</button> <button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
       const showChart = () => openChart(v.chart());
       if (has) {
