@@ -4,6 +4,14 @@ Status as of 2026-11-15. Counts are files on disk under `data/raw/`, which is gi
 about 7.3 GB. Raw files are not committed. The regional tables, QC reports and GeoJSON files in
 `data/processed/` are committed (about 9 MB). The per-cell cubes are local only.
 
+## Project scope: 1980 to 2018
+
+Every analysis output is limited to **1980 to 2018**, the window in `src/trend_detective/catalog/scope.py`.
+The regional map, the city and circle analysis, and the flood and drought routes clamp requested years to
+this window. The reason: the GDIS disaster records end in 2018, so flood and drought counts can only be
+compared with climate data for the same years. A dataset that starts later than 1980 is used from its own
+first year, and one that ends later is cut at 2018.
+
 ## Status at a glance
 
 | Group | Dataset | Files on disk | Download | Cleaned |
@@ -69,6 +77,17 @@ Other local files that read these outputs: `process/event_series.py` (monthly se
 drought flow, using the cubes and the ENSO, IOD and PDO indices), and `process/cities.py` and
 `process/selection.py`. These were added in the same local folder and are not committed.
 
+### GDIS flood and drought (committed)
+
+Made by `process/gdis.py` from the GDIS disaster-location records (SEDAC, 1960 to 2018), kept for
+1980 to 2018 and placed on the MERRA-2 cells of the Indonesia box.
+
+| File | Rows | Columns | Made by |
+|---|---|---|---|
+| `gdis/gdis_events_1980_2018.csv` | 1,139 | year, hazard, country, adm1, latitude, longitude, cell_lat, cell_lon | `process/gdis.py` |
+| `gdis/gdis_yearly_counts_idn.csv` | 839 | year, cell_lat, cell_lon, flood, drought (cells with no event left out) | `process/gdis.py` |
+| `gdis/gdis_counts_idn.npz` | arrays | the same counts for the engine | `process/gdis.py` |
+
 ## MERRA-2 (NASA GMAO reanalysis)
 
 Source: NASA GES DISC, version 5.12.4. Model output that assimilates observations, not a direct
@@ -123,3 +142,26 @@ variables. TSURF has 63% of cells masked because they are ocean cells, which is 
 
 ## Not downloaded
 - GPM IMERG half-hourly rainfall: not downloaded. Candidate for event-scale flood analysis.
+
+
+## Date ranges (project window 1980 to 2018)
+
+Available is what the file covers. Used is the part inside the project window.
+
+| Dataset | Available | Used in the project | Notes |
+|---|---|---|---|
+| MERRA-2 monthly and daily (T2M, QV2M, PS, PRECTOTCORR, EVAP, TSURF, VPD, T2MMAX) | 1980-01 to 2026-09 (T2MMAX to 2026-10) | 1980-01 to 2018-12 | Cell cubes and regional CSVs |
+| GPCP v3.3 rainfall | 1983-01 to 2025-12 | 1983-01 to 2018-12 | Starts in 1983 |
+| GLDAS Noah 2.1 soil moisture and rain | 2000-01 to 2026-07 | 2000-01 to 2018-12 | Cell cube for 0 to 10 cm soil moisture; regional rows for all layers |
+| GRACE / GRACE-FO water storage | 2002-04 to 2026-09 (259 months, with gaps) | 2002-04 to 2018-12 | About 12% of months are missing in the full record |
+| ECCO sea level (ocean) | 1992-01 to 2017-12 | 1992-01 to 2017-12 | Ends in 2017 |
+| NASA SSH indices (ENSO, IOD, PDO) | 1993-01 to 2026-11 | 1993-01 to 2018-12 | Global, one series each |
+| GDIS disaster locations (floods, droughts) | 1960-01 to 2018-12 | 1980-01 to 2018-12 | 1,139 flood and drought records in the Indonesia box (1,104 floods, 35 droughts) |
+| SEDAC flood hazard frequency | 1985 to 2003 (static map) | Not used yet | Not downloaded |
+| SEDAC drought hazard frequency | 1980 to 2000 (static map) | Not used yet | Not downloaded |
+| GPM IMERG daily rainfall (V07 Final) | 1998-06 to 2025-09 | Not used yet | Not downloaded |
+
+Notes: GDIS records are placed on MERRA-2 cells by location. The Indonesia box also covers parts of
+Malaysia, the Philippines, Thailand, Timor-Leste and Papua New Guinea. Of the 1,139 placed records, 656 are
+in Indonesia, 204 Malaysia, 149 Philippines, 88 Thailand, 39 Timor-Leste and 3 Papua New Guinea. The CSV
+keeps the country column, so an Indonesia-only count can be made from it.

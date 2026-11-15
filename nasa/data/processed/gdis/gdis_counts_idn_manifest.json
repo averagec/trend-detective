@@ -1,0 +1,21 @@
+{
+  "source": "GDIS 1960-2018, disaster locations (SEDAC)",
+  "window": [
+    1980,
+    2018
+  ],
+  "cells": [
+    39,
+    77
+  ],
+  "hazards": [
+    "flood",
+    "drought"
+  ],
+  "read": 39953,
+  "in_scope": 19813,
+  "placed": 1139,
+  "outside_box": 18674,
+  "events_csv_rows": 1139,
+  "yearly_counts_csv_rows": 839
+}

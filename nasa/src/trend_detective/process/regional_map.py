@@ -21,10 +21,12 @@ from pathlib import Path
 import numpy as np
 
 from trend_detective.catalog.regions import REGIONS
+from trend_detective.catalog.scope import clamp
 from trend_detective.catalog.variables import VARIABLES
 from trend_detective.core.detect import noise_params, years_needed
 from trend_detective.core.summary import summarise
 from trend_detective.core.trend import benjamini_hochberg
+from trend_detective.process.event_series import indicator_monthly
 from trend_detective.process.frequency import to_yearly
 
 SCHEMA_VERSION = 1
@@ -51,6 +53,10 @@ LAYERS = {
     "gldas:gldas_sm_100_200cm": ("witness", "gldas", "gldas_sm_100_200cm"),
     "grace:grace_lwe": ("witness", "grace", "grace_lwe"),
     "ocean:ecco_v4r4_05deg": ("ocean", "ecco_v4r4_05deg", "ssh"),
+    # Climate indices: one series for the whole Pacific and Indian Ocean (region "global").
+    "index:enso": ("index", None, "enso"),
+    "index:iod": ("index", None, "iod"),
+    "index:pdo": ("index", None, "pdo"),
 }
 
 
@@ -61,6 +67,14 @@ def layer_label(layer: str) -> str:
 
 def _read(processed_dir: Path, layer: str) -> dict[str, list[dict]]:
     file_key, dataset, variable = LAYERS[layer]
+    if file_key == "index":
+        monthly = indicator_monthly(variable)  # YYYYMM -> mean; empty if the file is missing
+        rows = [
+            {"region": "global", "period": f"{p[:4]}-{p[4:]}", "value": str(v), "unit": "index",
+             "n_cells": "1", "n_valid": "1"}
+            for p, v in sorted(monthly.items())
+        ]
+        return {"global": rows} if rows else {}
     path = Path(processed_dir) / FILES[file_key]
     if not path.exists():
         raise FileNotFoundError(f"{path} not found. Run the processing script for it first.")
@@ -118,7 +132,7 @@ def _region(
     first: int | None,
     last: int | None,
 ) -> dict:
-    name = REGIONS[key].name if key in REGIONS else key
+    name = REGIONS[key].name if key in REGIONS else ("Global" if key == "global" else key)
     if not rows:
         return _no_data(key, name, f"No {name} data for this layer.")
     rows = [
@@ -229,15 +243,15 @@ def build_map(
         raise KeyError(layer)
     if freq not in FREQS:
         raise ValueError("freq must be 'monthly' or 'yearly'")
-    if first is not None and last is not None and first > last:
-        raise ValueError("from must be on or before to")
+    first, last = clamp(first, last)  # the project window: 1980 to 2018
     if regions is not None:
-        unknown = [r for r in regions if r not in REGIONS]
+        unknown = [r for r in regions if r not in REGIONS and r != "global"]
         if unknown:
             raise ValueError(f"unknown region(s): {', '.join(unknown)}")
 
     by_region = _read(processed_dir, layer)
-    keys = regions if regions is not None else [k for k in REGIONS if k in by_region]
+    default = [k for k in REGIONS if k in by_region] + [k for k in by_region if k not in REGIONS]
+    keys = regions if regions is not None else default
     results = [_region(k, by_region.get(k, []), layer, freq, first, last) for k in keys]
 
     ok = [i for i, r in enumerate(results) if r["status"] == "ok"]

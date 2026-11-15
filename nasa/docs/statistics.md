@@ -247,6 +247,11 @@ OLS test is significant **and** its adjusted p < 0.05.
 - Change log: `ols_trend` previously reported p = 0 when the residual spread was exactly zero,
   even for a flat series. A flat series now gives p = 1. Found on the 2000 test data, where
   a one-year series produced a false "significant" result.
+- Change log: `mann_kendall` previously dropped the missing months before computing Sen's slope,
+  so with gaps the slope was per valid value, not per month, and too large by roughly the share
+  of months missing (+25% in a test with 14% missing; OLS was not affected). It now computes the
+  slope with the gaps kept in place, so it is per month. S, Var(S) and the p-value are unchanged.
+  Three golden tests were added to `tests/core/test_trend.py`; none was changed.
 
 ## 8. Not yet decided
 - Which regions and variables go into the demo cases (`docs/product-sense.md`).
