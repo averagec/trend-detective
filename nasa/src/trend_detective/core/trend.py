@@ -121,6 +121,28 @@ def mann_kendall(values: np.ndarray) -> TrendResult:
     return TrendResult(slope, np.nan, np.nan, p, n, float(n), "mann-kendall")
 
 
+def benjamini_hochberg(p_values) -> np.ndarray:
+    """Benjamini-Hochberg adjusted p-values (false discovery rate) for many tests at once.
+
+    Use when the same test runs on many places, e.g. one trend per city: a place is significant
+    when its adjusted p < 0.05, which keeps the expected share of false alarms among the flagged
+    places at 5%. NaN inputs stay NaN and do not count as tests.
+    """
+    p = np.asarray(p_values, dtype=float)
+    out = np.full(p.shape, np.nan)
+    ok = np.isfinite(p)
+    m = int(ok.sum())
+    if m == 0:
+        return out
+    order = np.argsort(p[ok])
+    ranked = p[ok][order] * m / np.arange(1, m + 1)
+    adjusted = np.minimum.accumulate(ranked[::-1])[::-1]
+    vals = np.empty(m)
+    vals[order] = np.minimum(adjusted, 1.0)
+    out[ok] = vals
+    return out
+
+
 def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
     """Mean of a (lat, lon) grid weighted by cos(latitude). NaNs ignored."""
     f = np.asarray(field, dtype=float)

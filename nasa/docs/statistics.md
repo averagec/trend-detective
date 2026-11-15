@@ -77,6 +77,37 @@ largest in months with large day-to-day swings. State this next to any VPD resul
 - Daily T2MMAX: the regional mean is taken for each day, then averaged over the days of
   the month. The number of valid days is kept.
 
+### 3.5 Cell-level series and circles (`process/cell_cube.py`, `process/selection.py`)
+- The cube keeps every cell of the box, with the same cleaning as §3.1 to §3.3. Nothing is
+  averaged in the cube.
+- **City:** the series of the one cell that contains the point. No averaging.
+- **Circle:** the cells whose centres lie within the radius (75 to 250 km, at least 4 cells; see
+  `docs/decisions/0005-spatial-selection.md`). A cell with no value in any month is dropped, so
+  the cell set is fixed. Each cell goes through `summarise` on its own. The area average of the
+  used cells (cos-latitude weights, §3.4) goes through `summarise` as a reference.
+- Gaps: a missing month is NaN on a full monthly timeline. Series start in January, as the
+  seasonal removal in §4.1 needs.
+
+### 4.5 Flood and drought events and co-movement (`core/events.py`, `core/comovement.py`)
+- **Monthly totals:** rainfall rate (mm/day) × days in the month (mm). The trend is tested on
+  the rate, the amounts on the totals.
+- **Percentile:** the share of the same calendar month's values (monthly periods) or of the
+  complete annual totals (yearly periods) at or below the period's value. Partial years are
+  left out.
+- **Extreme:** at or above the 90th percentile for a flood, at or below the 10th for a drought.
+- **Trend:** the OLS trend of the deseasonalised rate (§4.2). Reported only when significant at
+  95%, with the direction ("wetter" or "drier").
+- **Call:** "not unusual" if not extreme; "extreme, in line with a trend" if extreme and the
+  significant trend is in the same direction; otherwise "one-time event".
+- **Amount:** observed minus the median of the same baseline (mm), and as a percent of the median.
+- **Peak:** for a year, the month whose percentile is furthest toward the incident.
+- **Co-movement:** Pearson correlation of the deseasonalised anomalies over the shared months.
+  The effective sample size uses the lag-1 autocorrelation of both series, as in §4.2.
+  The slope is the least-squares slope of rainfall on the factor. The implied rainfall change is
+  that slope × the factor's average anomaly in the period.
+- **Interpretation:** co-movement is not a cause (science rules 7 and 8). Several factors are
+  tested at once, and the p-values are not corrected for that (§6, item 4).
+
 ## 4. Statistics (`core/`)
 
 Every trend uses **monthly data** and its **deseasonalised anomalies**. Annual series are not

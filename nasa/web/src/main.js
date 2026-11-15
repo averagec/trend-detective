@@ -1,0 +1,13 @@
+import "./ui/scale.js";
+import "./styles/base.css";
+import "./styles/menu.css";
+import "./styles/room.css";
+import "./styles/dialogue.css";
+import "./styles/desktop.css";
+import "./styles/apps.css";
+import "./styles/map.css";
+import "./styles/chart.css";
+import "./ui/menu.js";
+import "./scene/office.js";
+import { analysis } from "./stats/trend-analysis.js";
+analysis.load().catch(() => {});

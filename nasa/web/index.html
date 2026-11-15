@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trend Detective</title>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="vignette"></div>
+<div id="grain"></div>
+<div class="letterbox top"></div><div class="letterbox bot"></div>
+
+<section id="menu" aria-label="Title screen">
+  <div class="shade"></div>
+  <div class="det" role="img" aria-label="Pixel art detective smoking, holding a coffee"></div>
+  <div class="left">
+    <div class="title">
+      <div class="mark">CASE FILES</div>
+      <div class="t1">TREND
+        <svg viewBox="0 0 520 160" aria-hidden="true">
+          <polyline class="str" points="10,140 120,104 190,122 300,58 380,74 500,12" fill="none" stroke="#c8392b" stroke-width="4" stroke-linejoin="round"></polyline>
+          <circle class="pin" style="animation-delay:.5s" cx="10" cy="140" r="8" fill="#c8392b"/>
+          <circle class="pin" style="animation-delay:.9s" cx="190" cy="122" r="8" fill="#c8392b"/>
+          <circle class="pin" style="animation-delay:1.3s" cx="380" cy="74" r="8" fill="#c8392b"/>
+          <circle class="pin" style="animation-delay:1.8s" cx="500" cy="12" r="8" fill="#c8392b"/>
+        </svg>
+      </div>
+      <div class="t2">DETECTIVE</div>
+    </div>
+    <div class="btns">
+      <button class="mbtn play" id="play" disabled><span class="arrow">▸</span>PLAY</button>
+      <button class="mbtn" id="b-how"><span class="arrow">▸</span>ABOUT</button>
+      <button class="mbtn" id="b-snd"><span class="arrow">▸</span>SOUND: ON</button>
+    </div>
+    <div class="load"><div class="load-track"><div id="load-fill"></div></div><span id="load-pct">LOADING 0%</span></div>
+  </div>
+  <div class="panel" id="p-how"><h2>About the case files</h2>
+    <p><b>Mission:</b> answer one honest question with NASA data. Is it really changing, where, by how much, and can we prove it?</p>
+    <p>You play a detective at an Earth system desk. Sea level next to 31 Indonesian cities comes from NASA's ECCO ocean model; temperature and rain come from NASA MERRA-2. Lock in a guess, look at the record, then test it against 1,000 trend-free fakes.</p>
+    <p class="small">Data: ECCO V4r4 (NASA PO.DAAC) · MERRA-2 (NASA GES DISC) · NASA GIBS · Natural Earth. Full references in ABOUT.TXT on the desk.</p>
+    <p class="team">CREATED BY TEAM: SANSONG</p></div>
+  <div class="credit">Team SanSong · NASA Space Apps 2026 · Room model by nickheitzman, CC BY 4.0 (modified)</div>
+</section>
+
+<div id="hud">
+  <div class="hud-tl">TREND DETECTIVE</div>
+  <div class="hud-r"><button class="hbtn" id="h-fs">FULLSCREEN</button> <button class="hbtn" id="h-snd">SOUND: ON</button></div>
+  <div class="hud-hint">DRAG TO LOOK AROUND · SCROLL TO MOVE CLOSER</div>
+</div>
+<div id="tip">Log in?</div>
+
+<div id="say" role="dialog" aria-live="polite">
+  <div class="say-box" id="say-box">
+    <div class="say-face" aria-hidden="true"></div>
+    <div class="say-main">
+      <div class="say-name">THE DETECTIVE</div>
+      <div class="say-text" id="say-text"></div>
+      <div class="say-next">▼</div>
+    </div>
+  </div>
+</div>
+
+<section id="os" aria-label="TD-OS computer">
+  <div class="crt">
+    <div class="desktop-bg"></div>
+    <canvas id="noise" width="320" height="200"></canvas>
+    <div class="pwr" id="pwr"><i></i></div>
+    <canvas id="static" width="320" height="200"></canvas>
+    <div id="bios"></div>
+    <div id="login">
+      <div class="lwin">
+        <div class="ltb"><span class="logo4"><i style="background:var(--red)"></i><i style="background:var(--mus)"></i><i style="background:var(--grn)"></i><i style="background:var(--sky)"></i></span>TD-OS · LOG IN</div>
+        <div class="lbody">
+          <img src="images/earth.png" alt="Pixel art Earth">
+          <div class="lform">
+            <h3>EARTH SYSTEM DESK</h3>
+            <span>USER</span><div class="field" id="f-user"></div>
+            <span>PASSWORD</span><div class="field" id="f-pass"></div>
+            <div class="lmsg" id="lmsg"></div>
+            <button class="lbtn" id="lbtn" tabindex="-1">ENTER ↵</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="cur"></div>
+    <div id="desk">
+      <div class="mbar"><span class="logo4"><i style="background:var(--red)"></i><i style="background:var(--mus)"></i><i style="background:var(--grn)"></i><i style="background:var(--sky)"></i></span><b style="font-weight:400">TD-OS</b><span>FILE</span><span>VIEW</span><span>HELP</span><span class="sp"></span><span id="who">DETECTIVE</span><span id="clock">23:48</span></div>
+      <div class="dtop" id="wins"><div class="icons" id="icons"></div></div>
+      <div class="fkeys"><button class="fk" data-k="help">F1 ABOUT</button><button class="fk" data-k="cases">F2 CASES</button><button class="fk" data-k="log">F3 LOG</button><button class="fk" data-k="leave">F10 LEAVE DESK</button></div>
+    </div>
+    <div class="fringe"></div><div class="scan"></div><div class="roll"></div><div class="glass"></div>
+  </div>
+</section>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

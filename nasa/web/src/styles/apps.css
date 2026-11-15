@@ -1,0 +1,96 @@
+.step {
+  margin: 4px 0 10px;
+}
+.step h4 {
+  margin: 0 0 6px;
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--blue);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 4px 10px;
+  border: 3px solid var(--ink);
+  background: #fff;
+  font-family: "VT323", monospace;
+  font-size: 21px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.chip:hover {
+  background: var(--cyan);
+}
+.chip.on {
+  background: var(--blue);
+  color: var(--cream);
+}
+.chip small {
+  font-size: 16px;
+  opacity: .75;
+}
+.cv {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  border: 3px solid var(--ink);
+  background: #0e1a40;
+}
+.axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  color: #5b6b8f;
+}
+.res {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 14px;
+  font-size: 21px;
+}
+.chk {
+  display: flex;
+  gap: 8px;
+  font-size: 20px;
+}
+.chk b {
+  font-weight: 400;
+  width: 22px;
+  text-align: center;
+  border: 2px solid var(--ink);
+}
+.chk.ok b {
+  background: var(--grn);
+}
+.chk.no b {
+  background: var(--red);
+  color: #fff;
+}
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 6px 16px;
+  border: 4px double;
+  font-size: 34px;
+  transform: rotate(-3deg);
+  animation: stamp .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+.flag {
+  display: inline-block;
+  padding: 0 8px;
+  background: var(--mus);
+  border: 2px solid var(--ink);
+  font-size: 18px;
+}
+.pcx {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  border: 3px solid var(--ink);
+  background: #000;
+}

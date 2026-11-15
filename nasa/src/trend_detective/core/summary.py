@@ -37,12 +37,16 @@ class Summary:
     ols_slope_per_month: float = float("nan")  # same slope as ols_per_decade / 120
 
 
-def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
-    """Summarise one monthly series. `series` must start in January, one value per month
-    (NaN where a month is missing)."""
+def summarise(series: np.ndarray, unit: str, label: str, steps_per_year: int = 12) -> Summary:
+    """Summarise one series. steps_per_year=12 (monthly): `series` starts in January, one value per
+    month, NaN where missing, and is deseasonalised. steps_per_year=1 (yearly): one annual value per
+    year, NaN where missing, not deseasonalised. The slope is always reported per decade."""
+    if steps_per_year not in (1, 12):
+        raise ValueError("steps_per_year must be 1 (yearly) or 12 (monthly)")
     y = np.asarray(series, dtype=float)
     n_valid = int(np.isfinite(y).sum())
-    years = n_valid / 12.0
+    years = n_valid / steps_per_year
+    per = steps_per_year * 10  # steps per decade: 120 monthly, 10 yearly
     warnings: list[str] = []
     if years < MIN_YEARS:
         warnings.append(
@@ -51,7 +55,8 @@ def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
     missing = 1.0 - n_valid / y.size
     if missing > MAX_MISSING_FRACTION:
         warnings.append(f"{missing:.0%} of months are missing.")
-    if n_valid < 24:  # with under two years each calendar month has at most one value
+    min_points = 24 if steps_per_year == 12 else 3  # monthly: two years; yearly: three values
+    if n_valid < min_points:  # with under two years each calendar month has at most one value
         nan = float("nan")
         return Summary(
             n_months=n_valid,
@@ -65,14 +70,14 @@ def summarise(series: np.ndarray, unit: str, label: str) -> Summary:
             mk_significant=False,
             tests_agree=False,
             warnings=tuple(warnings),
-            sentence=f"{label}: not enough data for a trend (need at least two years).",
+            sentence=f"{label}: not enough data for a trend (need at least "
+            f"{'two years' if steps_per_year == 12 else 'three years'}).",
         )
 
-    anomalies = deseasonalize(y)  # science rule 1
+    anomalies = deseasonalize(y) if steps_per_year == 12 else y  # rule 1: monthly only
     ols = ols_trend(anomalies)  # science rule 3
     mk = mann_kendall(anomalies)
 
-    per = MONTHS_PER_DECADE
     ols_per = ols.slope * per
     ci = (ols.ci_low * per, ols.ci_high * per)
     sen_per = mk.slope * per
