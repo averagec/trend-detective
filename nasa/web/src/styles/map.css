@@ -209,8 +209,9 @@
 }
 .rm-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 14px;
+  gap: 8px 14px;
   padding: 8px 10px;
   background: var(--cream);
   color: var(--ink);
@@ -220,6 +221,9 @@
 .rm-seg {
   display: inline-flex;
   flex: none;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  max-width: 100%;
 }
 .rm-seg button,
 .rm-chip {

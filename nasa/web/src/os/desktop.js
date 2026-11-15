@@ -238,15 +238,16 @@ function openSetup() {
   const s = S.setup || (S.setup = Object.assign({}, CASES[0].preset));
   const ds = D()[s.v];
   if (!ds.regions[s.r]) s.r = Object.keys(ds.regions)[0];
-  s.y0 = Math.max(ds.start, Math.min(s.y0, ds.end - 9));
-  s.y1 = Math.min(ds.end, Math.max(s.y1, s.y0 + 9));
+  s.y0 = Math.max(ds.start, Math.min(s.y0, ds.end));
+  s.y1 = Math.min(ds.end, Math.max(s.y1, s.y0));
+  const nYears = s.y1 - s.y0 + 1;
   const w = win(
     "w-setup",
     "SETUP.EXE",
     `
     <div class="step"><h4>1. WHAT ARE YOU MEASURING?</h4><div class="chips">${Object.entries(D()).map(([k, d]) => `<button class="chip${k === s.v ? " on" : ""}" data-v="${k}">${d.label}<br><small>${d.source}</small></button>`).join("")}</div></div>
     <div class="step"><h4>2. WHERE?</h4><div class="chips">${Object.entries(ds.regions).map(([k, r]) => `<button class="chip${k === s.r ? " on" : ""}" data-r="${k}">${r.name}</button>`).join("")}</div></div>
-    <div class="step"><h4>3. WHICH YEARS?</h4><label>FROM <button class="ypick" id="y0">${s.y0} ▾</button></label> <label>TO <button class="ypick" id="y1">${s.y1} ▾</button></label> <span class="dim">(${s.y1 - s.y0 + 1} years, min 10)</span></div>
+    <div class="step"><h4>3. WHICH YEARS?</h4><label>FROM <button class="ypick" id="y0">${s.y0} ▾</button></label> <label>TO <button class="ypick" id="y1">${s.y1} ▾</button></label> <span class="dim">(${nYears} ${nYears === 1 ? "year" : "years"}${nYears < 10 ? " · under 10: the verdict can’t call a trend" : ""})</span></div>
     ${S.runs && setupKey(s) !== S.lastKey ? '<div><span class="flag">EXPLORATORY</span> <span class="dim">Changed after seeing results.</span></div>' : ""}
     <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-next">${S.guess === null ? "NEXT: LOCK MY GUESS ▸" : "PLOT IT ▸"}</button></div>`,
     { left: "230px", top: "40px", width: "600px" }
@@ -261,11 +262,12 @@ function openSetup() {
     SFX.select();
     openSetup();
   });
-  w.querySelector("#y0").onclick = (e) => yearPick(e.currentTarget, ds.start, ds.end - 9, s.y0, (y) => {
+  w.querySelector("#y0").onclick = (e) => yearPick(e.currentTarget, ds.start, ds.end, s.y0, (y) => {
     s.y0 = y;
+    if (s.y1 < y) s.y1 = y;
     openSetup();
   });
-  w.querySelector("#y1").onclick = (e) => yearPick(e.currentTarget, s.y0 + 9, ds.end, s.y1, (y) => {
+  w.querySelector("#y1").onclick = (e) => yearPick(e.currentTarget, s.y0, ds.end, s.y1, (y) => {
     s.y1 = y;
     openSetup();
   });
