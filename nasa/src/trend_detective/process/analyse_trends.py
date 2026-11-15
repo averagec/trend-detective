@@ -215,6 +215,92 @@ def build_custom(
     }
 
 
+_VERDICT_WORDS = {
+    "rise": "a rise",
+    "fall": "a fall",
+    "unclear": "an unclear result",
+    "none": "no significant trend",
+    "no_data": "too little data",
+}
+
+
+def _lineup_json(case) -> dict:
+    """The `lineup` block of one case result (monthly or yearly)."""
+    lu = case.lineup
+    return {
+        "verdict": case.verdict,
+        "headline": case.headline,
+        "explanation": case.explanation,
+        "n_sims": None if lu is None else lu.n_sims,
+        "beat": None if lu is None else lu.beat,
+        "share": None if lu is None else jsonable(lu.share),
+        "observed_per_decade": None if lu is None else jsonable(lu.observed_per_decade),
+        "sims_per_decade": (
+            [] if lu is None else [round(float(x), 5) for x in lu.sims_per_decade]
+        ),
+        "checks": [{"code": c.code, "text": c.text, "ok": c.ok} for c in case.checks],
+        "years": jsonable(case.years),
+        "years_needed": jsonable(case.years_needed),
+    }
+
+
+def _statistics_json(summary) -> dict:
+    return {
+        k: jsonable(v) if not isinstance(v, tuple) else [jsonable(x) for x in v]
+        for k, v in asdict(summary).items()
+        if k not in ("sentence", "warnings", "ols_band_by_year")
+    }
+
+
+SIMILAR_POWER = 0.15  # counts of independent values within this share of each other are alike
+
+
+def _comparison(monthly, yearly, unit: str) -> str:
+    """One sentence on how the monthly and the yearly view relate: the same slope, but not always
+    the same significance. Which view has more power depends on how alike neighbouring months are,
+    so it compares the effective number of independent values (`n_eff`) of each, not the raw
+    counts, and it never claims more power for the view that did not find the trend."""
+    m, y = monthly.assessment.verdict, yearly.assessment.verdict
+    if y == "no_data":
+        return "The record has too few full years for a yearly view."
+    if m == y:
+        return f"The monthly and the yearly view agree: {_VERDICT_WORDS[m]}."
+    sm, sy = monthly.summary, yearly.summary
+    head = f"The yearly view says {_VERDICT_WORDS[y]}; the monthly view says {_VERDICT_WORDS[m]}. "
+    slopes = (
+        f"slopes {sm.ols_per_decade:+.2f} monthly and {sy.ols_per_decade:+.2f} yearly "
+        f"{unit} per decade"
+    )
+    closing = f"({slopes}): the two views differ in significance, not in the trend."
+    em, ey = sm.n_eff, sy.n_eff
+    if not (math.isfinite(em) and math.isfinite(ey)):
+        return head + f"The two views differ in significance, not in the trend ({slopes})."
+    counts = (
+        f"Allowing for each month being like the last, the {sm.n_months} months count as about "
+        f"{em:.0f} independent values, against about {ey:.0f} for the {sy.n_months} yearly values"
+    )
+    found = {"rise", "fall"}
+    near = (
+        "so the two views carry about the same information and the result sits close to the "
+        "5% limit"
+    )
+    if (m in found) == (y in found):  # neither view found a trend, or both did: only nuance differs
+        tail = near
+    else:
+        d, o = ("monthly", "yearly") if m in found else ("yearly", "monthly")
+        nd, no = (em, ey) if m in found else (ey, em)
+        if abs(nd - no) <= SIMILAR_POWER * max(nd, no):
+            tail = near
+        elif nd > no:
+            tail = f"so the {d} view has more power to pick up a trend of this size"
+        else:
+            tail = (
+                f"so the {o} view has more independent values, but the result sits close to "
+                "the 5% limit and tips differently in each view"
+            )
+    return f"{head}{counts}, {tail} {closing}"
+
+
 def build_lineup(
     label: str,
     unit: str,
@@ -223,22 +309,23 @@ def build_lineup(
     values: list[float | None],
     gap_years: tuple[int, int] | None = None,
 ) -> dict:
-    """`build_custom` plus the noise lineup and the case verdict (core/lineup.py).
+    """`build_custom` plus the noise lineup and the case verdict (core/lineup.py), monthly, and a
+    `yearly` block: the same judgement on the yearly averages of the seasonal anomalies (ADR 0011).
 
-    The `significance` block is the one the lineup judged, so a page never shows two verdicts for
-    one series. `lineup` holds the fakes' slopes (for drawing the histogram), the checks and the
-    case verdict.
+    The `significance` block is the one the monthly lineup judged, so a page never shows two
+    verdicts for one series. `lineup` holds the fakes' slopes (for drawing the histogram), the
+    checks and the case verdict.
     """
     pad = start_month - 1
     padded = np.array(
         [math.nan] * pad + [math.nan if v is None else v for v in values], dtype=float
     )
-    case = judge_case(
-        padded, unit, label, gap_years=gap_years, first_year=start_year, leading_pad=pad
-    )
+    kw = {"gap_years": gap_years, "first_year": start_year, "leading_pad": pad}
+    case = judge_case(padded, unit, label, **kw)
+    yearly = judge_case(padded, unit, label, frequency="yearly", **kw)
     last = pad + len(values) - 1
     axis = monthly_axis([f"{start_year + last // 12:04d}-{last % 12 + 1:02d}"], start_year)
-    lu = case.lineup
+    ys = yearly.summary
     return {
         "region": "custom",
         "region_name": "Your data",
@@ -248,19 +335,29 @@ def build_lineup(
         **analyse_series(
             padded, axis, unit, label, leading_pad=pad, assessment=case.assessment
         ),
-        "lineup": {
-            "verdict": case.verdict,
-            "explanation": case.explanation,
-            "n_sims": None if lu is None else lu.n_sims,
-            "beat": None if lu is None else lu.beat,
-            "share": None if lu is None else jsonable(lu.share),
-            "observed_per_decade": None if lu is None else jsonable(lu.observed_per_decade),
-            "sims_per_decade": (
-                [] if lu is None else [round(float(x), 5) for x in lu.sims_per_decade]
-            ),
-            "checks": [{"code": c.code, "text": c.text, "ok": c.ok} for c in case.checks],
-            "years": jsonable(case.years),
-            "years_needed": jsonable(case.years_needed),
+        "lineup": _lineup_json(case),
+        "yearly": {
+            "frequency": "yearly",
+            "first_year": start_year,
+            "last_year": start_year + last // 12,
+            "series": [
+                {"year": start_year + i, "anomaly": jsonable(v)}
+                for i, v in enumerate(yearly.analysed)
+            ],
+            "statistics": _statistics_json(ys),
+            "band": [
+                {
+                    "year": start_year + k,
+                    "fit": jsonable(f),
+                    "low": jsonable(lo),
+                    "high": jsonable(hi),
+                }
+                for k, f, lo, hi in ys.ols_band_by_year
+            ],
+            "significance": significance_json(yearly.assessment),
+            "lineup": _lineup_json(yearly),
+            "warnings": list(ys.warnings),
+            "comparison": _comparison(case, yearly, unit),
         },
     }
 

@@ -202,6 +202,31 @@ one optional field:
 The series is analysed as sent (no cut to the 1980 to 2018 project window), like `/api/analyse-series`.
 Nothing is stored.
 
+
+### The `yearly` block (ADR 0011)
+
+The response also has a `yearly` block: the same judgement on the **yearly averages of the seasonal
+anomalies** of the same series, so one request answers both "monthly" and "yearly". Months are averaged
+only for a year with at least 10 of its 12 months present (a thinner year is `null`); the yearly series
+is analysed with steps of one year (OLS with the adjusted interval, Mann-Kendall, the ladder, the
+lineup and the checks, all in years; later start years still cut 3, 5 and 8 years and leave-one-year-out
+drops one yearly value). The monthly block (`series`, `statistics`, `significance`, `lineup`) is exactly as
+before.
+
+| `yearly` field | Meaning |
+|---|---|
+| `frequency` | `"yearly"` |
+| `first_year`, `last_year` | The calendar years of the window; `series[0]` is `first_year` |
+| `series` | `[{year, anomaly}]`: the yearly average of the monthly anomalies, `null` for a thin year. In `unit` ("vs normal for the month") |
+| `statistics` | As the monthly `statistics`, per yearly step: `ols_per_decade`, `ols_ci_per_decade`, `ols_p`, `sen_per_decade`, `mk_p_ar1`, `n_months` (counts yearly values here), `ols_intercept` and `ols_slope_per_month` (per year, not per month) |
+| `band` | `[{year, fit, low, high}]`: the 95% band around the OLS line, one row per year |
+| `significance` | The ladder for the yearly series alone (family `none`) |
+| `lineup` | As the monthly `lineup`; `sims_per_decade` are the yearly fakes' slopes |
+| `warnings` | The yearly summary's warnings |
+| `comparison` | One sentence on how the two views relate. When they reach the same verdict: "agree". When they differ it compares the **effective number of independent values** of each view (`n_eff`, which allows for each month being like the last: for Ambon sea level 312 months count as about 9, 26 yearly values as about 10) and says which view has more power, or that they carry about the same information and the result sits close to the 5% limit. It never claims more power for the view that did not find the trend |
+
+The two views give the same slope but not always the same verdict. Usually monthly sees more (about 156 independent values against 28 for rainfall), but not always: sea-level months are so alike that Ambon's 312 months count as about 9, so the yearly view can be the one that finds a rise. With fewer than 3 yearly values `yearly.lineup.n_sims` is `null` and `comparison` says so.
+
 ### Response
 
 The `/api/analyse-series` response, plus a `lineup` block. `significance` is the one the lineup judged,
@@ -210,6 +235,7 @@ so a page never shows two verdicts for one series.
 | `lineup` field | Meaning |
 |---|---|
 | `verdict` | `"detected"`: the engine says rise or fall, fewer than 5% of the fakes are as strong, and every check passes. `"suspect"`: significant evidence but a check fails, or a known instrument change is inside the window and a test is significant. `"not_detected"`: not enough evidence yet, always so under 10 years |
+| `headline` | One plain-language sentence for the top of the result: what was found and why. `"Rising trend detected: about 38 mm per decade. Both statistical tests agree, none of 1,000 random look-alike records were as strong, and it held up in every check."`; `"Rising trend found, but treat it with caution: ... yet it is not clearly there once the earliest years are left out."` (the failed check in plain words); `"No significant trend detected (yet), but it is borderline: a rise of about 49 mm per decade came close but did not pass the tests, and only 23 of 1,000 random look-alike records were as strong. More years of data could settle it."` (a test p-value below 0.15, or the lineup alone below 5%: our limit); or `"No significant trend detected (yet): ..."` with the reason (record too short, the two tests disagree, the tests find a slope that the lineup says chance could make, or the data are too noisy to confirm the change). Never states a cause. Built in `core/lineup.py` from the verdict and the checks; the page shows it as it is |
 | `explanation` | Why, in plain words: the engine's explanation, how many fakes were as strong, and the failed checks |
 | `n_sims`, `beat`, `share` | The number of fakes (1000), how many had a slope as strong as the real one (either direction), and `beat / n_sims`. `null` when there is too little data |
 | `observed_per_decade` | The real OLS slope, in `unit` per decade |

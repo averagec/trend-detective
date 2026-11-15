@@ -4,12 +4,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { caseSpec, trendSpec } from "../src/data/to-chart.js";
+import { caseSpec, trendSpec, yearlySpec } from "../src/data/to-chart.js";
 import { caseData } from "../src/data/case-data.js";
 import { CASE_VERDICT } from "../src/data/verdict-wording.js";
 
 const load = (n) => JSON.parse(readFileSync(new URL(`./fixtures/${n}.json`, import.meta.url), "utf8"));
 const lineup = load("lineup");
+const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} vs ${b}`);
 
 test("the fixture is a real /api/lineup response: trend shape plus a lineup block", () => {
   const lu = lineup.lineup;
@@ -32,11 +33,21 @@ test("the case chart is the TREND.EXE chart plus the lineup rows and the case ve
   assert.equal(spec.stats.at(-1)[0], "CASE VERDICT");
 });
 
-test("the notes are the server's words: sentence, then why, then warnings, then the page's own", () => {
+test("the notes are the server's words: headline, sentence, why, warnings, then the page's own", () => {
   const spec = caseSpec(lineup, { notes: ["Region: x."] });
-  assert.equal(spec.notes[0], lineup.significance.sentence);
-  assert.equal(spec.notes[1], lineup.lineup.explanation);
+  assert.equal(spec.notes[0], lineup.lineup.headline);
+  assert.equal(spec.notes[1], lineup.significance.sentence);
+  assert.equal(spec.notes[2], lineup.lineup.explanation);
   assert.equal(spec.notes.at(-1), "Region: x.");
+});
+
+test("the headline is one plain sentence in both views and says detected or not detected (yet)", () => {
+  for (const block of [lineup.lineup, lineup.yearly.lineup]) {
+    assert.ok(typeof block.headline === "string" && block.headline.length > 20);
+    assert.match(block.headline, /^(Rising|Falling) trend (detected|found)|^A possible trend|^No significant trend detected \(yet\)/);
+    assert.ok(!/\n/.test(block.headline));
+  }
+  assert.equal(yearlySpec(lineup).notes[0], lineup.yearly.lineup.headline);
 });
 
 test("title and source can be set by the case, and nothing else changes", () => {
@@ -108,4 +119,47 @@ test("the data files are valid UTF-8 (a degree sign written in cp1252 shows as a
     const bytes = readFileSync(new URL(`../public/data/${f}`, import.meta.url));
     assert.doesNotThrow(() => new TextDecoder("utf-8", { fatal: true }).decode(bytes), f);
   }
+});
+
+test("the fixture has a yearly block: yearly values, band, its own lineup and a comparison sentence", () => {
+  const y = lineup.yearly;
+  assert.equal(y.frequency, "yearly");
+  assert.equal(y.series.length, y.last_year - y.first_year + 1);
+  assert.equal(y.band.length, y.series.length);
+  assert.equal(y.lineup.n_sims, 1000);
+  assert.ok(typeof y.comparison === "string" && y.comparison.length > 10);
+});
+
+test("the yearly chart puts each year at its middle and draws the server's line and band", () => {
+  const y = lineup.yearly, spec = yearlySpec(lineup), s = y.statistics;
+  assert.equal(spec.step, 1);
+  assert.equal(spec.monthly, false);
+  assert.deepEqual(spec.series[0], [y.first_year + 0.5, y.series[0].anomaly]);
+  assert.equal(spec.fit.length, 2);
+  const i0 = y.series.findIndex((r) => r.anomaly !== null);
+  close(spec.fit[0][0], y.first_year + i0 + 0.5);
+  close(spec.fit[0][1], s.ols_intercept + s.ols_slope_per_month * i0);
+  assert.equal(spec.band.length, y.band.length);
+  y.band.forEach((b, i) => assert.deepEqual(spec.band[i], [b.year + 0.5, b.low, b.high]));
+});
+
+test("the yearly chart says it is yearly and ends with its own case verdict and the comparison", () => {
+  const spec = yearlySpec(lineup, { title: "CASE · X", notes: ["Region: x."] });
+  assert.match(spec.sub, /YEARLY AVERAGES/);
+  assert.equal(spec.title, "CASE · X");
+  assert.equal(spec.stats.at(-1)[0], "CASE VERDICT");
+  assert.equal(spec.stats.at(-1)[1], CASE_VERDICT[lineup.yearly.lineup.verdict]);
+  assert.ok(spec.notes.includes(lineup.yearly.comparison));
+  assert.equal(spec.notes.at(-1), "Region: x.");
+  assert.ok(spec.stats[0][1].includes("yearly values"));
+});
+
+test("a yearly block with no trend still draws the points", () => {
+  const empty = JSON.parse(JSON.stringify(lineup));
+  empty.yearly.statistics.ols_per_decade = null;
+  empty.yearly.lineup.n_sims = null;
+  const spec = yearlySpec(empty);
+  assert.deepEqual([spec.fit, spec.band], [[], []]);
+  assert.ok(spec.series.length > 0);
+  assert.ok(!spec.stats.some(([k]) => k === "NOISE LINEUP"));
 });
