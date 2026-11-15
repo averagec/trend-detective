@@ -1,10 +1,12 @@
 """Golden tests: the stats must recover known answers from synthetic data.
 These are the project's science sensors. Never weaken them to make a change pass."""
+
 import numpy as np
 from scipy import stats
 
 from trend_detective.core.trend import (
     area_weighted_mean,
+    benjamini_hochberg,
     deseasonalize,
     mann_kendall,
     ols_band,
@@ -81,9 +83,7 @@ def test_band_golden_values_on_a_hand_worked_series():
     y = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
     fit, low, high = ols_band(y, np.array([2.0, 0.0, 4.0, 6.0]))
     np.testing.assert_allclose(fit, 0.4, atol=1e-12)
-    np.testing.assert_allclose(
-        high - fit, [0.9001317, 1.5590739, 1.5590739, 2.7003952], rtol=1e-6
-    )
+    np.testing.assert_allclose(high - fit, [0.9001317, 1.5590739, 1.5590739, 2.7003952], rtol=1e-6)
     np.testing.assert_allclose(fit - low, high - fit, rtol=1e-12)  # symmetric about the line
 
 
@@ -144,3 +144,19 @@ def test_band_ignores_missing_months_but_keeps_their_positions():
 def test_flat_exact_line_has_a_zero_width_band():
     fit, low, high = ols_band(2.0 + 0.5 * np.arange(10.0), np.array([0.0, 5.0, 9.0]))
     np.testing.assert_allclose(high - low, 0.0, atol=1e-9)
+
+
+def test_benjamini_hochberg_matches_the_textbook_example():
+    p = np.array([0.01, 0.04, 0.03, 0.005, np.nan])
+    adj = benjamini_hochberg(p)
+    assert np.allclose(adj[:4], [0.02, 0.04, 0.04, 0.02])
+    assert np.isnan(adj[4])
+    assert np.allclose(adj[:4], stats.false_discovery_control(p[:4], method="bh"))
+
+
+def test_benjamini_hochberg_keeps_false_alarms_near_five_percent():
+    flagged = 0
+    for _ in range(200):
+        p = RNG.uniform(0, 1, 50)
+        flagged += (benjamini_hochberg(p) < 0.05).any()
+    assert flagged / 200 < 0.10

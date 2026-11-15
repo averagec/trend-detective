@@ -142,6 +142,26 @@ by one extreme month.
 - **Agreement:** if the OLS and Mann-Kendall tests disagree on sign or significance, the summary
   says so and asks the reader to check for outliers or non-linearity (science rule 3).
 
+### 4.5 Many places at once: Benjamini-Hochberg (`benjamini_hochberg`)
+The Indonesia map tests one trend per coastal city (62 tests). At p < 0.05 about 3 of them would
+look significant by chance alone. `core.trend.benjamini_hochberg` turns the OLS p-values into
+adjusted p-values that control the false discovery rate: among the cities shown as a clear trend,
+the expected share of false alarms is at most 5%. A city is shown as a clear trend only when its
+OLS test is significant **and** its adjusted p < 0.05.
+
+### 4.6 Sea level next to Indonesian cities (`process/ocean_cities.py`, `scripts/export_indonesia.py`)
+- Data: ECCO V4r4 dynamic sea surface height (`SSH`, inverse-barometer corrected), 0.5° monthly,
+  1992-2017, from the processed `ocean_se_asia/*.npz` grids. V4r4b differs by < 0.02 mm.
+- Cities: Natural Earth populated places in Indonesia (104 after removing a duplicate).
+  A city further than 20 km from the coast is inland and gets no sea-level series.
+- Series: cos(latitude)-weighted mean of up to 4 nearest ocean cells within 120 km, in mm.
+- Statistics: `core.summary.summarise` per city, then Benjamini-Hochberg across all tested
+  cities. Result (2026-11-15 build): 62 coastal cities tested, 50 with a clear rise, trends
+  +32 to +52 mm per decade. Cross-check: the whole Southeast Asia box rises +38.8 mm per decade
+  (95% CI +7.6 to +69.9) with the same code, inside the city range.
+- Limitation: ocean-model sea level next to the coast. It does not include land subsidence,
+  which dominates relative sea-level rise in Jakarta and Semarang.
+
 ## 5. Interpretation rules
 - Say "statistically significant at 95%", never "proves". Never say "caused by" unless a
   cited source does.
@@ -159,7 +179,7 @@ by one extreme month.
 3. **VPD is approximate** (§3.3).
 4. **Multiple tests.** Showing three regions and eight variables means about 24 tests. At
    5% some will look significant by chance. Say this on the page, or correct for it later
-   (e.g. Benjamini-Hochberg). Not done yet.
+   (e.g. Benjamini-Hochberg). Done for the Indonesia city map (§4.5); not yet for regions.
 5. **Seasonal structure.** Deseasonalising removes the mean seasonal cycle but not a change in
    the cycle itself (for example, a longer summer). A seasonal Mann-Kendall test would be
    needed for that. Not done yet.
@@ -169,7 +189,10 @@ by one extreme month.
 - `tests/core/test_trend.py` (golden tests, never loosen): known trends are recovered, the
   seasonal cycle is removed, white noise is rarely significant, autocorrelation widens the CI,
   Mann-Kendall agrees with Kendall's tau, Sen's slope resists an outlier, opposite trends are
-  both detected, and polar cells are down-weighted.
+  both detected, and polar cells are down-weighted. Benjamini-Hochberg matches scipy's
+  `false_discovery_control` on a textbook example and keeps false alarms near 5% on pure noise.
+- `tests/process/test_ocean_cities.py`: land and far cells are never picked, cells are nearest
+  first, the series is in millimetres and keeps missing months, inland cities get no series.
 - Band (`ols_band`, same file): a hand-worked 5-point series gives the exact half-widths
   (0.9001, 1.5591, 2.7004 at t = 2, 0 or 4, 6); the band opens at the rate of the slope CI; it is
   wider for autocorrelated anomalies; it covers the true line about 95% of the time over 400

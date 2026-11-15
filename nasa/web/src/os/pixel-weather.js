@@ -55,6 +55,27 @@ function storm(f) {
   }
   return { w: W, h: 14, px };
 }
+const SEA = [31, 79, 160], SEA2 = [59, 125, 221], FOAM = [214, 236, 248], WALL = [150, 140, 120], WALL2 = [96, 88, 74];
+const ROOF = [217, 74, 54], ROOF2 = [150, 48, 36], WIN = [247, 214, 120];
+function flood(f) {
+  const px = [], w = 11, h = 11, lvl = [0, 1, 1, 2, 2, 2, 1, 1][f % 8];
+  for (let y = 0; y < 4; y++) for (let x = 4 - y; x <= 6 + y; x++) {
+    const edge = x === 4 - y || x === 6 + y || y === 0;
+    px.push([x, y, edge ? INK : y % 2 ? ROOF : ROOF2]);
+  }
+  for (let y = 4; y < 10; y++) for (let x = 1; x < w - 1; x++) {
+    const edge = x === 1 || x === w - 2;
+    const win = y >= 5 && y <= 6 && (x === 3 || x === 4 || x === 6 || x === 7);
+    px.push([x, y, edge ? INK : win ? WIN : (x + y) % 2 ? WALL : WALL2]);
+  }
+  const top = 8 - lvl;
+  for (let y = top; y < h; y++) for (let x = -1; x <= w; x++) {
+    const c = y === top ? ((x + f) % 4 < 2 ? FOAM : SEA2) : (x + y) % 2 ? SEA : SEA2;
+    px.push([x, y, c]);
+  }
+  px.push([((f * 2) % (w + 2)) - 1, top - 1, FOAM]);
+  return { w, h, px };
+}
 function paintSprite(img, W, H, s, ax, ay) {
   const ox = ax - Math.floor(s.w / 2), oy = ay - s.h + 1, d = img.data;
   for (const [x, y, c] of s.px) {
@@ -117,7 +138,7 @@ function paintDrought(img, st, f) {
     d[p + 3] = 255;
   }
 }
-const pixelWeather = { rain, storm, paintSprite, drought, paintDrought, INK };
+const pixelWeather = { rain, storm, flood, paintSprite, drought, paintDrought, INK };
 export {
   pixelWeather
 };

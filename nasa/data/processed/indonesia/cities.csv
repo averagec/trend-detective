@@ -1,0 +1,105 @@
+name,province,lat,lon,population,capital,coast_km
+Jakarta,DKI Jakarta,-6.1725,106.8275,9125000,True,8.1
+Surabaya,Jawa Timur,-7.2473,112.7489,2845000,True,1.3
+Bandung,Jawa Barat,-6.9481,107.5681,2394000,True,64.1
+Bekasi,Jawa Barat,-6.2173,106.9723,2378211,False,17.0
+Medan,Sumatera Utara,3.5819,98.6481,2115000,True,24.7
+Palembang,Sumatera Selatan,-2.9781,104.7481,1749000,True,42.4
+Semarang,Jawa Tengah,-6.9647,110.4181,1396000,True,1.6
+Makassar,Sulawesi Selatan,-5.138,119.4301,1262000,True,2.0
+Cilacap,Jawa Tengah,-7.7188,109.0154,1174964,False,2.1
+Bogor,Jawa Barat,-6.5681,106.7481,918000,False,52.9
+Bandar Lampung,Lampung,-5.4496,105.3,881801,True,12.4
+Padang,Sumatera Barat,-0.9581,100.3581,855000,True,1.1
+Malang,Jawa Timur,-7.978,112.6081,805000,False,46.4
+Pekanbaru,Riau,0.5669,101.4231,799000,True,102.0
+Denpasar,Bali,-8.65,115.22,732344,True,8.4
+Yogyakarta,DI Yogyakarta,-7.78,110.375,636660,True,26.6
+Palu,Sulawesi Tengah,-0.907,119.833,612445,True,5.3
+Pontianak,Kalimantan Barat,-0.03,109.32,607311,True,9.4
+Banjarmasin,Kalimantan Selatan,-3.33,114.5801,603576,True,7.9
+Samarinda,Kalimantan Timur,-0.5,117.15,592228,True,39.4
+Binjai,Sumatera Utara,3.6204,98.5001,564979,False,33.0
+Surakarta,Jawa Tengah,-7.565,110.825,555308,False,68.8
+Banda Aceh,Aceh,5.55,95.32,513698,True,5.6
+Bukittinggi,Sumatera Barat,-0.3031,100.3615,506964,False,40.8
+Pasuruan,Jawa Timur,-7.6296,112.9,500000,False,2.4
+Mataram,Nusa Tenggara Barat,-8.5795,116.135,499409,True,6.4
+Jambi,Jambi,-1.59,103.61,457090,True,76.8
+Manado,Sulawesi Utara,1.48,124.85,451893,True,5.0
+Balikpapan,Kalimantan Timur,-1.25,116.83,445905,False,4.0
+Bengkulu,Bengkulu,-3.8,102.27,426673,True,0.2
+Gorontalo,Gorontalo,0.55,123.07,365497,False,7.6
+Ambon,Maluku,-3.7167,128.2,355596,True,1.8
+Pematangsiantar,Sumatera Utara,2.9614,99.0615,341200,False,61.4
+Jember,Jawa Timur,-8.1727,113.6873,298585,False,31.2
+Kupang,Nusa Tenggara Timur,-10.1787,123.583,282396,True,5.2
+Sukabumi,Jawa Barat,-6.9096,106.9,276414,False,44.8
+Majene,Sulawesi Barat,-3.5336,118.966,272377,False,1.2
+Pekalongan,Jawa Tengah,-6.8796,109.67,272000,False,2.0
+Tasikmalaya,Jawa Barat,-7.3254,108.2147,271143,False,49.5
+Tebingtinggi,Sumatera Utara,3.3304,99.13,268043,False,23.7
+Padangsidempuan,Sumatera Utara,1.3887,99.2734,266882,False,47.5
+Cirebon,Jawa Barat,-6.7333,108.5666,254298,False,3.6
+Singkawang,Kalimantan Barat,0.912,108.9655,248012,False,4.9
+Tegal,Jawa Tengah,-6.8696,109.12,237084,False,3.5
+Kediri,Jawa Timur,-7.7896,112.0,235143,False,58.6
+Singaraja,Bali,-8.1152,115.0944,234468,False,0.8
+Tanjungpinang,Kepulauan Riau,0.9168,104.4714,226666,False,0.2
+Sibolga,Sumatera Utara,1.75,98.8,217312,False,12.4
+Martapura,Kalimantan Selatan,-3.4135,114.8365,198239,False,33.6
+Tarakan,Kalimantan Timur,3.3,117.633,193069,False,2.9
+Ternate,Maluku Utara,0.793,127.363,187521,False,22.5
+Madiun,Jawa Timur,-7.6346,111.515,186099,False,72.2
+Pinrang,Sulawesi Selatan,-3.7857,119.6522,182731,False,15.2
+Probolinggo,Jawa Timur,-7.7496,113.15,181656,False,5.9
+Salatiga,Jawa Tengah,-7.3095,110.4901,176000,False,40.6
+Banyuwangi,Jawa Timur,-8.195,114.3696,172424,False,3.6
+Jayapura,Papua,-2.533,140.7,169341,True,2.9
+Kendari,Sulawesi Tenggara,-3.9553,122.5973,165377,True,1.4
+Serang,Banten,-6.11,106.1496,164767,False,16.8
+Palangkaraya,Kalimantan Tengah,-2.2096,113.91,148289,True,114.8
+Lhokseumawe,Aceh,5.1914,97.1415,140322,False,3.0
+Blitar,Jawa Timur,-8.0696,112.15,132416,False,28.2
+Pangkalpinang,Bangka Belitung,-2.08,106.15,125933,False,4.7
+Sorong,Papua Barat,-0.8554,131.285,125535,False,1.3
+Indramayu,Jawa Barat,-6.3356,108.319,123263,False,4.4
+Pati,Jawa Tengah,-6.7415,111.0347,122785,False,15.0
+Langsa,Aceh,4.6736,97.9664,117256,False,3.3
+Mojokerto,Jawa Timur,-7.4696,112.43,112557,False,36.9
+Magelang,Jawa Tengah,-7.4696,110.18,111461,False,49.3
+Raba,Nusa Tenggara Barat,-8.45,118.7666,106101,False,7.1
+Maumere,Nusa Tenggara Timur,-8.6189,122.2123,104285,False,2.0
+Biak,Papua,-1.1615,136.0485,103610,False,3.1
+Perabumulih,Sumatera Selatan,-3.4432,104.2315,103470,False,105.8
+Bontang,Kalimantan Timur,0.1333,117.5,101691,False,0.6
+Sungaipenuh,Jambi,-2.0631,101.3964,95913,False,59.2
+Sampit,Kalimantan Tengah,-2.5329,112.95,92710,False,45.3
+Parepare,Sulawesi Selatan,-4.0167,119.6333,87776,False,1.9
+Sumenep,Jawa Timur,-7.0049,113.8496,84656,True,6.7
+Watampone,Sulawesi Selatan,-4.5328,120.3334,81629,False,7.5
+Ende,Nusa Tenggara Timur,-8.8623,121.6489,77205,False,2.0
+Tuban,Jawa Timur,-6.8995,112.05,76242,True,3.6
+Manokwari,Papua Barat,-0.8711,134.0693,74504,False,3.3
+Lahat,Sumatera Selatan,-3.8,103.5333,65906,False,98.9
+Tanjung Pandan,Bangka Belitung,-2.75,107.65,62374,False,2.1
+Tidore,Maluku Utara,0.6964,127.436,60611,False,11.7
+Ruteng,Nusa Tenggara Timur,-8.6118,120.4698,53976,False,21.6
+Sawahlunto,Sumatera Barat,-0.6663,100.7833,50354,False,55.8
+Waingapu,Nusa Tenggara Timur,-9.6582,120.253,48828,False,4.0
+Luwuk,Sulawesi Tengah,-0.9396,122.79,47778,False,4.0
+Amahai,Maluku,-3.3281,128.9405,47653,False,2.6
+Poso,Sulawesi Tengah,-1.3896,120.76,47110,False,2.6
+Padangpanjang,Sumatera Barat,-0.4496,100.4167,44096,False,35.4
+Nabire,Papua,-3.3515,135.5134,43898,False,2.7
+Kotabumi,Lampung,-4.8333,104.9,42366,False,81.7
+Kualakapuas,Kalimantan Tengah,-3.0996,114.35,35632,False,15.7
+Praya,Nusa Tenggara Barat,-8.7223,116.2923,35183,False,20.9
+Merauke,Papua,-8.4932,140.4018,34412,False,4.7
+Kuta,Bali,-8.7151,115.1841,30012,False,4.9
+Timika,Papua,-4.5496,136.89,26021,False,37.3
+Baubau,Sulawesi Tenggara,-5.4699,122.6163,24412,False,0.8
+Makale,Sulawesi Selatan,-3.0968,119.8531,9960,False,44.4
+Palopo,Sulawesi Selatan,-3.0999,120.2363,2444,False,3.8
+Tarutung,Sumatera Utara,2.0171,98.9667,1305,False,43.5
+Telukbutun,Kepulauan Riau,4.217,108.2,140,False,1.8

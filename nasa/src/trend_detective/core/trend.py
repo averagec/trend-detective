@@ -1,7 +1,8 @@
 """Trend statistics. Pure functions only: no I/O, no network, no plotting.
 
 Owns: deseasonalising, OLS trend + confidence interval (autocorrelation-adjusted),
-Mann-Kendall test, Sen's slope, and area-weighted regional means.
+Mann-Kendall test, Sen's slope, area-weighted regional means, and the Benjamini-Hochberg
+correction for testing many places at once.
 See docs/science-rules.md for the rules these functions implement.
 """
 
@@ -161,3 +162,25 @@ def area_weighted_mean(field: np.ndarray, lats: np.ndarray) -> float:
     w = np.cos(np.deg2rad(np.asarray(lats, dtype=float)))[:, None] * np.ones_like(f)
     m = ~np.isnan(f)
     return float(np.sum(f[m] * w[m]) / np.sum(w[m]))
+
+
+def benjamini_hochberg(p_values) -> np.ndarray:
+    """Benjamini-Hochberg adjusted p-values (false discovery rate) for many tests at once.
+
+    Use when the same test runs on many places, e.g. one trend per city: a place is significant
+    when its adjusted p < 0.05, which keeps the expected share of false alarms among the flagged
+    places at 5%. NaN inputs stay NaN and do not count as tests.
+    """
+    p = np.asarray(p_values, dtype=float)
+    out = np.full(p.shape, np.nan)
+    ok = np.isfinite(p)
+    m = int(ok.sum())
+    if m == 0:
+        return out
+    order = np.argsort(p[ok])
+    ranked = p[ok][order] * m / np.arange(1, m + 1)
+    adjusted = np.minimum.accumulate(ranked[::-1])[::-1]
+    vals = np.empty(m)
+    vals[order] = np.minimum(adjusted, 1.0)
+    out[ok] = vals
+    return out

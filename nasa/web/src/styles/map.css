@@ -497,3 +497,121 @@
   width: 52%;
   white-space: nowrap;
 }
+.rm-prv {
+  fill: none;
+  stroke: #8fa3d6;
+  stroke-opacity: .45;
+  stroke-width: .8;
+}
+.rm-city {
+  cursor: pointer;
+  transition: opacity .25s;
+}
+.rm-city:hover {
+  filter: brightness(1.4);
+}
+.rm-city.on {
+  stroke: #ece6d6;
+  stroke-width: 2.5;
+}
+.rm-city.fade {
+  opacity: .2;
+}
+#rm-cities.off {
+  display: none;
+}
+.rm-clab {
+  fill: #ece6d6;
+  stroke: #06090f;
+  paint-order: stroke;
+  font-family: VT323, monospace;
+  pointer-events: none;
+}
+.rm-sw-in {
+  background: #0b1534;
+  border-color: #8b93ad;
+  border-radius: 50%;
+}
+.rm-fixed {
+  flex: 1;
+  min-width: 120px;
+  font-size: 16px;
+  color: #5b6b8f;
+  letter-spacing: 1px;
+}
+.rm-search {
+  position: relative;
+  flex: none;
+}
+.rm-search input {
+  width: 170px;
+  height: 32px;
+  padding: 0 8px;
+  font: 19px VT323, monospace;
+  color: var(--ink);
+  background: #fff;
+  border: 3px solid var(--ink);
+  outline: none;
+}
+.rm-search input:focus {
+  background: #fffbe9;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.rm-res {
+  position: absolute;
+  z-index: 30;
+  right: 0;
+  top: 36px;
+  width: 260px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.rm-res button {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 8px;
+  font: 19px VT323, monospace;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid #d2cbbb;
+  text-align: left;
+  cursor: pointer;
+}
+.rm-res button small {
+  font-size: 15px;
+  color: #5b6b8f;
+  white-space: nowrap;
+}
+.rm-res button.hi,
+.rm-res button:hover {
+  background: var(--blue);
+  color: var(--cream);
+}
+.rm-res button.hi small,
+.rm-res button:hover small {
+  color: #b9c9ee;
+}
+.rm-res .none {
+  padding: 6px 8px;
+  font-size: 18px;
+  color: #5b6b8f;
+}
+.rm-bar {
+  min-width: 0;
+  gap: 10px;
+}
+.rm {
+  grid-template-columns: minmax(0, 1fr);
+}
+.rm-range {
+  min-width: 90px;
+}
+.rm-search input {
+  width: 150px;
+}

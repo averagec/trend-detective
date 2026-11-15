@@ -73,6 +73,7 @@ network runs all demo cases, and `web/` contains no statistics code.
 ## Progress log
 <!-- Append one line per session: date — what changed — what's next. -->
 - 2026-11-15 — cloned the web repo, built it, read both sides, drafted this plan. Nothing merged. Next: decisions 1-4.
+- 2026-11-15 — ui-update: map-first MAP.EXE, fullscreen/scaling, Indonesia focus. New real layer SEA LVL: per-city ECCO sea level computed by `core` (`summarise` + new `benjamini_hochberg`), exported to `web/public/data/indonesia_sea_level.json` by `scripts/export_indonesia.py`; the page computes nothing for it. Province outlines and cities from Natural Earth (`scripts/build_indonesia_geo.py`). Other layers still synthetic and labelled SAMPLE DATA. Next: step 3 (API adapter) for t2m/precip; per-province MERRA-2 needs the raw grids (Jacob).
 
 ## Decisions & surprises
 - The web `tws` / `sst` / `ndvi` / `aod` layers have no data in this repo (only t2m and precip for 3

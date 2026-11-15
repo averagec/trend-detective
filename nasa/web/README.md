@@ -87,3 +87,16 @@ npm run build:map
 - 3D room: ["Detective's Office - True Detective Fan Art"](https://sketchfab.com/3d-models/detectives-office-true-detective-fan-art-a5d7f399d7694053affb63f069740c4a) by nickheitzman, licensed [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/). Modified: retextured screen, mousepad, corkboard and poster; walls and ceiling added.
 - Country outlines: Natural Earth, via world-atlas.
 - Data: NASA POWER (MERRA-2), GRACE / GRACE-FO.
+
+## Indonesia sea level (real data)
+
+MAP.EXE opens on Indonesia with the **SEA LVL** layer: sea level next to 62 coastal cities, from
+ECCO V4r4 (1992-2017). Every number on it is computed by the Python core, not the browser:
+
+```bash
+python scripts/build_indonesia_geo.py --ne-dir /path/to/natural-earth   # only if cities change
+python scripts/export_indonesia.py                                     # writes web/public/data/indonesia_sea_level.json
+```
+
+Search a city or province from the toolbar. Inland cities (more than 20 km from the sea) show
+no sea level. TEMP / RAIN / WATER / SEA are still synthetic and labelled SAMPLE DATA.
