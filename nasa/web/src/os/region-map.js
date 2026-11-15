@@ -168,7 +168,8 @@ function buildSvg() {
       };
       d.onmousemove = (e) => cityTip(e, i);
       d.onmouseleave = () => tip(null);
-      const t = el("text", { x: x + 0.5, y: y - 0.35, class: "rm-clab", "data-i": i }, cl);
+      const t = el("text", { x: x + 0.5, y: y - 0.35, class: "rm-clab", "data-i": i, "font-size": 0.85 }, cl);
+      t.style.display = "none"; // hidden until cityLabels() sizes and places it
       t.textContent = c.name;
     });
   }
