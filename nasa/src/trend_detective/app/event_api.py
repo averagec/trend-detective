@@ -18,7 +18,7 @@ from flask import abort, render_template, request
 from trend_detective.catalog.variables import VARIABLES
 from trend_detective.core.comovement import comovement
 from trend_detective.core.events import assess
-from trend_detective.core.trend import deseasonalize
+from trend_detective.core.trend import benjamini_hochberg, deseasonalize
 from trend_detective.process.cities import RAINFALL_SOURCES, load_cities
 from trend_detective.process.event_series import (
     INDICATORS,
@@ -190,6 +190,12 @@ def register_event_routes(app, cubes, cities_path) -> None:
                     "note": NOT_A_CAUSE,
                 }
             )
+        # Many factors are tested against the same rainfall: adjust their p-values together.
+        adjusted = benjamini_hochberg(
+            [row["p_value"] if row["p_value"] is not None else np.nan for row in co_movement]
+        )
+        for row, a in zip(co_movement, adjusted, strict=True):
+            row["p_adjusted"] = _value(float(a))
         co_movement.sort(key=lambda row: -abs(row["r"]) if row["r"] is not None else 0.0)
 
         peak = result.peak

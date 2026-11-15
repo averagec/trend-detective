@@ -18,12 +18,12 @@ Rules (see docs/decisions/0005-spatial-selection.md):
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
 from trend_detective.core.summary import Summary, summarise
-from trend_detective.core.trend import area_weighted_mean
+from trend_detective.core.trend import area_weighted_mean, benjamini_hochberg
 
 RADIUS_MIN_KM = 75.0
 RADIUS_MAX_KM = 250.0
@@ -153,18 +153,23 @@ class CellTrend:
     lat: float
     lon: float
     summary: Summary
+    p_adj: float = float("nan")  # OLS p-value after Benjamini-Hochberg across the circle's cells
 
     @property
     def slope(self) -> float:
         return self.summary.ols_per_decade
 
     @property
+    def significant(self) -> bool:
+        return bool(self.p_adj < 0.05)  # NaN compares False
+
+    @property
     def rising(self) -> bool:
-        return bool(self.summary.ols_significant and self.slope > 0)
+        return bool(self.significant and self.slope > 0)
 
     @property
     def falling(self) -> bool:
-        return bool(self.summary.ols_significant and self.slope < 0)
+        return bool(self.significant and self.slope < 0)
 
 
 @dataclass(frozen=True)
@@ -182,9 +187,10 @@ class CircleResult:
     cells_in_circle: int
     cells_used: int
     cells: tuple[CellTrend, ...]
-    rising: int  # cells with a significant rising trend
-    falling: int  # cells with a significant falling trend
+    rising: int  # cells with a significant rising trend (after Benjamini-Hochberg)
+    falling: int  # cells with a significant falling trend (after Benjamini-Hochberg)
     not_significant: int
+    expected_per_sign: float  # cells that would look significant by chance alone, per sign
     slope_min: float  # per decade, over cells with a finite slope
     slope_max: float
     periods: list[str]
@@ -203,8 +209,12 @@ def analyse_city(
     unit: str,
     label: str,
     city_name: str,
+    land_share: float | None = None,
 ) -> CityResult:
-    """One city: the series of the cell that contains it, with a scale warning."""
+    """One city: the series of the cell that contains it, with a scale warning.
+
+    land_share: share of months with a MERRA-2 land surface value in the cell (None if unknown).
+    """
     cell = city_cell(grid, lat, lon)
     full = to_timeline(periods, np.asarray(values[:, cell.i, cell.j], dtype=float))
     tl = timeline_periods(periods[0], full.size)
@@ -214,6 +224,11 @@ def analyse_city(
         f"centred at {cell.lat:.2f}, {cell.lon:.2f}. The cell includes {city_name} and its "
         "surroundings, so neighbouring cells may trend differently.",
     )
+    if land_share is not None:
+        warn += (
+            f"The cell has land values in {land_share:.0%} of months (MERRA-2 land surface "
+            "temperature), so the share of land or sea is only partly known.",
+        )
     return CityResult(cell, tl, full, summary, warn + summary.warnings)
 
 
@@ -247,8 +262,13 @@ def analyse_circle(
         CellTrend(c.lat, c.lon, summarise(full[:, k], unit, f"cell {c.lat:.2f}, {c.lon:.2f}"))
         for k, c in enumerate(used)
     )
+    # Many cells are tested at once: adjust each cell's p-value so that the count of significant
+    # cells is not inflated by chance (docs/stats_trend.md, Benjamini-Hochberg).
+    adjusted = benjamini_hochberg([t.summary.ols_p for t in per_cell])
+    per_cell = tuple(replace(t, p_adj=float(a)) for t, a in zip(per_cell, adjusted, strict=True))
     rising = sum(1 for t in per_cell if t.rising)
     falling = sum(1 for t in per_cell if t.falling)
+    expected_per_sign = 0.025 * len(per_cell)  # two-sided 5% test, half the chance on each side
     slopes = np.array([t.slope for t in per_cell], dtype=float)
     finite = slopes[np.isfinite(slopes)]
     avg, n_valid = area_average(full, np.array([c.lat for c in used]))
@@ -272,6 +292,7 @@ def analyse_circle(
         rising=rising,
         falling=falling,
         not_significant=len(per_cell) - rising - falling,
+        expected_per_sign=expected_per_sign,
         slope_min=float(finite.min()) if finite.size else float("nan"),
         slope_max=float(finite.max()) if finite.size else float("nan"),
         periods=tl,

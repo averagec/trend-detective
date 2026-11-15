@@ -111,6 +111,22 @@ def jsonable(value):
     return value
 
 
+def iso_periods(periods: list[str]) -> list[str]:
+    """YYYYMM (the cube) to YYYY-MM (the API, the same as /api/trend and /api/map)."""
+    return [f"{p[:4]}-{p[4:]}" for p in periods]
+
+
+def land_share_at(cubes: "CubeStore", lat: float, lon: float) -> float | None:
+    """Share of months with a MERRA-2 land surface value in the cell that holds (lat, lon)."""
+    if not (cubes.folder / CUBE_FILES["merra2"]).exists():
+        return None
+    cube = cubes.get("merra2")
+    if "tsurf" not in cube.values:
+        return None
+    cell = city_cell(Grid(cube.lat, cube.lon), lat, lon)
+    return float(np.isfinite(cube.values["tsurf"][:, cell.i, cell.j]).mean())
+
+
 def summary_json(s) -> dict:
     return {key: jsonable(getattr(s, key)) for key in SUMMARY_KEYS}
 
@@ -346,7 +362,8 @@ def create_app(
             label = VARIABLES[variable].label if variable in VARIABLES else variable
             if mode == "city":
                 res = analyse_city(
-                    values, periods, grid, lat, lon, unit, f"{label}, {place}", place
+                    values, periods, grid, lat, lon, unit, f"{label}, {place}", place,
+                    land_share=land_share_at(cubes, lat, lon),
                 )
                 out.append(
                     {
@@ -355,7 +372,7 @@ def create_app(
                         "label": label,
                         "unit": unit,
                         "cell": cell_json(dataset, res.cell),
-                        "periods": res.periods,
+                        "periods": iso_periods(res.periods),
                         "series": jsonable(res.series),
                         "summary": summary_json(res.summary),
                         "warnings": list(res.warnings),
@@ -378,6 +395,7 @@ def create_app(
                             "rising": res.rising,
                             "falling": res.falling,
                             "not_significant": res.not_significant,
+                            "expected_per_sign": jsonable(res.expected_per_sign),
                             "slope_min": jsonable(res.slope_min),
                             "slope_max": jsonable(res.slope_max),
                         },
@@ -390,12 +408,13 @@ def create_app(
                                     grid.dlon * KM_PER_DEG * math.cos(math.radians(c.lat)), 1
                                 ),
                                 "slope_per_decade": jsonable(c.slope),
-                                "significant": c.summary.ols_significant,
+                                "significant": c.significant,
+                                "p_adjusted": jsonable(c.p_adj),
                             }
                             for c in res.cells
                         ],
                         "average": {
-                            "periods": res.periods,
+                            "periods": iso_periods(res.periods),
                             "series": jsonable(res.average_series),
                             "valid_per_month": jsonable(res.valid_per_month),
                             "summary": summary_json(res.average),

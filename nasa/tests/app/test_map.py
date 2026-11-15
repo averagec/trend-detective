@@ -117,8 +117,8 @@ def test_year_window_limits_the_months(client):
               "from": 1995, "to": 2000},
     ).get_json()
     result = body["results"][0]
-    assert result["periods"][0] == "199501"
-    assert result["periods"][-1] == "200012"
+    assert result["periods"][0] == "1995-01"
+    assert result["periods"][-1] == "2000-12"
     assert result["summary"]["n_months"] == 72
 
 
