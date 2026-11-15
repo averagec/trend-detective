@@ -483,7 +483,7 @@ function openTest() {
   };
 }
 const ABOUT_HTML = `<div class="about">
-<h3>TREND DETECTIVE: CASE FILES</h3>
+<h3>TRENDSEN: CASE FILES</h3>
 <div class="dim">NASA SPACE APPS CHALLENGE 2026 · BE AN EARTH SYSTEM TREND DETECTIVE</div>
 <h4>MISSION</h4>
 <p>Help anyone in Indonesia, a student or a city planner, answer one honest question with NASA data: <b>is this really changing, where, by how much, and can we prove it?</b> No guessing from one scary graph. Every claim has to survive the tests.</p>
