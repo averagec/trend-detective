@@ -1,0 +1,5 @@
+# Runtime dependencies for the Vercel Flask service only (the full list is in pyproject.toml).
+flask
+numpy
+scipy
+h5py
