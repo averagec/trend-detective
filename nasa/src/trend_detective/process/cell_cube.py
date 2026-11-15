@@ -52,12 +52,14 @@ from trend_detective.process.witness_clean import month_of_file, wrap_lon  # noq
 
 OUT = ROOT / "data" / "processed" / "cells"
 RAW_GPCP = ROOT / "data" / "raw" / "witness" / "gpcp"
+RAW_GLDAS = ROOT / "data" / "raw" / "witness" / "gldas"
 BOX = (94.0, -12.0, 142.0, 7.0)  # west, south, east, north, in degrees; cell centres inside
 CELL_VARIABLES = ["t2m", "qv2m", "ps", "precip", "evap", "tsurf", "vpd"]
 COLLECTIONS = ["M2TMNXSLV", "M2TMNXFLX", "M2TMNXLND"]  # monthly collections only (T2MMAX later)
 GPCP_SPEC = next(s for s in WITNESS_SPECS if s.var == "gpcp_precip")
+GLDAS_SPEC = next(s for s in WITNESS_SPECS if s.var == "gldas_sm_0_10cm")
 VPD_UNIT = "kPa"
-DATASETS = ["merra2", "gpcp"]
+DATASETS = ["merra2", "gpcp", "gldas"]
 
 
 def box_slices(lats: np.ndarray, lons: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -157,6 +159,41 @@ def build_gpcp() -> Cube:
     return _finish({"gpcp_precip": steps}, ["gpcp_precip"], lat, lon, manifest)
 
 
+def build_gldas(folder: Path | None = None) -> Cube:
+    """0-10 cm soil moisture (GLDAS Noah 2.1, 0.25 degrees) for the Indonesia box, one array per
+    month. Cleaned with witness_clean's rules (fill and range masking). No statistics here."""
+    folder = RAW_GLDAS if folder is None else folder
+    qc = {"cells": 0, "fill_masked": 0, "out_of_range_masked": 0}
+    errors: list[str] = []
+    steps: list[tuple[str, np.ndarray]] = []
+    lat = lon = None
+    files = sorted(folder.glob("*/*.nc4"))
+    for path in files:
+        month = month_of_file(path, GLDAS_SPEC)
+        if month is None:
+            continue
+        try:
+            with h5py.File(path, "r") as f:
+                lats = np.asarray(f["lat"][:], dtype=float)
+                lons = wrap_lon(np.asarray(f["lon"][:], dtype=float))
+                raw = np.asarray(f[GLDAS_SPEC.source][0], dtype=float)
+        except (KeyError, OSError, ValueError) as err:
+            errors.append(f"{path.name}: {err}")
+            continue
+        li, oi = box_slices(lats, lons)
+        lat, lon = lats[li], lons[oi]
+        sub = raw[np.ix_(li, oi)]
+        steps.append((month.replace("-", ""), witness_mask(sub, GLDAS_SPEC, qc)))
+    manifest = {
+        "dataset": "gldas",
+        "files_read": {"gldas": len(files)},
+        "errors": errors,
+        "units": {"gldas_sm_0_10cm": GLDAS_SPEC.unit},
+        "qc": {"gldas_sm_0_10cm": qc},
+    }
+    return _finish({"gldas_sm_0_10cm": steps}, ["gldas_sm_0_10cm"], lat, lon, manifest)
+
+
 def _finish(store, variables, lat, lon, manifest) -> Cube:
     arrays: dict[str, np.ndarray] = {}
     periods: dict[str, list[str]] = {}
@@ -225,7 +262,12 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--out", type=Path, default=OUT)
     args = p.parse_args(argv)
     for name in args.datasets:
-        cube = build_merra2(args.variables) if name == "merra2" else build_gpcp()
+        builders = {
+            "merra2": lambda: build_merra2(args.variables),
+            "gpcp": build_gpcp,
+            "gldas": build_gldas,
+        }
+        cube = builders[name]()
         path = write(cube, args.out)
         grid = f"{cube.lat.size} x {cube.lon.size}"
         print(f"{name}: wrote {len(cube.values)} variable(s) on {grid} to {path}")

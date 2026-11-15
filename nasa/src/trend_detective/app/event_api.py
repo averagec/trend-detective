@@ -15,6 +15,7 @@ import math
 import numpy as np
 from flask import abort, render_template, request
 
+from trend_detective.catalog.scope import in_scope
 from trend_detective.catalog.variables import VARIABLES
 from trend_detective.core.comovement import comovement
 from trend_detective.core.events import assess
@@ -30,7 +31,7 @@ from trend_detective.process.event_series import (
 from trend_detective.process.selection import Grid, city_cell
 
 RAINFALL_VARIABLES = {"merra2": "precip", "gpcp": "gpcp_precip"}
-DATASET_NAMES = {"merra2": "MERRA-2", "gpcp": "GPCP"}
+DATASET_NAMES = {"merra2": "MERRA-2", "gpcp": "GPCP", "gldas": "GLDAS"}
 NOT_A_CAUSE = "Moved together with rainfall in the record. This is not a cause."
 
 
@@ -73,6 +74,8 @@ def _parse_period(body: dict) -> tuple[str, int, int | None]:
             abort(400, description="period month must be a whole number from 1 to 12")
         if not 1 <= month <= 12:
             abort(400, description="period month must be from 1 to 12")
+    if not in_scope(year):
+        abort(400, description="the project covers 1980 to 2018 only")
     return kind, year, month
 
 
@@ -141,7 +144,7 @@ def register_event_routes(app, cubes, cities_path) -> None:
             cube = cubes.get(dataset)
             fgrid = Grid(cube.lat, cube.lon)
             fcell = city_cell(fgrid, city.lat, city.lon)
-            rainfall_var = RAINFALL_VARIABLES[dataset]
+            rainfall_var = RAINFALL_VARIABLES.get(dataset)  # GLDAS has no rainfall factor here
             for var in cube.values:
                 if var == rainfall_var:
                     continue

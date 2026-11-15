@@ -96,5 +96,12 @@ VARIABLES: dict[str, Variable] = {
             "NASA's sea-surface height index for the Pacific Decadal Oscillation, averaged over "
             "each month. Co-movement only.",
         ),
+        Variable(
+            "gldas_sm_0_10cm",
+            "Soil moisture, top 10 cm (GLDAS)",
+            "Is the ground getting drier?",
+            "Water held in the top 10 cm of soil, in kg per square metre (GLDAS Noah model, "
+            "0.25 degrees).",
+        ),
     ]
 }
