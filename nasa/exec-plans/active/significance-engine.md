@@ -140,9 +140,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - All Phase 2 simulation ranges hold. Golden tests untouched; `tests/core/test_trend.py` unchanged.
 
 ## Out of scope (listed so they are not forgotten)
-- **Sen's slope with missing months** (`mann_kendall` drops NaNs before the slope). [GATE] needs the
-  user's OK to touch `mann_kendall`. The verdict does not depend on it (p-values and the sign are
-  unaffected), but the displayed Sen value is wrong for series with gaps.
+- ~~Sen's slope with missing months~~ fixed on main by PR #4 (2026-11-15); the xfail is now a normal test.
 - `years_needed` simulates the OLS test only. Under the two-test rule more years are needed; the
   adjusted Mann-Kendall is too slow inside that simulation. Label it "OLS only" for now.
 - `core/events.py` tests its own trend with OLS at p < 0.05; it does not follow the ladder yet.
@@ -158,6 +156,7 @@ uncorrected sentence. The page shows `significance.sentence`.
 - 2026-11-15 — Phase 3 done: city, circle, map, /api/trend, /api/scan (now `?variable=`, layer family) and /api/analyse-series return the `significance` block (shared `process/significance_json.py`); circle cells and map `direction` follow the ladder; legacy keys kept, `mk_p_ar1`, `mk_p_ar1_adj` added. Trend/CI/p numbers unchanged (snapshot). Proven behaviour change: an AR(1) region with unadjusted MK p 0.0006 but adjusted 0.087 was a `rise`, is now `unclear`. Fixtures regenerate with `scripts/make_web_fixtures.py`. Next: Phase 4 (website).
 - 2026-11-15 — Phase 4 done: TREND.EXE and the classic page read the `significance` block (verdict, both q-values, family label, server sentence); TREND.EXE no longer calls /api/scan; web tests 12. Next: Phase 5 (docs, science rules, real-data check).
 - 2026-11-15 — Phase 5 done: docs/api.md, statistics.md 4.8, science-rules 3 and 7, ADR 0007/0008/0009 cross-references, ARCHITECTURE (stale duplicate app row removed). Real data: East China temperature 1990-2019 `unclear` (OLS q 0.061, MK q 0.007); full record 18 rises unchanged. Everything is local; nothing pushed.
+- 2026-11-15 — Merged origin/main (762ba82: Sen fix PR #4, project window 1980-2018, GDIS counts, MAP layers) into the branch (5b7027d). User chose option A: the project window now limits /api/trend, /api/scan and /api/meta too. xfail removed (Sen fixed on main). Regional export regenerated (it was stale: made before main's own window change). Found: main's window change pads series that begin later (GRACE 2002, GLDAS 2000, ENSO 1993) from 1980 and reported the padding as '65% of months are missing'; fixed with leading_pad in regional_map (their test that the timeline starts in 1980 still holds). Not pushed since e11fe41.
 
 ## Decisions & surprises
 - A silent merge hazard: `summarise(values, unit, label, leading_pad)` was called positionally, and after

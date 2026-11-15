@@ -293,11 +293,13 @@ decides what counts as significant. It never computes a trend itself: every slop
 7. **Autocorrelation is corrected at lag 1 only** (OLS and `mann_kendall_ar1`). Longer memory, for
    example ENSO, is not, and `r1` is noisy on short records (at 120 months, 6 to 7% of trend-free
    series are still called significant, not 5%).
-8. **Known defect: Sen's slope with missing months.** `mann_kendall` drops the missing months
-   before computing Sen's slope, so with gaps the slope is per valid value, not per month, and is
-   too large by roughly the share of months missing (+25% in a test with 14% missing; OLS is not
-   affected). Not fixed: it changes behaviour that the golden tests describe, so it needs a
-   decision. `test_sen_slope_survives_gaps` in `tests/app/test_web.py` is marked `xfail` until then.
+8. **Fixed 2026-11-15 (PR #4): Sen's slope with missing months.** `mann_kendall` used to drop the missing
+   months before computing Sen's slope, so with gaps it was per valid value, not per month (+25% in a test
+   with 14% missing). It now keeps each month's position; `test_sen_slope_survives_gaps` guards it.
+9. **Project window 1980 to 2018** (`catalog/scope.py`). Every analysis route is limited to it. The
+   choice matters: for the same data, 7 of 8 variables change verdict pattern between 1980-2018 and
+   1980-2026 (East China air temperature: +0.215 against +0.302 K per decade). The end year was set by
+   the disaster records (GDIS ends in 2018), not by the climate results.
 
 ## 7. Tests that protect this
 - `tests/core/test_trend.py` (golden tests, never loosen): known trends are recovered, the
@@ -347,7 +349,6 @@ decides what counts as significant. It never computes a trend itself: every slop
 - Whether `years_needed` should simulate both tests, and whether `core/events.py` should follow the
   verdict ladder (§4.8).
 - Pre-whitened Mann-Kendall (`docs/stats_trend.md`) is not built; it could join as a third test.
-- Whether to fix Sen's slope with missing months (§6, item 8).
 - Whether annual means are shown alongside the monthly trend as a plain-language check.
 - Band level term: `s² / n_eff` with `s² = SSR / (n − 2)` (§4.2a). The slope part is the existing
   CI, so only the level term is new. A different convention (for example `SSR / (n_eff − 2)` as

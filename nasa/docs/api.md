@@ -16,6 +16,13 @@ change, so a new field also means updating that test and this file.
 
 ## Conventions
 
+- **Project window.** Every route that takes years (`from`, `to`) is limited to **1980 to 2018**
+  (`catalog/scope.py`, the same limit as the city, circle and map routes), so every screen analyses the
+  same years. No years given means the whole window; years outside it are cut to it; a range that does not
+  overlap the window is a `400` ("the project covers 1980 to 2018 only"). `/api/meta` `years` reports the
+  window. The one exception is `POST /api/analyse-series`: it is the user's own data, analysed as sent.
+  Why 2018: the GDIS disaster records end there (docs/datasets.md).
+
 - **Trend units.** A trend is *per decade*, in the variable's own unit (`unit`): the per-month
   slope × 120. Example: `0.13` with `unit: "K"` means +0.13 K per decade. Never a bare number.
 - **Anomalies.** `anomaly`, `mean_anomaly`, `band` and `ols_intercept` are *anomalies*: the value
@@ -72,8 +79,8 @@ The trend for one region and variable over a window of whole calendar years.
 |---|---|---|
 | `variable` | yes | A `variables[].key` from `/api/meta` |
 | `region` | yes | A `regions[].key` from `/api/meta` |
-| `from` | no | First year (default: first year of the record). January of this year starts the series |
-| `to` | no | Last year, included (default: last year of the record) |
+| `from` | no | First year (default: 1980, the start of the project window). January of this year starts the series |
+| `to` | no | Last year, included (default: 2018, the end of the project window) |
 
 Example: `/api/trend?variable=t2m&region=east_asia_land&from=1990&to=2019`
 
@@ -190,7 +197,7 @@ the share of false alarms among the regions flagged.
 | Parameter | Required | Meaning |
 |---|---|---|
 | `variable` | yes | A `variables[].key` from `/api/meta`. Missing: `400`. Unknown: `404` |
-| `from`, `to` | no | As for `/api/trend` (default: the whole record) |
+| `from`, `to` | no | As for `/api/trend` (default: the project window, 1980 to 2018) |
 
 Example: `/api/scan?variable=t2m&from=1990&to=2019`
 

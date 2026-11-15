@@ -173,8 +173,8 @@ def mann_kendall_ar1(values: np.ndarray) -> TrendResult:
     `mann_kendall`; otherwise the p-value is larger. Method and measured error rates:
     docs/decisions/0007-scan-family-and-autocorrelation-aware-mann-kendall.md.
 
-    `values` may contain NaN (ignored). Sen's slope here is per time step of `values`, so a missing
-    month still counts as a step (unlike `mann_kendall`, which drops NaNs before computing it).
+    `values` may contain NaN (ignored). Sen's slope is per time step of `values`, so a missing month
+    still counts as a step, the same as `mann_kendall` since the fix for gaps.
     """
     y_all = np.asarray(values, dtype=float)
     keep = ~np.isnan(y_all)

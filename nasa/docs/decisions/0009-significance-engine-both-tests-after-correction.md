@@ -81,6 +81,9 @@ this. Read a flagged series in a short, strongly autocorrelated record as a lead
 - The teammate's numbers change in two places, on purpose: circle cells count as rising or falling only
   when both tests agree after correction, and the map's `direction` follows the ladder with the adjusted
   Mann-Kendall p-value. Trend, CI and p-value numbers do not change (snapshot test).
+- **Project window (user decision A, 2026-11-15).** `/api/trend`, `/api/scan` and `/api/meta` use the same
+  1980 to 2018 limit as the trend engine (`catalog/scope.py`), so the page and the map analyse the same years.
+  Verdicts depend on it (7 of 8 variables change pattern with 1980-2026), so it is shown and documented.
 - Every route returns one `significance` block (`docs/api.md`). The old top-level `sentence` of
   `/api/trend` stays for compatibility and is the per-series, uncorrected one.
 - `years_needed` (core/detect.py) simulates the OLS test only. Requiring both tests needs more years;

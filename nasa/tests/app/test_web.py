@@ -354,13 +354,8 @@ def test_analyse_with_gaps_counts_only_real_months(client):
     assert gap["value"] is None and gap["anomaly"] is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="core.trend.mann_kendall drops NaNs before computing Sen's slope, so with missing "
-    "months it is per valid sample, not per month: 0.376 instead of 0.30 per decade (+25%) "
-    "with 14% of months missing. OLS is unaffected. Remove this marker when it is fixed.",
-)
 def test_sen_slope_survives_gaps(client):
+    # with missing months Sen's slope stays per month (the fix for gaps in mann_kendall)
     values = synthetic_months(240, 0.30)
     for i in range(5, 240, 7):
         values[i] = None
@@ -723,3 +718,67 @@ def test_web_fixtures_have_the_shape_of_the_live_api(client, scan_client):
     for name, response in live.items():
         fixture = json.loads((WEB_FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
         assert same_shape(fixture, response), f"{name}: fixture and live response differ in shape"
+
+
+# --- The project window (catalog/scope.py: 1980 to 2018) applies to every route ------------------
+
+
+@pytest.fixture
+def wide_client(tmp_path: Path):
+    """A record that runs past the window on both sides: 1975 to 2025."""
+    rng = np.random.default_rng(8)
+    path = tmp_path / "monthly_regional.csv"
+    rows = []
+    for region in ("east_asia_land", "se_asia_maritime"):
+        for i in range(12 * 51):
+            value = 290 + 3 * math.sin(2 * math.pi * i / 12) + 0.002 * i + rng.normal(0, 0.3)
+            rows.append(
+                {
+                    "region": region,
+                    "variable": "t2m",
+                    "period": f"{1975 + i // 12}-{i % 12 + 1:02d}",
+                    "value": f"{value:.6g}",
+                    "unit": "K",
+                    "n_cells": 100,
+                    "n_valid": 100,
+                    "n_days": "",
+                }
+            )
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    return create_app(path).test_client()
+
+
+def test_the_default_window_is_the_project_window(wide_client):
+    assert wide_client.get("/api/meta").get_json()["years"] == {"first": 1980, "last": 2018}
+    trend = wide_client.get("/api/trend?variable=t2m&region=east_asia_land").get_json()
+    assert (trend["first_month"], trend["last_month"]) == ("1980-01", "2018-12")
+    assert trend["statistics"]["n_months"] == 12 * 39
+    scan = wide_client.get("/api/scan?variable=t2m").get_json()
+    assert (scan["from"], scan["to"]) == (1980, 2018)
+    assert {r["last_month"] for r in scan["results"]} == {"2018-12"}
+
+
+def test_requested_years_are_limited_to_the_window(wide_client):
+    url = "/api/trend?variable=t2m&region=east_asia_land"
+    wide = wide_client.get(f"{url}&from=1970&to=2000").get_json()
+    assert (wide["first_month"], wide["last_month"]) == ("1980-01", "2000-12")
+    late = wide_client.get(f"{url}&from=1990&to=2026").get_json()
+    assert (late["first_month"], late["last_month"]) == ("1990-01", "2018-12")
+    scan = wide_client.get("/api/scan?variable=t2m&from=1960&to=2030").get_json()
+    assert (scan["from"], scan["to"]) == (1980, 2018)
+
+
+def test_a_window_wholly_outside_the_project_is_refused_with_a_clear_message(wide_client):
+    for query in ("from=1960&to=1975", "from=2019&to=2025"):
+        for route in ("/api/trend?variable=t2m&region=east_asia_land", "/api/scan?variable=t2m"):
+            err = assert_json_error(wide_client.get(f"{route}&{query}"), 400)
+            assert "1980 to 2018" in err["error"]
+
+
+def test_a_pasted_series_is_not_limited_to_the_project_window(client):
+    # it is the user's own data: any years are analysed as sent
+    data = client.post("/api/analyse-series", json=body(start="2021-01")).get_json()
+    assert data["first_month"] == "2021-01" and data["last_month"] == "2040-12"

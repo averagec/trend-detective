@@ -348,6 +348,10 @@ def create_app(
         units = {variable: entry["unit"] for (_, variable), entry in series.items()}
         regions_present = sorted({region for region, _ in series})
         first, last = store.years()
+        try:
+            first, last = clamp(first, last)  # the years a page may ask for: the project window
+        except ValueError:
+            pass  # a record entirely outside the window: show the years it has
         return jsonify(
             {
                 "variables": [
@@ -371,7 +375,11 @@ def create_app(
         )
 
     def year_window() -> tuple[int, int]:
-        """The `from` and `to` query parameters (default: the whole record), validated."""
+        """The `from` and `to` query parameters, validated and limited to the project window.
+
+        Default: the project window (1980 to 2018, catalog/scope.py), the same limit the city,
+        circle and map routes use, so every screen analyses the same years.
+        """
         try:
             first = int(request.args.get("from", store.years()[0]))
             last = int(request.args.get("to", store.years()[1]))
@@ -381,7 +389,7 @@ def create_app(
             abort(400, description="from and to must be years between 1 and 9999")
         if first > last:
             abort(400, description="from must be on or before to")
-        return first, last
+        return _scope(first, last)
 
     @app.get("/api/trend")
     def trend():

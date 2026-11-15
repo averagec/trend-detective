@@ -25,6 +25,13 @@ def write_csv(root, series):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def regions_of(root, **kwargs):
+    """The map's regions for the years of the synthetic data (stated, so the test does not depend
+    on the project window, which limits any map to 1980-2018)."""
+    payload = build_map(root, "merra2:t2m", first=1990, last=2009, **kwargs)
+    return {r["key"]: r for r in payload["regions"]}
+
+
 def noisy(slope, seed, n=240):
     rng = np.random.default_rng(seed)
     t = np.arange(n)
@@ -47,7 +54,7 @@ def test_map_direction_needs_both_tests_after_correction(tmp_path):
         tmp_path,
         {"east_asia_land": noisy(0.0025, 1), "se_asia_maritime": remembering(0.0012, 189)},
     )
-    regions = {r["key"]: r for r in build_map(tmp_path, "merra2:t2m")["regions"]}
+    regions = regions_of(tmp_path)
     east, se = regions["east_asia_land"], regions["se_asia_maritime"]
     assert east["direction"] == "rise" and east["significance"]["verdict"] == "rise"
     assert se["ols_p_adj"] < 0.05 and se["mk_p_adj"] < 0.05, "the old rule would have said rise"
@@ -64,7 +71,7 @@ def test_map_blocks_describe_the_layer_family_and_skip_regions_without_data(tmp_
         "se_asia_maritime": [None] * 240,  # a box with no valid values
     }
     write_csv(tmp_path, values)
-    payload = build_map(tmp_path, "merra2:t2m")
+    payload = build_map(tmp_path, "merra2:t2m", first=1990, last=2009)
     regions = {r["key"]: r for r in payload["regions"]}
     assert regions["se_asia_maritime"]["status"] == "no_data"
     assert "significance" not in regions["se_asia_maritime"]
@@ -79,7 +86,7 @@ def test_map_blocks_describe_the_layer_family_and_skip_regions_without_data(tmp_
 
 def test_yearly_map_gets_the_same_block(tmp_path):
     write_csv(tmp_path, {"east_asia_land": noisy(0.003, 2), "north_asia_siberia": noisy(0.0, 3)})
-    regions = {r["key"]: r for r in build_map(tmp_path, "merra2:t2m", freq="yearly")["regions"]}
+    regions = regions_of(tmp_path, freq="yearly")
     assert regions["east_asia_land"]["significance"]["verdict"] == "rise"
     assert regions["north_asia_siberia"]["direction"] == "none"
 
@@ -123,3 +130,23 @@ def test_a_city_is_judged_on_its_own():
     if a.verdict == "rise":
         assert a.sentence == city.summary.sentence  # a clear trend reads as it always did
     assert not math.isnan(a.ols_p)
+
+
+def test_years_before_a_dataset_begins_are_padding_not_missing_months(tmp_path):
+    # GRACE starts in 2002, GPCP in 1983: the timeline opens with the project window (1980), but the
+    # steps before the data are padding. They must not be reported as "65% of months are missing".
+    write_csv(tmp_path, {"east_asia_land": noisy(0.002, 5, n=240)})  # data: 1990-01 to 2009-12
+    for freq in ("monthly", "yearly"):
+        region = build_map(tmp_path, "merra2:t2m", freq=freq)["regions"][0]  # the whole window
+        assert region["first_period"] in ("1980-01", "1980")  # the timeline (their design)
+        assert region["missing_share"] == 0
+        assert not any(w["code"] == "missing_months" for w in region["warnings"])
+        assert not any(w["code"] == "missing_months" for w in region["significance"]["warnings"])
+    monthly = build_map(tmp_path, "merra2:t2m")["regions"][0]
+    assert monthly["n_points"] == 240 and monthly["last_period"] == "2009-12"
+    # a real gap inside the data is still reported
+    gappy = noisy(0.002, 5, n=240)
+    gappy = [None if 40 <= i < 80 else v for i, v in enumerate(gappy)]
+    write_csv(tmp_path / "gappy", {"east_asia_land": gappy})
+    region = build_map(tmp_path / "gappy", "merra2:t2m")["regions"][0]
+    assert any(w["code"] == "missing_months" for w in region["warnings"])

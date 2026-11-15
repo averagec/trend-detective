@@ -159,15 +159,22 @@ def _region(
     if not np.isfinite(monthly).any():  # e.g. ocean cells in a land-only box: nothing to test
         return _no_data(key, name, f"No valid {name} values for this layer.")
 
+    def lead(values: np.ndarray) -> int:
+        """Steps before the dataset begins. The timeline opens with the project window (1980), but
+        GPCP starts in 1983 and GRACE in 2002: those steps are padding, not missing data."""
+        return int(np.flatnonzero(np.isfinite(values))[0])
+
     if freq == "yearly":
         years, annual = to_yearly(axis, monthly)  # every year in the axis, NaN when incomplete
         span = [str(y) for y in years]
-        summary = summarise(annual, unit, label, steps_per_year=1)
-        n_units = len(years)
+        pad = lead(annual) if np.isfinite(annual).any() else 0
+        summary = summarise(annual, unit, label, steps_per_year=1, leading_pad=pad)
+        n_units = len(years) - pad
     else:
         span = axis
-        summary = summarise(monthly, unit, label)
-        n_units = len(axis)
+        pad = lead(monthly)
+        summary = summarise(monthly, unit, label, leading_pad=pad)
+        n_units = len(axis) - pad
 
     n_cells = [int(float(r["n_cells"])) for r in rows if r["n_cells"]]
     n_valid = [int(float(r["n_valid"])) for r in rows if r["n_valid"]]
