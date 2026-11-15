@@ -133,6 +133,7 @@ def _region(
     freq: str,
     first: int | None,
     last: int | None,
+    include_series: bool = False,
 ) -> dict:
     name = REGIONS[key].name if key in REGIONS else ("Global" if key == "global" else key)
     if not rows:
@@ -182,7 +183,7 @@ def _region(
     steps = 1 if freq == "yearly" else 12
     sigma, phi = noise_params(annual if freq == "yearly" else monthly, steps)
     needed = years_needed(summary.ols_per_decade, sigma, phi, steps_per_year=steps)
-    return {
+    out = {
         "key": key,
         "name": name,
         "status": "ok",
@@ -210,6 +211,14 @@ def _region(
         "_summary": summary,  # handed to core/significance.py by build_map, then removed
         "_label": label,
     }
+    if include_series:
+        values = monthly if freq != "yearly" else annual
+        periods = axis if freq != "yearly" else [str(y) for y in years]
+        out["series"] = [
+            {"period": p_, "value": float(v) if np.isfinite(v) else None}
+            for p_, v in zip(periods, values, strict=True)
+        ]
+    return out
 
 
 def _clean(obj):
@@ -234,6 +243,7 @@ def build_map(
     first: int | None = None,
     last: int | None = None,
     regions: list[str] | None = None,
+    include_series: bool = False,
 ) -> dict:
     """Trend numbers for one layer in every region. Raises KeyError for an unknown layer and
     ValueError for a bad frequency, years or region."""
@@ -250,7 +260,9 @@ def build_map(
     by_region = _read(processed_dir, layer)
     default = [k for k in REGIONS if k in by_region] + [k for k in by_region if k not in REGIONS]
     keys = regions if regions is not None else default
-    results = [_region(k, by_region.get(k, []), layer, freq, first, last) for k in keys]
+    results = [
+        _region(k, by_region.get(k, []), layer, freq, first, last, include_series) for k in keys
+    ]
 
     ok = [i for i, r in enumerate(results) if r["status"] == "ok"]
     if ok:
