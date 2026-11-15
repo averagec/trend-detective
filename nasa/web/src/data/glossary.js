@@ -19,7 +19,7 @@ export function glossaryFor(labels) {
     for (const [re, term, def] of GLOSSARY) {
       if (!seen.has(term) && re.test(label)) {
         seen.add(term);
-        rows.push(`<div><b>${term}</b> ${def}</div>`);
+        rows.push(`<div><span class="gloss-term">${term}:</span> ${def}</div>`);
       }
     }
   }

@@ -239,12 +239,29 @@
 
 /* short definitions under significance stats: the app's pixel font, readable on cream and white */
 .gloss {
+  display: block;
   margin-top: 10px;
   font-family: "VT323", monospace;
   font-size: 19px;
   line-height: 1.15;
-  color: #3d4c7c;
   letter-spacing: 0.5px;
+  text-indent: 0;
+  text-align: left;
+  color: #3d4c7c;
+  opacity: 1;
 }
-.gloss div { margin: 4px 0; }
-.gloss b { color: #1f2a4a; font-weight: 400; }
+.gloss div {
+  display: block;
+  margin: 4px 0;
+  padding: 0;
+  text-indent: 0;
+  text-align: left;
+  color: #3d4c7c;
+  opacity: 1;
+}
+.gloss .gloss-term {
+  display: inline;
+  color: #1f2a4a;
+  background: none;
+  opacity: 1;
+}
