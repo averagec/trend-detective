@@ -1,4 +1,4 @@
-// Draws what the server computes. Nothing here is a statistic: every number comes from /api/trend.
+// Draws what the server computes. Nothing here is a statistic: every number comes from /api/*.
 
 const HOW_TO_READ = [
   "The dots are each month's difference from a normal year for that month.",
@@ -10,7 +10,7 @@ const HOW_TO_READ = [
 const LIMITS = [
   "MERRA-2 is a computer model that uses observations. It is not a direct measurement.",
   "Each region is averaged over several grid cells of about 50 km, so small areas are blurred.",
-  "Trend tests on a few regions and variables can look significant by chance. Read the results as a starting point.",
+  "Many trends are tested at once, so some look significant by chance. The q-value row corrects for that.",
 ];
 
 const state = {
@@ -46,10 +46,16 @@ function finite(x) {
   return typeof x === "number" && Number.isFinite(x);
 }
 
-async function api(path) {
-  const response = await fetch(path);
+// Every /api error is {"error": "...", "status": N}; show that message as it is.
+async function api(path, options) {
+  let response;
+  try {
+    response = await fetch(path, options);
+  } catch {
+    throw new Error("Could not reach the server.");
+  }
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.description || body.error || `Request failed (${response.status})`);
+  if (!response.ok) throw new Error(body.error || body.description || `Request failed (${response.status})`);
   return body;
 }
 
@@ -123,12 +129,23 @@ function chartSVG(data) {
   return out;
 }
 
+const VERDICT = {
+  rise: "Rising: both tests significant", fall: "Falling: both tests significant",
+  unclear: "Unclear: the two tests do not agree", none: "No significant trend (yet)",
+  no_data: "Not enough data",
+};
+
 function panelHTML(data) {
   const s = data.statistics;
+  // The verdict, q-values and sentence come from the server's `significance` block: it already
+  // accounts for the other regions of this variable (the "layer" family).
+  const sig = data.significance;
+  const fam = sig.family;
+  const qLabel = fam.name === "none" ? "p-values (no correction)" : `q-values (corrected for ${fam.n_tests} regions tested together)`;
   const ci = Array.isArray(s.ols_ci_per_decade) ? s.ols_ci_per_decade : [null, null];
   const hasTrend = finite(s.ols_per_decade);
   let html = `<section class="panel"><h3>${esc(data.region_name)}</h3>`;
-  html += `<p class="headline">${esc(data.sentence)}</p>`;
+  html += `<p class="headline">${esc(sig.sentence)}</p>`;
   html += chartSVG(data);
   if (hasTrend) {
     html += `<div class="cards" style="margin-top:12px">
@@ -144,18 +161,27 @@ function panelHTML(data) {
     </div>
     <table class="stats-table"><tbody>
       <tr><th scope="row">OLS p-value (adjusted for autocorrelation)</th><td>${fmtP(s.ols_p)}</td></tr>
+      <tr><th scope="row">Effective sample size, from lag-1 autocorrelation ${fmt(s.r1)}</th>
+        <td>${fmt(s.n_eff, 0)} of ${s.n_months} months</td></tr>
       <tr><th scope="row">Mann-Kendall p-value (not adjusted)</th><td>${fmtP(s.mk_p)}</td></tr>
-    </tbody></table>`;
+      <tr><th scope="row">Mann-Kendall p-value (adjusted for autocorrelation)</th><td>${fmtP(s.mk_p_ar1)}</td></tr>
+      <tr><th scope="row">OLS and Mann-Kendall ${esc(qLabel)}</th>
+        <td>${fmtP(sig.ols_q)} · ${fmtP(sig.mk_q)}</td></tr>
+    </tbody></table>
+    <p class="muted"><b>${esc(VERDICT[sig.verdict] || sig.verdict)}</b></p>
+    <p class="muted">Neighbouring months resemble each other, so ${s.n_months} months hold about as much
+      independent information as ${fmt(s.n_eff, 0)}. The OLS p-value, its confidence interval and the adjusted
+      Mann-Kendall p-value use that smaller number.</p>`;
   }
-  if (data.warnings.length) {
-    html += `<ul class="warnings" role="note">${data.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  if (sig.warnings.length) {
+    html += `<ul class="warnings" role="note">${sig.warnings.map((w) => `<li>${esc(w.text)}</li>`).join("")}</ul>`;
   }
   return html + `</section>`;
 }
 
 function comparisonNote(a, b) {
   const sa = a.statistics, sb = b.statistics;
-  const bothSig = sa.ols_significant && sb.ols_significant;
+  const bothSig = a.significance.significant && b.significance.significant; // after correction
   const sameSign = Math.sign(sa.ols_per_decade) === Math.sign(sb.ols_per_decade);
   if (bothSig && !sameSign) {
     return `${a.region_name} and ${b.region_name} show opposite trends, and both are statistically significant at 95%.`;
@@ -213,8 +239,10 @@ function refresh() {
   return (async () => {
     showError("");
     try {
-      const a = await api(query(state.regionA));
-      const b = state.regionB ? await api(query(state.regionB)) : null;
+      const [a, b] = await Promise.all([
+        api(query(state.regionA)),
+        state.regionB ? api(query(state.regionB)) : null,
+      ]);
       if (id !== state.request) return; // a newer request has started
       $("result").innerHTML = b
         ? `<div class="compare-grid">${panelHTML(a)}${panelHTML(b)}</div>` +
@@ -224,6 +252,29 @@ function refresh() {
       if (id === state.request) showError(err.message);
     }
   })();
+}
+
+// Your own data: the numbers are sent to the server as they are typed; every check and
+// every statistic happens there (POST /api/analyse-series).
+function parseValues(text) {
+  return text.split(/[\s,;]+/).filter(Boolean).map((tok) =>
+    /^(na|nan|null|-)$/i.test(tok) ? null : Number.isFinite(Number(tok)) ? Number(tok) : tok);
+}
+
+async function analyseOwn() {
+  showError("");
+  try {
+    const data = await api("api/analyse-series", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: $("own-label").value, unit: $("own-unit").value,
+        start: $("own-start").value.trim(), values: parseValues($("own-values").value) }),
+    });
+    $("own-result").innerHTML = panelHTML(data);
+  } catch (err) {
+    $("own-result").innerHTML = "";
+    showError(err.message);
+  }
 }
 
 function renderNotes() {
@@ -261,8 +312,19 @@ async function init() {
           <input id="to" type="number" min="${first}" max="${last}" value="${last}" /></label>
       </div></section>
     <section class="step" aria-live="polite" id="result"></section>
+    <section class="step"><details><summary>Analyse your own monthly data</summary>
+      <div class="controls">
+        <label class="control">Name <input id="own-label" type="text" value="My data" maxlength="80" /></label>
+        <label class="control">Unit <input id="own-unit" type="text" value="K" maxlength="20" size="8" /></label>
+        <label class="control">First month, as YYYY-MM <input id="own-start" type="text" value="2000-01" size="8" /></label>
+        <label class="control">Values, one per month in order, separated by spaces, commas or new lines (NA for a missing month, at least 24 numbers)
+          <textarea id="own-values" rows="5" cols="60"></textarea></label>
+        <button type="button" class="chip" id="own-go" style="align-self:flex-start">Analyse</button>
+      </div>
+      <div id="own-result" aria-live="polite"></div></details></section>
     <section class="notes" id="notes"></section>`;
 
+  $("own-go").addEventListener("click", analyseOwn);
   $("compare").addEventListener("change", (ev) => { state.regionB = ev.target.value || null; refresh(); });
   $("from").addEventListener("change", refresh);
   $("to").addEventListener("change", refresh);

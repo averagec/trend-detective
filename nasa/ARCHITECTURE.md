@@ -19,10 +19,11 @@ app/web.py (Flask)         -> per request: process.analyse_trends.build() -> cor
 | Module | Path | Responsibility | May import |
 |---|---|---|---|
 | ingest | `src/trend_detective/ingest/` | Fetch + cache NASA data (only place with network calls) | — |
-| process | `src/trend_detective/process/` | Clean raw files, unit conversion, VPD, regional means, series builder. Per-cell cubes (`cell_cube.py`), city and circle selection (`selection.py`), city list (`cities.py`), monthly event inputs and indicators (`event_series.py`). No statistics. | core, catalog, numpy, h5py |
-| core | `src/trend_detective/core/` | Pure stats: `trend.py` (deseasonalise, OLS, Mann-Kendall, Sen, area weighting), `summary.py` (tests + plain-language sentence), `events.py` (flood and drought calls, percentiles, amounts), `comovement.py` (factor co-movement with rainfall) | numpy/scipy |
+| process | `src/trend_detective/process/` | Clean raw files, unit conversion, VPD, regional means, series builder. Per-cell cubes (`cell_cube.py`), city and circle selection (`selection.py`), city list (`cities.py`), monthly event inputs and indicators (`event_series.py`), `significance_json.py` (the one serializer for the verdict block). No statistics. | core, catalog, numpy, h5py |
+| core | `src/trend_detective/core/` | Pure stats: `trend.py` (deseasonalise, OLS, Mann-Kendall, Sen, area weighting), `summary.py` (tests + plain-language sentence), `events.py` (flood and drought calls, percentiles, amounts), `comovement.py` (factor co-movement with rainfall), `significance.py` (corrects across a family and decides the verdict: both tests, after correction; ADR 0009) | numpy/scipy |
 | catalog | `src/trend_detective/catalog/` | Variables (`variables.py`), regions (`regions.py`), study sites (`sites.py`): plain-language text | — |
 | app | `src/trend_detective/app/` | `web.py`: the dynamic app for students and the public (Flask), including the map page (`/map`) for city and circle selection. `event_api.py`: the flood and drought flow (`/event`, `/api/event`). `nasa_view.py`: internal checks of raw files. | core, catalog, process |
+| website | `web/` | TD-OS (Vite + three.js), built to `web/dist` and served by Flask. Draws what `/api/*` returns: `data/api.js` is its only backend access, `data/to-chart.js` reshapes responses, `os/trend-app.js` is TREND.EXE (ADR 0008). Contract: `docs/api.md` | the API only |
 | demo data | `data/demo/` | Cached CSVs for demo cases (committed, small). Demo cases must run offline. | — |
 
 ## Invariants (enforced in `scripts/check.sh`)

@@ -3,6 +3,7 @@ import { say, closeSay } from "../ui/dialogue.js";
 import { analysis } from "../stats/trend-analysis.js";
 import { openChart } from "../ui/chart-view.js";
 import { regionMap } from "./region-map.js";
+import { trendApp } from "./trend-app.js";
 import { leaveDesk } from "../scene/office.js";
 import { toLocal } from "../ui/scale.js";
 const $ = (s) => document.querySelector(s);
@@ -481,6 +482,7 @@ const map = () => {
   guideDone("map");
   return regionMap.open(win, { log, closeId });
 };
+const trend = (preset) => trendApp.open(win, { log }, preset);
 function startCase(setup) {
   Object.assign(S, { setup: Object.assign({}, setup), guess: null, look: null, runs: 0, exploratory: false, lastKey: null, deseason: false });
   ["evidence", "lineup"].forEach((id) => {
@@ -512,6 +514,7 @@ const ICONS = [
   ["data", "dish", "DATA.LNK", data],
   ["earth", "picture", "EARTH.PCX", earth],
   ["map", "globe", "MAP.EXE", map],
+  ["trend", "chart", "TREND.EXE", () => trend()],
   ["log", "disk", "LOG.TXT", logw],
   ["id", "id", "ID.CARD", idcard],
   ["evidence", "mag", "EVIDENCE", () => isLocked("evidence") ? (SFX.err(), say(["Guess first. Then the evidence."])) : openPlot(), true],
@@ -661,7 +664,7 @@ async function shutdown() {
   document.querySelectorAll(".win").forEach((w) => w.remove());
   leaveDesk();
 }
-const desktop = { open, shutdown, startCase };
+const desktop = { open, shutdown, startCase, openTrend: trend };
 addEventListener("keydown", (e) => {
   if (!document.body.classList.contains("in-os") || $("#desk").style.display !== "flex") return;
   const map2 = { F1: "help", F2: "cases", F3: "log", F10: "leave", Escape: "leave" };

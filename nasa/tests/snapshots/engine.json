@@ -1,0 +1,510 @@
+{
+ "decisions": {
+  "circle": {
+   "falling": 5,
+   "not_significant": 3,
+   "rising": 11,
+   "significant_cells": [
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "warnings": [
+    "Mixed signal: 11 cell(s) rise and 5 fall significantly. The average hides this; compare the cells."
+   ]
+  },
+  "city": {
+   "sentence": "T2M, Jakarta rose by 0.48 K per decade (95% CI +0.42 to +0.54), statistically significant at 95%.",
+   "warnings": [
+    "This series is for one grid cell, 69 \u00d7 56 km, centred at -6.00, 106.88. The cell includes Jakarta and its surroundings, so neighbouring cells may trend differently."
+   ]
+  },
+  "map": {
+   "monthly": {
+    "east_asia_land": {
+     "direction": "rise",
+     "sentence": "Mean 2 m air temperature, Eastern China and Korea rose by 0.41 K per decade (95% CI +0.22 to +0.59), statistically significant at 95%."
+    },
+    "north_asia_siberia": {
+     "direction": "none",
+     "sentence": "Mean 2 m air temperature, Southern Siberia and Mongolia: no significant trend detected (yet). The estimated change is +0.05 K per decade."
+    },
+    "se_asia_maritime": {
+     "direction": "none",
+     "sentence": "Mean 2 m air temperature, Maritime Southeast Asia (Indonesia, Malaysia, Philippines): no significant trend detected (yet). The estimated change is -0.07 K per decade."
+    }
+   },
+   "yearly": {
+    "east_asia_land": {
+     "direction": "rise",
+     "sentence": "Mean 2 m air temperature, Eastern China and Korea rose by 0.41 K per decade (95% CI +0.23 to +0.58), statistically significant at 95%."
+    },
+    "north_asia_siberia": {
+     "direction": "none",
+     "sentence": "Mean 2 m air temperature, Southern Siberia and Mongolia: no significant trend detected (yet). The estimated change is +0.05 K per decade."
+    },
+    "se_asia_maritime": {
+     "direction": "none",
+     "sentence": "Mean 2 m air temperature, Maritime Southeast Asia (Indonesia, Malaysia, Philippines): no significant trend detected (yet). The estimated change is -0.07 K per decade."
+    }
+   }
+  }
+ },
+ "numbers": {
+  "circle": {
+   "average": {
+    "mk_p": 3.957393330639883e-44,
+    "n_months": 288,
+    "n_years": 24.0,
+    "ols_ci_per_decade": [
+     0.1309892031766708,
+     0.16349365132912108
+    ],
+    "ols_p": 2.5870678805276554e-47,
+    "ols_per_decade": 0.14724142725289593,
+    "sen_per_decade": 0.14850316404775857,
+    "tests_agree": true
+   },
+   "cells": [
+    {
+     "lat": -7.5,
+     "lon": 106.875,
+     "mk_p": 0.12332406525659674,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.11518252471879231,
+      0.013660062684667004
+     ],
+     "ols_p": 0.12202403426727526,
+     "ols_per_decade": -0.050761231017062654,
+     "p_adj": 0.1288031472821239,
+     "sen_per_decade": -0.04808038982707989,
+     "tests_agree": true
+    },
+    {
+     "lat": -7.0,
+     "lon": 106.25,
+     "mk_p": 1.0140115406506902e-30,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.41863864981647564,
+      0.5573259587638515
+     ],
+     "ols_p": 9.777918229315757e-34,
+     "ols_per_decade": 0.48798230429016354,
+     "p_adj": 2.0642271817444377e-33,
+     "sen_per_decade": 0.49468928985010774,
+     "tests_agree": true
+    },
+    {
+     "lat": -7.0,
+     "lon": 106.875,
+     "mk_p": 5.285466342292112e-25,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.3649526112966349,
+      0.5066401038809133
+     ],
+     "ols_p": 2.289868691660355e-27,
+     "ols_per_decade": 0.4357963575887741,
+     "p_adj": 2.9005003427697833e-27,
+     "sen_per_decade": 0.42873619755274195,
+     "tests_agree": true
+    },
+    {
+     "lat": -7.0,
+     "lon": 107.5,
+     "mk_p": 2.2761353880212645e-26,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.36048824509530075,
+      0.4927984151250997
+     ],
+     "ols_p": 1.3814398556587727e-29,
+     "ols_per_decade": 0.4266433301102002,
+     "p_adj": 1.8748112326797628e-29,
+     "sen_per_decade": 0.42314410431357563,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.5,
+     "lon": 105.625,
+     "mk_p": 1.9995224188607716e-35,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.4362450192582601,
+      0.5632449170828752
+     ],
+     "ols_p": 1.0155654222237686e-39,
+     "ols_per_decade": 0.4997449681705676,
+     "p_adj": 9.647871511125802e-39,
+     "sen_per_decade": 0.498911895482373,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.5,
+     "lon": 106.25,
+     "mk_p": 1.490322346744693e-29,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.39784156194273124,
+      0.5281365803228475
+     ],
+     "ols_p": 3.5762798036634853e-34,
+     "ols_per_decade": 0.46298907113278936,
+     "p_adj": 8.493664533700778e-34,
+     "sen_per_decade": 0.4697549652020798,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.5,
+     "lon": 106.875,
+     "mk_p": 7.305302879597109e-35,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.41766550986782,
+      0.5434429941058966
+     ],
+     "ols_p": 4.547749751966788e-38,
+     "ols_per_decade": 0.4805542519868583,
+     "p_adj": 2.880241509578966e-37,
+     "sen_per_decade": 0.4747120453853979,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.5,
+     "lon": 107.5,
+     "mk_p": 5.106117475113419e-32,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.4197467774921687,
+      0.5565273723424182
+     ],
+     "ols_p": 1.1188959574716303e-33,
+     "ols_per_decade": 0.4881370749172935,
+     "p_adj": 2.1259023191960976e-33,
+     "sen_per_decade": 0.47587884273305286,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.5,
+     "lon": 108.125,
+     "mk_p": 0.06799462388090775,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.020226687733391167,
+      0.1113157060129593
+     ],
+     "ols_p": 0.17396033859338134,
+     "ols_per_decade": 0.04554450913978407,
+     "p_adj": 0.17396033859338134,
+     "sen_per_decade": 0.0654580617174439,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.0,
+     "lon": 105.625,
+     "mk_p": 3.521736447274512e-30,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.40860002515034066,
+      0.5454330035304679
+     ],
+     "ols_p": 7.727373483693045e-33,
+     "ols_per_decade": 0.47701651434040426,
+     "p_adj": 1.2235008015847321e-32,
+     "sen_per_decade": 0.47425760543180123,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.0,
+     "lon": 106.25,
+     "mk_p": 1.2605326511258157e-34,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.42124787883823706,
+      0.5488581314532381
+     ],
+     "ols_p": 8.722269314777249e-38,
+     "ols_per_decade": 0.48505300514573757,
+     "p_adj": 4.143077924519193e-37,
+     "sen_per_decade": 0.47116584549988316,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.0,
+     "lon": 106.875,
+     "mk_p": 1.1184702142917983e-32,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.41531687882110896,
+      0.5439552083575059
+     ],
+     "ols_p": 1.1691992614742113e-36,
+     "ols_per_decade": 0.47963604358930734,
+     "p_adj": 4.442957193602003e-36,
+     "sen_per_decade": 0.48000539147005145,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.0,
+     "lon": 107.5,
+     "mk_p": 1.271082113973672e-31,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      0.38179003321382304,
+      0.5087188085298192
+     ],
+     "ols_p": 1.3874845209294674e-33,
+     "ols_per_decade": 0.4452544208718211,
+     "p_adj": 2.3965641725145347e-33,
+     "sen_per_decade": 0.4577403842050657,
+     "tests_agree": true
+    },
+    {
+     "lat": -6.0,
+     "lon": 108.125,
+     "mk_p": 0.12452065096442161,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.013163853647618004,
+      0.12489515036658957
+     ],
+     "ols_p": 0.1122718718532517,
+     "ols_per_decade": 0.05586564835948578,
+     "p_adj": 0.12548032736539896,
+     "sen_per_decade": 0.05746788342116432,
+     "tests_agree": true
+    },
+    {
+     "lat": -5.5,
+     "lon": 106.25,
+     "mk_p": 2.7148739038238376e-35,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.5829010749333038,
+      -0.44444905421134173
+     ],
+     "ols_p": 2.044310178017808e-35,
+     "ols_per_decade": -0.5136750645723228,
+     "p_adj": 5.548841911762622e-35,
+     "sen_per_decade": -0.5085224750611747,
+     "tests_agree": true
+    },
+    {
+     "lat": -5.5,
+     "lon": 106.875,
+     "mk_p": 2.0248162523137349e-38,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.6136745934271625,
+      -0.48468787693511034
+     ],
+     "ols_p": 2.143735096328216e-44,
+     "ols_per_decade": -0.5491812351811364,
+     "p_adj": 4.073096683023611e-43,
+     "sen_per_decade": -0.5469564692527008,
+     "tests_agree": true
+    },
+    {
+     "lat": -5.5,
+     "lon": 107.5,
+     "mk_p": 8.280162853300793e-28,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.524284342858413,
+      -0.38737736892983565
+     ],
+     "ols_p": 6.388498246032877e-31,
+     "ols_per_decade": -0.4558308558941243,
+     "p_adj": 9.33703589804805e-31,
+     "sen_per_decade": -0.4633517192111115,
+     "tests_agree": true
+    },
+    {
+     "lat": -5.0,
+     "lon": 106.25,
+     "mk_p": 2.2425172764686547e-24,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.4617861617911116,
+      -0.32664549339066606
+     ],
+     "ols_p": 4.7890464266411035e-25,
+     "ols_per_decade": -0.3942158275908888,
+     "p_adj": 5.68699263163631e-25,
+     "sen_per_decade": -0.3934946347766898,
+     "tests_agree": true
+    },
+    {
+     "lat": -5.0,
+     "lon": 106.875,
+     "mk_p": 4.1082127545981164e-33,
+     "n_months": 288,
+     "n_years": 24.0,
+     "ols_ci_per_decade": [
+      -0.5702689570348155,
+      -0.435452276479258
+     ],
+     "ols_p": 1.5669917796591473e-36,
+     "ols_per_decade": -0.5028606167570367,
+     "p_adj": 4.9621406355873e-36,
+     "sen_per_decade": -0.5013211212861775,
+     "tests_agree": true
+    }
+   ],
+   "cells_in_circle": 19,
+   "cells_used": 19,
+   "expected_per_sign": 0.47500000000000003,
+   "slope_max": 0.4997449681705676,
+   "slope_min": -0.5491812351811364
+  },
+  "city": {
+   "cell": [
+    -6.0,
+    106.875
+   ],
+   "mk_p": 1.1184702142917983e-32,
+   "n_months": 288,
+   "n_years": 24.0,
+   "ols_ci_per_decade": [
+    0.41531687882110896,
+    0.5439552083575059
+   ],
+   "ols_p": 1.1691992614742113e-36,
+   "ols_per_decade": 0.47963604358930734,
+   "sen_per_decade": 0.48000539147005145,
+   "tests_agree": true
+  },
+  "map": {
+   "monthly": {
+    "east_asia_land": {
+     "ci_high": 0.5935891097054896,
+     "ci_low": 0.21684319252606252,
+     "mk_p": 8.988394656345189e-06,
+     "mk_p_adj": 2.6965183969035566e-05,
+     "n_points": 180,
+     "noise_lag1": 0.16602300186361746,
+     "noise_sd": 0.5432920023910952,
+     "ols_p": 3.69562546769709e-05,
+     "ols_p_adj": 0.0001108687640309127,
+     "sen_per_decade": 0.41015332566167323,
+     "slope_per_decade": 0.405216151115776,
+     "tests_agree": true,
+     "years_needed_90": 14.0
+    },
+    "north_asia_siberia": {
+     "ci_high": 0.22626303467588155,
+     "ci_low": -0.12099122258291634,
+     "mk_p": 0.6650093137405124,
+     "mk_p_adj": 0.6650093137405124,
+     "n_points": 180,
+     "noise_lag1": 0.0,
+     "noise_sd": 0.5102188510270752,
+     "ols_p": 0.5504402599324493,
+     "ols_p_adj": 0.5504402599324493,
+     "sen_per_decade": 0.041114099599860496,
+     "slope_per_decade": 0.0526359060464826,
+     "tests_agree": true,
+     "years_needed_90": 50.0
+    },
+    "se_asia_maritime": {
+     "ci_high": 0.12685358581871387,
+     "ci_low": -0.27321502166548983,
+     "mk_p": 0.33023155778799107,
+     "mk_p_adj": 0.4953473366819866,
+     "n_points": 180,
+     "noise_lag1": 0.21216870681461453,
+     "noise_sd": 0.4729930719473219,
+     "ols_p": 0.47015496039881544,
+     "ols_p_adj": 0.5504402599324493,
+     "sen_per_decade": -0.08864988218988756,
+     "slope_per_decade": -0.07318071792338796,
+     "tests_agree": true,
+     "years_needed_90": 40.0
+    }
+   },
+   "yearly": {
+    "east_asia_land": {
+     "ci_high": 0.5812974949811447,
+     "ci_low": 0.23272768359035562,
+     "mk_p": 0.0029854708912688084,
+     "mk_p_adj": 0.008956412673806424,
+     "n_points": 15,
+     "noise_lag1": 0.5847339710099623,
+     "noise_sd": 0.22137759892419545,
+     "ols_p": 0.00025152314234544654,
+     "ols_p_adj": 0.0007545694270363396,
+     "sen_per_decade": 0.3930888888889209,
+     "slope_per_decade": 0.4070125892857502,
+     "tests_agree": true,
+     "years_needed_90": 27.0
+    },
+    "north_asia_siberia": {
+     "ci_high": 0.27189335166365636,
+     "ci_low": -0.16615483975898224,
+     "mk_p": 0.37305311625145265,
+     "mk_p_adj": 0.559579674377179,
+     "n_points": 15,
+     "noise_lag1": 0.2288649264864896,
+     "noise_sd": 0.11462969028151312,
+     "ols_p": 0.5878421026601522,
+     "ols_p_adj": 0.5878421026601522,
+     "sen_per_decade": 0.053675925925947214,
+     "slope_per_decade": 0.052869255952337074,
+     "tests_agree": true,
+     "years_needed_90": 48.0
+    },
+    "se_asia_maritime": {
+     "ci_high": 0.13390075373159804,
+     "ci_low": -0.2809110513506377,
+     "mk_p": 0.7665252995235718,
+     "mk_p_adj": 0.7665252995235718,
+     "n_points": 15,
+     "noise_lag1": 0.0,
+     "noise_sd": 0.158254953655571,
+     "ols_p": 0.45756705691979377,
+     "ols_p_adj": 0.5878421026601522,
+     "sen_per_decade": -0.03776547619046206,
+     "slope_per_decade": -0.07350514880951983,
+     "tests_agree": true,
+     "years_needed_90": 40.0
+    }
+   }
+  }
+ }
+}

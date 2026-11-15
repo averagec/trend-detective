@@ -43,6 +43,11 @@ if [ -f pyproject.toml ] || [ -f requirements.txt ]; then
   if python -m ruff --version >/dev/null 2>&1; then run "ruff" python -m ruff check --quiet .; fi
   if python -m pytest --version >/dev/null 2>&1 && [ -d tests ]; then run "pytest" python -m pytest -q; fi
 fi
+# The website (web/) must still build: Flask serves web/dist. Skipped until `npm ci` has run there.
+if [ -f web/package.json ] && [ -d web/node_modules ] && command -v npm >/dev/null; then
+  run "web build" npm --prefix web run -s build
+  run "web tests" npm --prefix web test --silent
+fi
 if [ -f package.json ]; then
   grep -q '"lint"' package.json && run "npm lint" npm run -s lint
   grep -q '"typecheck"' package.json && run "typecheck" npm run -s typecheck

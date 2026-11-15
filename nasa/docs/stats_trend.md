@@ -1,6 +1,10 @@
 # Trend engine statistics (proposal)
 
-Status: **proposal, not built.** Once approved, this file defines the statistics for the trend
+Status: **proposal, not built.** Note (2026-11-15): the headline-test question is settled for now by
+`docs/decisions/0009-significance-engine-*.md`: both OLS and Mann-Kendall are shown, and a trend is
+rising or falling only when both are significant after correction. Pre-whitening below is not built.
+
+Original status: **proposal, not built.** Once approved, this file defines the statistics for the trend
 engine and replaces `docs/statistics.md` for that engine. `docs/science-rules.md` still applies:
 the changes it needs are listed in §8 for a decision.
 

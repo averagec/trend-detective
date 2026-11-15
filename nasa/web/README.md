@@ -11,6 +11,19 @@ npm run dev
 
 Build for production with `npm run build`. The output goes to `dist/`.
 
+### With the analysis engine (TREND.EXE)
+
+TREND.EXE reads every number from the Python backend. From the project root (`nasa/`):
+
+```bash
+cd web && npm ci && npm run build && cd ..      # once, and after changing web/
+python src/trend_detective/app/web.py           # serves the site and /api at http://127.0.0.1:5000
+```
+
+For live reload while editing the site, run the backend as above and `npm run dev` in `web/`
+(Vite proxies `/api` to port 5000). `npm test` checks the response mapper against real API
+responses in `tests/fixtures/`. Contract: `docs/api.md`; decision: `docs/decisions/0008-*.md`.
+
 ## How it works
 
 1. **The office**: a 3D room built with three.js. Click the monitor to log in.
@@ -104,16 +117,21 @@ zoom to it. Inland cities (more than 20 km from the sea) show no sea level.
 
 **CIRCLE** works like Earthdata Search: press CIRCLE, then press on the map and drag to draw. The
 answer follows the selected layer: switch SEA LVL / TEMP / RAIN / WATER and the same circle is
-read again for that variable. The card shows the grid cells whose centres are inside, how many go
-up or down clearly, the spread of cell trends, the cities inside, and the cells' yearly average.
-Numbers come from `indonesia_cells.json` (`python scripts/export_cells.py`: one core trend per
-grid cell per layer, Benjamini-Hochberg across that layer's cells). A circle under 75 km or over
-250 km, or with fewer than 4 cells with data, gets a pop-up (ADR 0005 limits). Esc cancels.
+read again for that variable. The server (`POST /api/cell-circle`) takes the layer's grid cells whose
+**centre is inside the circle** (a cell whose centre is outside is left out, even if it overlaps) and
+corrects them **together**, for this circle only (Benjamini-Hochberg, both tests, ADR 0009). The card
+shows how many go up or down clearly, how many are unclear, the spread of cell trends, the cities
+inside and the cells' yearly average. Each cell's own tests come from `python scripts/export_cells.py`
+(`indonesia_cells.json` for drawing, `data/processed/cell_stats/<layer>.json` for the server). A circle
+under 75 km or over 250 km, or with fewer than 4 cells with data, gets a pop-up (ADR 0005 limits). Esc
+cancels. **Needs the Flask server running**, because the correction depends on which cells you draw
+around.
 
 Grid data per layer: SEA LVL from the ECCO files in the repo (works now). TEMP and RAIN need
 `data/processed/cells/merra2_idn.npz` (built by `process/cell_cube.py` from the raw MERRA-2
-files); commit it and re-run `scripts/export_cells.py`. WATER needs a GRACE cube
-(`grace_idn.npz`), not built yet. Until then those layers show "no grid data yet".
+files); then re-run `scripts/export_cells.py`, which writes both the page file and the server's
+`cell_stats/<layer>.json`. WATER needs a GRACE cube (`grace_idn.npz`), not built yet. Until then
+those layers show "no grid data yet".
 SAT toggles NASA GIBS Blue Marble imagery (needs internet; the chip turns mustard when
 offline). Every chart opens full size when clicked (`src/ui/chart-view.js`).
 

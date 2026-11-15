@@ -1,0 +1,361 @@
+{
+ "annual": [
+  {
+   "mean_anomaly": -0.045224999999999224,
+   "months": 10,
+   "year": 2000
+  },
+  {
+   "mean_anomaly": -0.017522727272726323,
+   "months": 11,
+   "year": 2001
+  },
+  {
+   "mean_anomaly": 0.008604166666671631,
+   "months": 12,
+   "year": 2002
+  },
+  {
+   "mean_anomaly": 0.038854166666666856,
+   "months": 12,
+   "year": 2003
+  },
+  {
+   "mean_anomaly": 0.037750000000016826,
+   "months": 2,
+   "year": 2004
+  }
+ ],
+ "band": [
+  {
+   "fit": -0.045103956475005196,
+   "high": -0.033904922364198356,
+   "low": -0.056302990585812035,
+   "year": 2000
+  },
+  {
+   "fit": -0.017750589322419928,
+   "high": -0.010571653718658983,
+   "low": -0.024929524926180873,
+   "year": 2001
+  },
+  {
+   "fit": 0.009602777830165339,
+   "high": 0.016080425359075,
+   "low": 0.003125130301255675,
+   "year": 2002
+  },
+  {
+   "fit": 0.036956144982750606,
+   "high": 0.0467890879975628,
+   "low": 0.027123201967938406,
+   "year": 2003
+  }
+ ],
+ "first_month": "2000-01",
+ "label": "Station",
+ "last_month": "2004-02",
+ "region": "custom",
+ "region_name": "Your data",
+ "sentence": "Station rose by 0.27 K per decade (95% CI +0.22 to +0.33), statistically significant at 95%.",
+ "series": [
+  {
+   "anomaly": null,
+   "period": "2000-01",
+   "value": null
+  },
+  {
+   "anomaly": null,
+   "period": "2000-02",
+   "value": null
+  },
+  {
+   "anomaly": -0.045000000000015916,
+   "period": "2000-03",
+   "value": 282.598
+  },
+  {
+   "anomaly": -0.045250000000010004,
+   "period": "2000-04",
+   "value": 283.002
+  },
+  {
+   "anomaly": -0.045000000000015916,
+   "period": "2000-05",
+   "value": 282.603
+  },
+  {
+   "anomaly": -0.04550000000000409,
+   "period": "2000-06",
+   "value": 281.507
+  },
+  {
+   "anomaly": -0.04499999999995907,
+   "period": "2000-07",
+   "value": 280.01
+  },
+  {
+   "anomaly": -0.04550000000000409,
+   "period": "2000-08",
+   "value": 278.512
+  },
+  {
+   "anomaly": -0.045000000000015916,
+   "period": "2000-09",
+   "value": 277.417
+  },
+  {
+   "anomaly": -0.04550000000000409,
+   "period": "2000-10",
+   "value": 277.017
+  },
+  {
+   "anomaly": -0.04499999999995907,
+   "period": "2000-11",
+   "value": 277.422
+  },
+  {
+   "anomaly": -0.04550000000000409,
+   "period": "2000-12",
+   "value": 278.522
+  },
+  {
+   "anomaly": null,
+   "period": "2001-01",
+   "value": null
+  },
+  {
+   "anomaly": -0.04550000000000409,
+   "period": "2001-02",
+   "value": 281.527
+  },
+  {
+   "anomaly": -0.015000000000043201,
+   "period": "2001-03",
+   "value": 282.628
+  },
+  {
+   "anomaly": -0.014250000000004093,
+   "period": "2001-04",
+   "value": 283.033
+  },
+  {
+   "anomaly": -0.015000000000043201,
+   "period": "2001-05",
+   "value": 282.633
+  },
+  {
+   "anomaly": -0.014499999999998181,
+   "period": "2001-06",
+   "value": 281.538
+  },
+  {
+   "anomaly": -0.014999999999929514,
+   "period": "2001-07",
+   "value": 280.04
+  },
+  {
+   "anomaly": -0.014499999999998181,
+   "period": "2001-08",
+   "value": 278.543
+  },
+  {
+   "anomaly": -0.014999999999986358,
+   "period": "2001-09",
+   "value": 277.447
+  },
+  {
+   "anomaly": -0.014499999999998181,
+   "period": "2001-10",
+   "value": 277.048
+  },
+  {
+   "anomaly": -0.014999999999986358,
+   "period": "2001-11",
+   "value": 277.452
+  },
+  {
+   "anomaly": -0.014499999999998181,
+   "period": "2001-12",
+   "value": 278.553
+  },
+  {
+   "anomaly": -0.029999999999972715,
+   "period": "2002-01",
+   "value": 280.055
+  },
+  {
+   "anomaly": -0.014499999999998181,
+   "period": "2002-02",
+   "value": 281.558
+  },
+  {
+   "anomaly": 0.014999999999986358,
+   "period": "2002-03",
+   "value": 282.658
+  },
+  {
+   "anomaly": 0.01474999999999227,
+   "period": "2002-04",
+   "value": 283.062
+  },
+  {
+   "anomaly": 0.014999999999986358,
+   "period": "2002-05",
+   "value": 282.663
+  },
+  {
+   "anomaly": 0.014499999999998181,
+   "period": "2002-06",
+   "value": 281.567
+  },
+  {
+   "anomaly": 0.015000000000043201,
+   "period": "2002-07",
+   "value": 280.07
+  },
+  {
+   "anomaly": 0.014499999999998181,
+   "period": "2002-08",
+   "value": 278.572
+  },
+  {
+   "anomaly": 0.014999999999986358,
+   "period": "2002-09",
+   "value": 277.477
+  },
+  {
+   "anomaly": 0.014499999999998181,
+   "period": "2002-10",
+   "value": 277.077
+  },
+  {
+   "anomaly": 0.015000000000043201,
+   "period": "2002-11",
+   "value": 277.482
+  },
+  {
+   "anomaly": 0.014499999999998181,
+   "period": "2002-12",
+   "value": 278.582
+  },
+  {
+   "anomaly": 0.0,
+   "period": "2003-01",
+   "value": 280.085
+  },
+  {
+   "anomaly": 0.014499999999998181,
+   "period": "2003-02",
+   "value": 281.587
+  },
+  {
+   "anomaly": 0.04499999999995907,
+   "period": "2003-03",
+   "value": 282.688
+  },
+  {
+   "anomaly": 0.044749999999964984,
+   "period": "2003-04",
+   "value": 283.092
+  },
+  {
+   "anomaly": 0.04499999999995907,
+   "period": "2003-05",
+   "value": 282.693
+  },
+  {
+   "anomaly": 0.04550000000000409,
+   "period": "2003-06",
+   "value": 281.598
+  },
+  {
+   "anomaly": 0.04500000000007276,
+   "period": "2003-07",
+   "value": 280.1
+  },
+  {
+   "anomaly": 0.04550000000000409,
+   "period": "2003-08",
+   "value": 278.603
+  },
+  {
+   "anomaly": 0.045000000000015916,
+   "period": "2003-09",
+   "value": 277.507
+  },
+  {
+   "anomaly": 0.04550000000000409,
+   "period": "2003-10",
+   "value": 277.108
+  },
+  {
+   "anomaly": 0.045000000000015916,
+   "period": "2003-11",
+   "value": 277.512
+  },
+  {
+   "anomaly": 0.04550000000000409,
+   "period": "2003-12",
+   "value": 278.613
+  },
+  {
+   "anomaly": 0.03000000000002956,
+   "period": "2004-01",
+   "value": 280.115
+  },
+  {
+   "anomaly": 0.04550000000000409,
+   "period": "2004-02",
+   "value": 281.618
+  }
+ ],
+ "significance": {
+  "expected_by_chance": null,
+  "family": {
+   "alpha": 0.05,
+   "method": null,
+   "n_tests": null,
+   "name": "none"
+  },
+  "mk_p_ar1": 9.281599291342048e-05,
+  "mk_q": 9.281599291342048e-05,
+  "ols_p": 3.541400419555189e-07,
+  "ols_q": 3.541400419555189e-07,
+  "sentence": "Station rose by 0.27 K per decade (95% CI +0.22 to +0.33), statistically significant at 95%.",
+  "significant": true,
+  "verdict": "rise",
+  "warnings": [
+   {
+    "code": "short_record",
+    "text": "Only 3.9 years of data; trends under 10 years are not reliable."
+   }
+  ]
+ },
+ "statistics": {
+  "mk_ar1_significant": true,
+  "mk_p": 7.923504767429185e-14,
+  "mk_p_ar1": 9.281599291342048e-05,
+  "mk_significant": true,
+  "n_eff": 13.19767011866435,
+  "n_months": 47,
+  "n_years": 3.9166666666666665,
+  "ols_ci_per_decade": [
+   0.21683091598526555,
+   0.33023642706643974
+  ],
+  "ols_intercept": -0.05878064005129783,
+  "ols_p": 3.541400419555189e-07,
+  "ols_per_decade": 0.2735336715258527,
+  "ols_significant": true,
+  "ols_slope_per_month": 0.002279447262715439,
+  "r1": 0.5615222285962725,
+  "sen_per_decade": 0.2723076923080743,
+  "tests_agree": true
+ },
+ "unit": "K",
+ "variable": "custom",
+ "warnings": [
+  "Only 3.9 years of data; trends under 10 years are not reliable."
+ ]
+}

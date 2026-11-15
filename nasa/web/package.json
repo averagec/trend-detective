@@ -10,7 +10,8 @@
     "build:map": "node scripts/assets/build_region_map.mjs",
     "build:assets": "node scripts/assets/build_asia_outline.mjs && python3 scripts/assets/extract_textures.py && python3 scripts/assets/make_textures.py && python3 scripts/assets/repack_model.py assets/source/office_original.glb public/models/office.glb && python3 scripts/assets/make_sprites.py && python3 scripts/assets/make_earth.py && python3 scripts/assets/make_icons.py",
     "data:power": "node scripts/data/fetch_power.mjs",
-    "data:grace": "python3 scripts/data/import_grace.py"
+    "data:grace": "python3 scripts/data/import_grace.py",
+    "test": "node --test"
   },
   "dependencies": {
     "three": "0.170.0"

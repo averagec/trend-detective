@@ -33,9 +33,9 @@ network runs all demo cases, and `web/` contains no statistics code.
 - [ ] 1. Import into `nasa/web/`. Leave out `assets/source/office_original.glb` (12 MB, rebuild-only)
       and keep `package-lock.json`. Add `node_modules/`, `dist/` to the ignore list. Verify
       `npm ci && npm run build` works (it did on the clone: 668 kB JS, 179 kB gzip).
-- [ ] 2. Serve the build from Flask (`/` -> `web/dist/index.html`, static assets). Dev: Vite proxy
+- [x] 2. (done on feature/trend-exe-api-integration; ADR 0008) Serve the build from Flask (`/` -> `web/dist/index.html`, static assets). Dev: Vite proxy
       `/api` -> Flask. Add the web build to `scripts/check.sh` when `web/` exists.
-- [ ] 3. Adapter `web/src/data/api.js` (fetch `/api/meta`, `/api/trend`) replacing
+- [~] 3. (done for TREND.EXE only: `data/api.js`, `to-chart.js`; SETUP/PLOT/MAP still use browser data) Adapter `web/src/data/api.js` (fetch `/api/meta`, `/api/trend`) replacing
       `DATASETS`/`makeSeries`/`analyse` in `desktop.js` (SETUP, PLOT). Use `catalog/` text for
       labels. Units come from the API (K, mm day-1): convert for display in the adapter only.
 - [ ] 4. Move the LINEUP and verdict logic into `core/` (new `core/lineup.py`): AR(1) surrogates

@@ -3,7 +3,7 @@
 Owns: where a month or year sits in its own climate (percentile against the same calendar month,
 or against annual totals), the amount and percent change against the climatological median, the
 peak month, the trend of the rainfall rate, and the call (one-time event, extreme within a trend,
-or not unusual). Rules: docs/science-rules.md and docs/statistics.md §4.5.
+or not unusual). Rules: docs/science-rules.md and docs/statistics.md §3.6.
 
 Inputs are monthly series on one timeline that starts in January, with NaN for missing months:
   totals : rainfall total per month, mm (rate x days in month)

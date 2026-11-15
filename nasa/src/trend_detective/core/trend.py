@@ -24,6 +24,9 @@ class TrendResult:
     n_eff: float  # effective sample size after lag-1 autocorrelation
     method: str
     intercept: float = float("nan")  # OLS intercept, for drawing the line (OLS only)
+    # Lag-1 autocorrelation that set n_eff, floored at 0 (a negative value is not used to
+    # shrink the uncertainty). NaN for methods that do not estimate it.
+    r1: float = float("nan")
 
     @property
     def significant(self) -> bool:
@@ -83,6 +86,7 @@ def ols_trend(values: np.ndarray, alpha: float = 0.05) -> TrendResult:
         n_eff,
         "ols",
         float(intercept),
+        float(r1),
     )
 
 
@@ -157,6 +161,43 @@ def mann_kendall(values: np.ndarray) -> TrendResult:
     p = float(2 * stats.norm.sf(abs(z)))
     slope = sens_slope(y_all)
     return TrendResult(slope, np.nan, np.nan, p, n, float(n), "mann-kendall")
+
+
+def mann_kendall_ar1(values: np.ndarray) -> TrendResult:
+    """Mann-Kendall test with the variance widened for lag-1 autocorrelation.
+
+    Same statistic S and tie-corrected variance as `mann_kendall`, but Var(S) is multiplied by
+    n / n_eff, the effective-sample-size factor `ols_trend` uses (Santer et al., 2000), with
+    n_eff = n (1 - r1) / (1 + r1) (at least 3). r1 is the lag-1 autocorrelation of the series
+    with Sen's trend removed, floored at 0: when it is not positive, the result equals
+    `mann_kendall`; otherwise the p-value is larger. Method and measured error rates:
+    docs/decisions/0007-scan-family-and-autocorrelation-aware-mann-kendall.md.
+
+    `values` may contain NaN (ignored). Sen's slope is per time step of `values`, so a missing month
+    still counts as a step, the same as `mann_kendall` since the fix for gaps.
+    """
+    y_all = np.asarray(values, dtype=float)
+    keep = ~np.isnan(y_all)
+    t, y = np.arange(y_all.size, dtype=float)[keep], y_all[keep]
+    n = y.size
+    if n < 3:
+        raise ValueError("need at least 3 non-missing values")
+    i, j = np.triu_indices(n, k=1)
+    s = float(np.sum(np.sign(y[j] - y[i])))
+    _, counts = np.unique(y, return_counts=True)
+    var_s = (n * (n - 1) * (2 * n + 5) - np.sum(counts * (counts - 1) * (2 * counts + 5))) / 18
+    slope = sens_slope(y_all)
+    r1 = max(lag1_autocorr(y - slope * t), 0.0)
+    n_eff = max(n * (1 - r1) / (1 + r1), 3.0)
+    var_adjusted = var_s * n / n_eff
+    if s > 0:
+        z = (s - 1) / np.sqrt(var_adjusted)
+    elif s < 0:
+        z = (s + 1) / np.sqrt(var_adjusted)
+    else:
+        z = 0.0
+    p = float(2 * stats.norm.sf(abs(z)))
+    return TrendResult(slope, np.nan, np.nan, p, n, float(n_eff), "mann-kendall-ar1", r1=float(r1))
 
 
 def benjamini_hochberg(p_values) -> np.ndarray:

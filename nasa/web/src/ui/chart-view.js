@@ -34,29 +34,16 @@ function onKey(e) {
     close();
   }
 }
-function openChart(spec) {
-  close();
-  const host = document.querySelector("#os .crt") || document.body;
-  const o = document.createElement("div");
-  o.id = "chartview";
-  o.className = "cv-over";
-  o.innerHTML = `<div class="cv-win" role="dialog" aria-label="${spec.title}">
-    <div class="cv-tb"><span>${spec.title}</span><button class="cv-x" aria-label="Close chart">×</button></div>
-    <div class="cv-body">
-      <div class="cv-sub">${spec.sub || ""}</div>
+// Draws the chart, legend, stats and notes for `spec` into `el` (any element). Used inline by
+// TREND.EXE and, through openChart, in the full-size overlay.
+function renderChart(el, spec) {
+  el.innerHTML = `<div class="cv-sub">${spec.sub || ""}</div>
       <div class="cv-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"></svg><div class="cv-read" hidden></div></div>
       <div class="cv-leg"></div>
       ${spec.stats && spec.stats.length ? `<div class="cv-stats">${spec.stats.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>` : ""}
       ${(spec.notes || []).map((n) => `<div class="cv-note">${n}</div>`).join("")}
-      ${spec.source ? `<div class="cv-src">SOURCE · ${spec.source}</div>` : ""}
-    </div></div>`;
-  host.appendChild(o);
-  o.addEventListener("pointerdown", (e) => {
-    if (e.target === o) close();
-  });
-  o.querySelector(".cv-x").onclick = close;
-  document.addEventListener("keydown", onKey, true);
-
+      ${spec.source ? `<div class="cv-src">SOURCE · ${spec.source}</div>` : ""}`;
+  const o = el;
   const svg = o.querySelector("svg"), ser = spec.series.filter((p) => p[1] != null);
   const xs = ser.map((p) => p[0]), ys = ser.map((p) => p[1]);
   (spec.band || []).forEach((b) => ys.push(b[1], b[2]));
@@ -128,7 +115,7 @@ function openChart(spec) {
     dot.setAttribute("x", px - 5);
     dot.setAttribute("y", py - 5);
     dot.setAttribute("visibility", "visible");
-    const fv = fitAt(best[0]), when = spec.monthly ? `${Math.floor(best[0])}-${String(Math.floor(best[0] % 1 * 12) + 1).padStart(2, "0")}` : Math.floor(best[0]);
+    const fv = fitAt(best[0]), when = spec.monthly ? `${Math.floor(best[0])}-${String(Math.floor(best[0] % 1 * 12 + 1e-6) + 1).padStart(2, "0")}` : Math.floor(best[0]);
     read.innerHTML = `<b>${when}</b> ${best[1] >= 0 ? "+" : "−"}${Math.abs(best[1]).toFixed(spec.dp ?? 1)} ${unit}${fv != null ? `<br><span>trend line ${fv >= 0 ? "+" : "−"}${Math.abs(fv).toFixed(spec.dp ?? 1)}</span>` : ""}`;
     read.hidden = false;
     const bw = svg.clientWidth, k = bw / W, oy = (svg.clientHeight - H * k) / 2;
@@ -140,6 +127,25 @@ function openChart(spec) {
     dot.setAttribute("visibility", "hidden");
     read.hidden = true;
   });
+  return el;
+}
+// Full-size chart preview. Every graph in the app opens here when clicked.
+function openChart(spec) {
+  close();
+  const host = document.querySelector("#os .crt") || document.body;
+  const o = document.createElement("div");
+  o.id = "chartview";
+  o.className = "cv-over";
+  o.innerHTML = `<div class="cv-win" role="dialog" aria-label="${spec.title}">
+    <div class="cv-tb"><span>${spec.title}</span><button class="cv-x" aria-label="Close chart">×</button></div>
+    <div class="cv-body"></div></div>`;
+  host.appendChild(o);
+  o.addEventListener("pointerdown", (e) => {
+    if (e.target === o) close();
+  });
+  o.querySelector(".cv-x").onclick = close;
+  document.addEventListener("keydown", onKey, true);
+  renderChart(o.querySelector(".cv-body"), spec);
   return o;
 }
-export { openChart, close as closeChart };
+export { openChart, renderChart, close as closeChart };

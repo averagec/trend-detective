@@ -12,7 +12,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from trend_detective.core.trend import deseasonalize, mann_kendall, ols_band, ols_trend
+from trend_detective.core.trend import (
+    deseasonalize,
+    mann_kendall,
+    mann_kendall_ar1,
+    ols_band,
+    ols_trend,
+)
 
 MONTHS_PER_DECADE = 120
 MIN_YEARS = 10  # science rule 2: show a warning under 10 years of monthly data
@@ -36,15 +42,27 @@ class Summary:
     sentence: str
     ols_intercept: float = float("nan")  # intercept of the OLS line on the anomalies
     ols_slope_per_month: float = float("nan")  # same slope as ols_per_decade / 120
+    n_eff: float = float("nan")  # effective sample size behind ols_p and the CI
+    r1: float = float("nan")  # lag-1 autocorrelation of the OLS residuals (floored at 0)
+    # Mann-Kendall with the variance adjusted for lag-1 autocorrelation (ADR 0007). mk_p stays
+    # the unadjusted one; this is shown next to it.
+    mk_p_ar1: float = float("nan")
+    mk_ar1_significant: bool = False
     # 95% band around the OLS line, one row per year of the series: (years after the first year,
     # line value, lower, upper), in the unit of the anomalies. Empty when there is no trend.
     ols_band_by_year: tuple[tuple[int, float, float, float], ...] = ()
 
 
-def summarise(series: np.ndarray, unit: str, label: str, steps_per_year: int = 12) -> Summary:
+def summarise(
+    series: np.ndarray, unit: str, label: str, steps_per_year: int = 12, *, leading_pad: int = 0
+) -> Summary:
     """Summarise one series. steps_per_year=12 (monthly): `series` starts in January, one value per
     month, NaN where missing, and is deseasonalised. steps_per_year=1 (yearly): one annual value per
-    year, NaN where missing, not deseasonalised. The slope is always reported per decade."""
+    year, NaN where missing, not deseasonalised. The slope is always reported per decade.
+
+    `leading_pad` counts NaN steps at the front that only align a series to January (data that
+    starts mid-year). They are not gaps in the record, so they are left out of the share missing.
+    """
     if steps_per_year not in (1, 12):
         raise ValueError("steps_per_year must be 1 (yearly) or 12 (monthly)")
     y = np.asarray(series, dtype=float)
@@ -56,7 +74,7 @@ def summarise(series: np.ndarray, unit: str, label: str, steps_per_year: int = 1
         warnings.append(
             f"Only {years:.1f} years of data; trends under {MIN_YEARS} years are not reliable."
         )
-    missing = 1.0 - n_valid / y.size
+    missing = 1.0 - n_valid / (y.size - leading_pad)
     if missing > MAX_MISSING_FRACTION:
         warnings.append(f"{missing:.0%} of months are missing.")
     min_points = 24 if steps_per_year == 12 else 3  # monthly: two years; yearly: three values
@@ -81,6 +99,7 @@ def summarise(series: np.ndarray, unit: str, label: str, steps_per_year: int = 1
     anomalies = deseasonalize(y) if steps_per_year == 12 else y  # rule 1: monthly only
     ols = ols_trend(anomalies)  # science rule 3
     mk = mann_kendall(anomalies)
+    mk_ar1 = mann_kendall_ar1(anomalies)
 
     # One point per year, only where it lies inside the record (no extrapolation).
     if steps_per_year == 12:
@@ -131,5 +150,9 @@ def summarise(series: np.ndarray, unit: str, label: str, steps_per_year: int = 1
         sentence=sentence,
         ols_intercept=ols.intercept,
         ols_slope_per_month=ols.slope,
+        n_eff=ols.n_eff,
+        r1=ols.r1,
+        mk_p_ar1=mk_ar1.p_value,
+        mk_ar1_significant=mk_ar1.p_value < 0.05,
         ols_band_by_year=band,
     )

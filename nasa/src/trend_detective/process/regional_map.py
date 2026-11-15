@@ -24,10 +24,12 @@ from trend_detective.catalog.regions import REGIONS
 from trend_detective.catalog.scope import clamp
 from trend_detective.catalog.variables import VARIABLES
 from trend_detective.core.detect import noise_params, years_needed
+from trend_detective.core.significance import Item, assess_family
 from trend_detective.core.summary import summarise
 from trend_detective.core.trend import benjamini_hochberg
 from trend_detective.process.event_series import indicator_monthly
 from trend_detective.process.frequency import to_yearly
+from trend_detective.process.significance_json import significance_json
 
 SCHEMA_VERSION = 1
 FREQS = ("monthly", "yearly")
@@ -158,15 +160,22 @@ def _region(
     if not np.isfinite(monthly).any():  # e.g. ocean cells in a land-only box: nothing to test
         return _no_data(key, name, f"No valid {name} values for this layer.")
 
+    def lead(values: np.ndarray) -> int:
+        """Steps before the dataset begins. The timeline opens with the project window (1980), but
+        GPCP starts in 1983 and GRACE in 2002: those steps are padding, not missing data."""
+        return int(np.flatnonzero(np.isfinite(values))[0])
+
     if freq == "yearly":
         years, annual = to_yearly(axis, monthly)  # every year in the axis, NaN when incomplete
         span = [str(y) for y in years]
-        summary = summarise(annual, unit, label, steps_per_year=1)
-        n_units = len(years)
+        pad = lead(annual) if np.isfinite(annual).any() else 0
+        summary = summarise(annual, unit, label, steps_per_year=1, leading_pad=pad)
+        n_units = len(years) - pad
     else:
         span = axis
-        summary = summarise(monthly, unit, label)
-        n_units = len(axis)
+        pad = lead(monthly)
+        summary = summarise(monthly, unit, label, leading_pad=pad)
+        n_units = len(axis) - pad
 
     n_cells = [int(float(r["n_cells"])) for r in rows if r["n_cells"]]
     n_valid = [int(float(r["n_valid"])) for r in rows if r["n_valid"]]
@@ -197,8 +206,10 @@ def _region(
         "sen_per_decade": summary.sen_per_decade,
         "mk_p": summary.mk_p,
         "tests_agree": summary.tests_agree,
-        "sentence": summary.sentence,
+        "sentence": summary.sentence,  # this region alone, no correction: see `significance`
         "warnings": [{"code": _code(w), "text": w} for w in summary.warnings],
+        "_summary": summary,  # handed to core/significance.py by build_map, then removed
+        "_label": label,
     }
     if include_series:
         values = monthly if freq != "yearly" else annual
@@ -208,19 +219,6 @@ def _region(
             for p_, v in zip(periods, values, strict=True)
         ]
     return out
-
-
-def _direction(region: dict) -> str:
-    """rise / fall when both adjusted tests are significant and agree on sign; unclear when only
-    one is significant or they disagree; none otherwise."""
-    ols_sig = region["ols_p_adj"] < 0.05
-    mk_sig = region["mk_p_adj"] < 0.05
-    same_sign = np.sign(region["slope_per_decade"]) == np.sign(region["sen_per_decade"])
-    if ols_sig and mk_sig and same_sign:
-        return "rise" if region["slope_per_decade"] > 0 else "fall"
-    if ols_sig or mk_sig:
-        return "unclear"
-    return "none"
 
 
 def _clean(obj):
@@ -268,12 +266,25 @@ def build_map(
 
     ok = [i for i, r in enumerate(results) if r["status"] == "ok"]
     if ok:
-        ols_adj = benjamini_hochberg([results[i]["ols_p"] for i in ok])
-        mk_adj = benjamini_hochberg([results[i]["mk_p"] for i in ok])
+        # The regions of one layer are one family (ADR 0009): core/significance.py corrects the OLS
+        # and the autocorrelation-adjusted Mann-Kendall p-values and decides the direction.
+        verdicts = assess_family(
+            [Item(results[i]["_summary"], results[i]["_label"], results[i]["unit"]) for i in ok],
+            "layer",
+        )
+        # kept for compatibility: the unadjusted Mann-Kendall p-value, corrected
+        mk_old = benjamini_hochberg([results[i]["mk_p"] for i in ok])
         for j, i in enumerate(ok):
-            results[i]["ols_p_adj"] = float(ols_adj[j])
-            results[i]["mk_p_adj"] = float(mk_adj[j])
-            results[i]["direction"] = _direction(results[i])
+            a = verdicts[j]
+            results[i]["ols_p_adj"] = a.ols_q
+            results[i]["mk_p_adj"] = float(mk_old[j])
+            results[i]["mk_p_ar1"] = a.mk_p_ar1
+            results[i]["mk_p_ar1_adj"] = a.mk_q
+            results[i]["direction"] = "none" if a.verdict == "no_data" else a.verdict
+            results[i]["significance"] = significance_json(a)
+    for r in results:
+        r.pop("_summary", None)
+        r.pop("_label", None)
 
     unit = next((r["unit"] for r in results if r["status"] == "ok"), "")
     return _clean(
@@ -286,8 +297,9 @@ def build_map(
             "from": first,
             "to": last,
             "adjustment": (
-                "Benjamini-Hochberg across regions, applied separately to the OLS and "
-                "Mann-Kendall p-values."
+                "Benjamini-Hochberg across regions, applied separately to the OLS and to the "
+                "autocorrelation-adjusted Mann-Kendall p-values. A region is rise or fall only "
+                "when both are significant after correction and agree in sign."
             ),
             "regions": results,
         }
