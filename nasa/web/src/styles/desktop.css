@@ -432,7 +432,7 @@ body.in-os #os {
   cursor: move;
   user-select: none;
   font-size: 23px;
-  background: #5b6b8f;
+  background: #46557d;
   color: var(--cream);
 }
 .win.active .tb {
@@ -499,7 +499,7 @@ body.in-os #os {
   background: #b9b3a4;
 }
 .dim {
-  color: #5b6b8f;
+  color: #46557d;
 }
 .hi {
   color: var(--red);

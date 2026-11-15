@@ -198,8 +198,8 @@
   outline: 3px solid var(--mus);
 }
 .zoom-hint {
-  font-size: 14px;
-  color: #5b6b8f;
+  font-size: 15px;
+  color: #3d4c7c;
   letter-spacing: 1px;
   text-align: right;
 }
