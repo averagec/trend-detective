@@ -46,8 +46,9 @@ body.playing #menu {
 .t1 {
   position: relative;
   font-family: "Special Elite", monospace;
-  font-size: 132px;
-  line-height: .9;
+  font-size: 112px;
+  line-height: 1.1;
+  white-space: nowrap;
   color: #f3ecdc;
   letter-spacing: .01em;
   text-shadow: 0 5px 0 #000;

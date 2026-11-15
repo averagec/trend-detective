@@ -2,7 +2,7 @@ import { SFX } from "../audio/sfx.js";
 import { say, closeSay } from "../ui/dialogue.js";
 import { caseData } from "../data/case-data.js";
 import { analyseOwn, getLineup } from "../data/api.js";
-import { caseSpec } from "../data/to-chart.js";
+import { caseSpec, yearlySpec } from "../data/to-chart.js";
 import { CASE_VERDICT, CASE_VERDICT_COLOR, CASE_VERDICT_MARK } from "../data/verdict-wording.js";
 import { openChart } from "../ui/chart-view.js";
 import { glossaryFor } from "../data/glossary.js";
@@ -437,52 +437,67 @@ function openTest() {
     }
     S.runs++;
     S.lastKey = setupKey(s);
-    const col = CASE_VERDICT_COLOR[verdict] || "#1f4fa0", mark = CASE_VERDICT_MARK[verdict] || "";
     const guessDir = ["UP", "DOWN", "NONE", null][S.guess], slope = st.ols_per_decade;
     const realDir = verdict === "detected" ? (slope > 0 ? "UP" : "DOWN") : "NONE";
     const pv = (p) => (!Number.isFinite(p) ? "n/a" : p < 1e-4 ? "< 0.0001" : p.toFixed(4));
-    out.innerHTML = `
-      <canvas class="cv" id="cv-h" width="360" height="110"></canvas>
-      <div class="axis"><span>FAKE RECORDS (BLUE / GOLD) VS REAL (RED LINE)</span><span>${lu.beat} / ${lu.n_sims} AS STRONG</span></div>
-      <div class="verdict" style="color:${col};border-color:${col}">${mark} ${esc(word)}</div> ${S.exploratory ? '<span class="flag">EXPLORATORY</span>' : ""}
+    const spec = { title: `CASE · ${place.toUpperCase()} · ${ds.label.toUpperCase()}`, source: `${ds.source} · ANALYSED BY THE PROJECT'S PYTHON CORE`, notes: ds.regions[s.r].long ? [`Region: ${ds.regions[s.r].long}.`] : [] };
+    // The engine judged both views (ADR 0011). The guess, the log and the detective use the monthly one.
+    const views = {
+      monthly: { name: "MONTHLY", st, sig, lu, chart: () => caseSpec(R, spec) },
+      yearly: { name: "YEARLY", st: R.yearly.statistics, sig: R.yearly.significance, lu: R.yearly.lineup, chart: () => yearlySpec(R, spec) }
+    };
+    const draw = (which) => {
+      const v = views[which], l = v.lu, a = v.st, g = v.sig, vw = CASE_VERDICT[l.verdict] || String(l.verdict).toUpperCase();
+      const col = CASE_VERDICT_COLOR[l.verdict] || "#1f4fa0", mark = CASE_VERDICT_MARK[l.verdict] || "", has = !!l.n_sims;
+      out.innerHTML = `
+      <div class="tr-bar" role="group" aria-label="Monthly or yearly">${Object.entries(views).map(([k, x]) => `<button class="chip${k === which ? " on" : ""}" data-f="${k}" aria-pressed="${k === which}">${x.name}</button>`).join("")}</div>
+      <div class="headline" id="headline" style="border-left-color:${col}">${esc(l.headline)}</div>
+      <div class="dim" id="freq-note">${esc(R.yearly.comparison)}</div>
+      ${has ? `<canvas class="cv" id="cv-h" width="360" height="110"></canvas>
+      <div class="axis"><span>FAKE RECORDS (BLUE / GOLD) VS REAL (RED LINE)</span><span>${l.beat} / ${l.n_sims} AS STRONG</span></div>` : '<div class="dim">Too few values for a lineup in this view.</div>'}
+      <div class="verdict" style="color:${col};border-color:${col}">${mark} ${esc(vw)}</div> ${S.exploratory ? '<span class="flag">EXPLORATORY</span>' : ""}
       <div class="res">
-        <span>TREND</span><span>${num(slope)} ${esc(perDec)}</span>
-        <span>95% RANGE</span><span>${num(st.ols_ci_per_decade[0])} to ${num(st.ols_ci_per_decade[1])}</span>
-        <span>OLS</span><span>p = ${pv(sig.ols_p)} (autocorrelation-adjusted)</span>
-        <span>MANN-KENDALL</span><span>p = ${pv(sig.mk_p_ar1)} (autocorrelation-adjusted)</span>
-        <span>NOISE LINEUP</span><span>${lu.beat} of ${lu.n_sims} fakes as strong (${(lu.share * 100).toFixed(1)}%)</span>
-        ${Number.isFinite(lu.years_needed) ? `<span>YEARS NEEDED</span><span>about ${lu.years_needed.toFixed(0)} years of record for a change this size (you have ${Math.round(lu.years)})</span>` : ""}
+        <span>TREND</span><span>${num(a.ols_per_decade)} ${esc(perDec)}</span>
+        <span>95% RANGE</span><span>${num(a.ols_ci_per_decade[0])} to ${num(a.ols_ci_per_decade[1])}</span>
+        <span>OLS</span><span>p = ${pv(g.ols_p)} (autocorrelation-adjusted)</span>
+        <span>MANN-KENDALL</span><span>p = ${pv(g.mk_p_ar1)} (autocorrelation-adjusted)</span>
+        ${has ? `<span>NOISE LINEUP</span><span>${l.beat} of ${l.n_sims} fakes as strong (${(l.share * 100).toFixed(1)}%)</span>` : ""}
+        ${Number.isFinite(l.years_needed) ? `<span>YEARS NEEDED</span><span>about ${l.years_needed.toFixed(0)} years of record for a change this size (you have ${Math.round(l.years)})</span>` : ""}
       </div>
-      <div style="margin-top:8px">${lu.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${esc(c.text)}</div>`).join("")}</div>
-      <div class="dim" style="margin-top:8px">${esc(lu.explanation)}</div>
-      <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"}</div>
+      <div style="margin-top:8px">${l.checks.map((c) => `<div class="chk ${c.ok ? "ok" : "no"}"><b>${c.ok ? "✓" : "✗"}</b>${esc(c.text)}</div>`).join("")}</div>
+      <div class="dim" style="margin-top:8px">${esc(l.explanation)}</div>
+      <div style="margin-top:6px">YOUR GUESS: ${["AN INCREASE", "A DECREASE", "NO CHANGE", "NOT SURE"][S.guess]} · ${guessDir === null ? "NO CALL" : guessDir === realDir ? "MATCHED" : "DIDN’T MATCH"} <span class="dim">(judged on the monthly view)</span></div>
       ${glossaryFor(["TREND", "95% RANGE", "MANN-KENDALL", "NOISE LINEUP", "YEARS NEEDED"])}
       <div style="text-align:right;margin-top:8px"><button class="obtn" id="go-chart">VIEW FULL CHART ▸</button> <button class="obtn" id="go-again">CHANGE SETUP</button></div>`;
-    plotHist(out.querySelector("#cv-h"), lu.sims_per_decade, lu.observed_per_decade);
+      const showChart = () => openChart(v.chart());
+      if (has) {
+        plotHist(out.querySelector("#cv-h"), l.sims_per_decade, l.observed_per_decade);
+        out.querySelector("#cv-h").classList.add("zoomable");
+        out.querySelector("#cv-h").onclick = showChart;
+      }
+      out.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => {
+        SFX.select();
+        draw(b.dataset.f);
+      });
+      out.querySelector("#go-chart").onclick = showChart;
+      out.querySelector("#go-again").onclick = () => {
+        closeId("w-test");
+        openSetup();
+      };
+    };
+    draw("monthly");
     SFX.stamp();
     const crt = document.querySelector(".crt");
     crt.classList.remove("jolt");
     void crt.offsetWidth;
     crt.classList.add("jolt");
     log(`VERDICT: ${word}${S.exploratory ? " (EXPLORATORY)" : ""}`, "hi");
-    const showChart = () => openChart(caseSpec(R, {
-      title: `CASE · ${place.toUpperCase()} · ${ds.label.toUpperCase()}`,
-      source: `${ds.source} · ANALYSED BY THE PROJECT'S PYTHON CORE`,
-      notes: ds.regions[s.r].long ? [`Region: ${ds.regions[s.r].long}.`] : []
-    }));
-    out.querySelector("#go-chart").onclick = showChart;
-    out.querySelector("#cv-h").classList.add("zoomable");
-    out.querySelector("#cv-h").onclick = showChart;
-    out.querySelector("#go-again").onclick = () => {
-      closeId("w-test");
-      openSetup();
-    };
     const lines = { detected: [`It holds up. ${place}, ${num(slope, ds.unit === "mm" ? 1 : 2)} ${perDec}.`, "No matter how I poke at it, same answer. Into the report it goes."], not_detected: ["Hm. Too much wobble to call it.", s.v === "ssl" ? "All those El Niño years jerking the sea around. The climb’s buried in there somewhere." : "Something might be happening. I just can’t prove it yet."], suspect: ["Strong... maybe too strong. Something’s off.", "One of the checks failed. I’m not putting my name on this."] }[verdict] || ["Huh. That answer doesn’t make sense to me."];
     setTimeout(() => say(lines), 600);
   };
 }
 const ABOUT_HTML = `<div class="about">
-<h3>TREND DETECTIVE: CASE FILES</h3>
+<h3>TRENDSEN: CASE FILES</h3>
 <div class="dim">NASA SPACE APPS CHALLENGE 2026 · BE AN EARTH SYSTEM TREND DETECTIVE</div>
 <h4>MISSION</h4>
 <p>Help anyone in Indonesia, a student or a city planner, answer one honest question with NASA data: <b>is this really changing, where, by how much, and can we prove it?</b> No guessing from one scary graph. Every claim has to survive the tests.</p>
